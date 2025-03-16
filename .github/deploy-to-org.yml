@@ -2,24 +2,17 @@ name: 部署到组织 GitHub Pages
 
 on:
   push:
-    branches: [ main ] # 修改为你的主分支名称，如 master
+    branches: [ main ] # 确保这里的分支名称与您实际使用的分支名称一致
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # 添加明确的权限
     steps:
       - name: 检出代码
         uses: actions/checkout@v3
-        with:
-          persist-credentials: false
-
-      # 如果项目需要构建，取消注释这些步骤
-      # - name: 安装依赖
-      #   run: npm install
-      # 
-      # - name: 构建项目
-      #   run: npm run build
-      
+        
       - name: 部署到组织仓库
         uses: JamesIves/github-pages-deploy-action@v4
         with:
