@@ -1,4 +1,4 @@
-# Elyxira ✨
+# Elyxira 
 
 <div align="center">
 
