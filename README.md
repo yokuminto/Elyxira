@@ -24,7 +24,6 @@
 ## 💻 本地部署
 
 ```
-
 # 克隆仓库
 git clone https://github.com/yokuminto/elyxira.git
 
@@ -124,17 +123,27 @@ E. 选项E
 - 您可以自由使用、修改和分享本项目的代码，但必须保留原始版权声明
 - 对于内容部分，您可以分享和改编，但必须提供适当署名，不得用于商业目的，且必须以相同条款共享您的贡献
 
-## 🙏 致谢
-
-- 感谢所有为医学教育做出贡献的教育工作者
-- 感谢开源社区提供的技术支持
-- 感谢参与测试和反馈的社群
-
----
-
 <div align="center">
   <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh">
     <img src="https://mirrors.creativecommons.org/presskit/buttons/88x31/svg/by-nc-sa.svg" width="120" alt="CC BY-NC-SA 4.0">
   </a>
   <p>© 2025 Elyxira </p>
+</div>
+
+## 🙏 致谢 & 感谢支持
+
+- 感谢所有为医学教育做出贡献的教育工作者
+- 感谢东方医学社群提供的支持
+- 感谢参与测试和反馈的所有人
+
+<br>
+<div align="center">
+  <a href="https://thfmu.com/" title="东方医学">
+    <img src="./asset/thmed.png" width="180" alt="THMED">
+  </a>
+</div>
+<br>
+<div align="center">
+  <p>欢迎来到东方医学(THMED)！</p>
+  <p>东方医学致力于医学病案交流、循证体系建构与文化传播，提供东方世界观作品与医学专业课的交流平台。我们希望您在这里度过一段美好的时光~</p>
 </div>
