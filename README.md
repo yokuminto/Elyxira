@@ -3,7 +3,7 @@
 ![MIT](https://img.shields.io/badge/协议-MIT-green)
 ![CC-BY-NC-SA-4.0](https://img.shields.io/badge/协议-CC--BY--NC--SA--4.0-orange)
 
-> 一站式医学学习平台，助力医学生高效备考与知识掌握。基于Web的开源医学题库系统，支持AI辅助分析和个性化学习路径。
+> 样式美观&开源&在线的题目练习平台，基于html，支持AI解析、自定义题库
 
 ## 📋 功能特点
 
