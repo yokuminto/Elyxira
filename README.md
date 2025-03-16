@@ -157,28 +157,22 @@ E. 选项E
 
 ## 📜 开源协议
 
-<div align="center">
 
 本项目采用双协议授权：
+采用 [MIT 协议](LICENSE-MIT.md) + [CC BY-NC-SA 4.0 国际许可协议](LICENSE-CC.md)
 
-</div>
 
-- **代码部分**：采用 [MIT 协议](LICENSE-MIT.md)
-- **内容部分**：采用 [CC BY-NC-SA 4.0 国际许可协议](LICENSE-CC.md)
-
-<div align="center">
   <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh">
     <img src="https://mirrors.creativecommons.org/presskit/buttons/88x31/svg/by-nc-sa.svg" width="120" alt="CC BY-NC-SA 4.0">
   </a>
-</div>
+
 
 ## 🙏 鸣谢
 
-<div align="center">
   <p>感谢所有为医学教育做出贡献的教育工作者</p>
   <p>感谢东方医学社群提供的支持</p>
   <p>感谢参与测试和反馈的所有用户</p>
-</div>
+
 
 ---
 
@@ -186,12 +180,8 @@ E. 选项E
   <a href="https://thfmu.com/" title="东方医学">
     <img src="./asset/thmed.png" width="180" alt="THMED">
   </a>
-  <p><b>欢迎来到东方医学(THMED)！</b></p>
-  <p>东方医学致力于医学病案交流、循证体系建构与文化传播，</p>
-  <p>提供东方世界观作品与医学专业课的交流平台。</p>
-  <p>我们希望您在这里度过一段美好的时光～</p>
-</div>
-
-<div align="center">
-  <p>© 2025 Elyxira | 知识助力成长</p>
+  <br><b>欢迎来到东方医学(THMED)！</b><br>
+  东方医学致力于医学病案交流、循证体系建构与文化传播<br>
+  提供东方世界观作品与医学专业课的交流平台<br>
+  我们希望您在这里度过一段美好的时光～
 </div>
