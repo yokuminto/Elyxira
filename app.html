@@ -25,47 +25,44 @@
             --border-radius: 8px;
             --transition: all 0.25s ease;
 
-            /* Markdown笔记主题变量 - 更加鲜明的色彩 */
-            --note-primary: #4468ee;
-            --note-secondary: #3a42d5;
-            --note-success: #36b991;
-            --note-danger: #e54960;
-            --note-warning: #f5a623;
-            --note-info: #3dacf7;
-            --note-pink: #e94db3;
-            --note-purple: #9c27b0;
-            --note-orange: #ff9800;
-            --note-brown: #7d6e63;
-            --note-gray: #607d8b;
-            --note-cyan: #00acc1;
+            /* Markdown 渲染变量 */
+            --c-blue: #4468ee;
+            --c-indigo: #3a42d5;
+            --c-green: #36b991;
+            --c-red: #e54960;
+            --c-yellow: #f5a623;
+            --c-sky: #3dacf7;
+            --c-pink: #e94db3;
+            --c-purple: #9c27b0;
+            --c-orange: #ff9800;
+            --c-brown: #7d6e63;
+            --c-gray: #607d8b;
+            --c-cyan: #00acc1;
 
-            /* 笔记文本颜色 - 提高对比度 */
-            --note-text-primary: #2a2a30;
-            --note-text-secondary: #5a5a68;
-            --note-text-light: #7a7a8c;
-            --note-text-highlight: #4468ee;
+            --t-dark: #2a2a30;
+            --t-medium: #5a5a68;
+            --t-light: #7a7a8c;
+            --t-accent: #4468ee;
 
-            /* 笔记背景颜色 - 优化透明度 */
-            --note-bg-primary: rgba(68, 104, 238, 0.1);
-            --note-bg-secondary: rgba(58, 66, 213, 0.08);
-            --note-bg-success: rgba(54, 185, 145, 0.08);
-            --note-bg-danger: rgba(229, 73, 96, 0.08);
-            --note-bg-warning: rgba(245, 166, 35, 0.08);
-            --note-bg-info: rgba(61, 172, 247, 0.08);
-            --note-bg-pink: rgba(233, 77, 179, 0.08);
-            --note-bg-purple: rgba(156, 39, 176, 0.08);
-            --note-bg-orange: rgba(255, 152, 0, 0.08);
-            --note-bg-brown: rgba(125, 110, 99, 0.08);
-            --note-bg-gray: rgba(96, 125, 139, 0.08);
-            --note-bg-cyan: rgba(0, 172, 193, 0.08);
+            --bg-blue: rgba(68, 104, 238, 0.1);
+            --bg-indigo: rgba(58, 66, 213, 0.08);
+            --bg-green: rgba(54, 185, 145, 0.08);
+            --bg-red: rgba(229, 73, 96, 0.08);
+            --bg-yellow: rgba(245, 166, 35, 0.08);
+            --bg-sky: rgba(61, 172, 247, 0.08);
+            --bg-pink: rgba(233, 77, 179, 0.08);
+            --bg-purple: rgba(156, 39, 176, 0.08);
+            --bg-orange: rgba(255, 152, 0, 0.08);
+            --bg-brown: rgba(125, 110, 99, 0.08);
+            --bg-gray: rgba(96, 125, 139, 0.08);
+            --bg-cyan: rgba(0, 172, 193, 0.08);
 
-            /* 笔记边框颜色 - 调整饱和度 */
-            --note-border-primary: #4468ee;
-            --note-border-secondary: #3a42d5;
-            --note-border-success: #36b991;
-            --note-border-danger: #e54960;
-            --note-border-warning: #f5a623;
-            --note-border-info: #3dacf7;
+            --b-blue: #4468ee;
+            --b-indigo: #3a42d5;
+            --b-green: #36b991;
+            --b-red: #e54960;
+            --b-yellow: #f5a623;
+            --b-sky: #3dacf7;
 
             /* 笔记代码块样式 - 提高可读性 */
             --note-code-bg: #f7f9fc;
@@ -204,7 +201,7 @@
 
         .queue-item .timestamp {
             font-size: 0.9em;
-            color: var(--note-text-light);
+            color: var(--t-light);
         }
 
         /* 合并预览样式 */
@@ -214,7 +211,7 @@
 
         .merge-message {
             margin-bottom: 20px;
-            color: var(--note-text-primary);
+            color: var(--t-dark);
         }
 
         .merge-options {
@@ -260,47 +257,47 @@
             --surface-card: var(--card-bg);
             --surface-bg: var(--bg-color);
 
-            /* Markdown笔记主题变量 - 暗色模式下更明亮 */
-            --note-primary: #7a8ef5;
-            --note-secondary: #8e94f2;
-            --note-success: #4ecaa0;
-            --note-danger: #e87685;
-            --note-warning: #f7bb62;
-            --note-info: #6abcf8;
-            --note-pink: #f992c3;
-            --note-purple: #bb98ff;
-            --note-orange: #ffb864;
-            --note-brown: #af9b90;
-            --note-gray: #99acb9;
-            --note-cyan: #4cd2e4;
+            /* 核心颜色 */
+            --c-blue: #7a8ef5;
+            --c-indigo: #8e94f2;
+            --c-green: #4ecaa0;
+            --c-red: #e87685;
+            --c-yellow: #f7bb62;
+            --c-sky: #6abcf8;
+            --c-pink: #f992c3;
+            --c-purple: #bb98ff;
+            --c-orange: #ffb864;
+            --c-brown: #af9b90;
+            --c-gray: #99acb9;
+            --c-cyan: #4cd2e4;
 
-            /* 笔记文本颜色 - 提高暗色下可读性 */
-            --note-text-primary: #E6E1E3;
-            --note-text-secondary: #cbd4dd;
-            --note-text-light: #a5aeba;
-            --note-text-highlight: #9facf9;
+            /* 文本颜色 */
+            --t-dark: #E6E1E3;
+            --t-medium: #cbd4dd;
+            --t-light: #a5aeba;
+            --t-accent: #9facf9;
 
-            /* 笔记背景颜色 - 暗色下更柔和 */
-            --note-bg-primary: rgba(122, 142, 245, 0.15);
-            --note-bg-secondary: rgba(142, 148, 242, 0.15);
-            --note-bg-success: rgba(78, 202, 160, 0.15);
-            --note-bg-danger: rgba(232, 118, 133, 0.15);
-            --note-bg-warning: rgba(247, 187, 98, 0.15);
-            --note-bg-info: rgba(106, 188, 248, 0.15);
-            --note-bg-pink: rgba(249, 146, 195, 0.15);
-            --note-bg-purple: rgba(187, 152, 255, 0.15);
-            --note-bg-orange: rgba(255, 184, 100, 0.15);
-            --note-bg-brown: rgba(175, 155, 144, 0.15);
-            --note-bg-gray: rgba(153, 172, 185, 0.15);
-            --note-bg-cyan: rgba(76, 210, 228, 0.15);
+            /* 背景颜色 */
+            --bg-blue: rgba(122, 142, 245, 0.15);
+            --bg-indigo: rgba(142, 148, 242, 0.15);
+            --bg-green: rgba(78, 202, 160, 0.15);
+            --bg-red: rgba(232, 118, 133, 0.15);
+            --bg-yellow: rgba(247, 187, 98, 0.15);
+            --bg-sky: rgba(106, 188, 248, 0.15);
+            --bg-pink: rgba(249, 146, 195, 0.15);
+            --bg-purple: rgba(187, 152, 255, 0.15);
+            --bg-orange: rgba(255, 184, 100, 0.15);
+            --bg-brown: rgba(175, 155, 144, 0.15);
+            --bg-gray: rgba(153, 172, 185, 0.15);
+            --bg-cyan: rgba(76, 210, 228, 0.15);
 
-            /* 笔记边框颜色 - 暗色下边框更明显 */
-            --note-border-primary: #7a8ef5;
-            --note-border-secondary: #8e94f2;
-            --note-border-success: #4ecaa0;
-            --note-border-danger: #e87685;
-            --note-border-warning: #f7bb62;
-            --note-border-info: #6abcf8;
+            /* 边框颜色 */
+            --b-blue: #7a8ef5;
+            --b-indigo: #8e94f2;
+            --b-green: #4ecaa0;
+            --b-red: #e87685;
+            --b-yellow: #f7bb62;
+            --b-sky: #6abcf8;
 
             /* 笔记代码块样式 - 暗色下代码更清晰 */
             --note-code-bg: rgba(255, 255, 255, 0.1);
@@ -1464,7 +1461,7 @@
 
         /* Markdown渲染和编辑 */
         .markdown-body {
-            color: var(--note-text-primary);
+            color: var(--t-dark);
             line-height: 1.5;
             transition: var(--transition);
         }
@@ -1473,13 +1470,13 @@
         .markdown-body h2,
         .markdown-body h3,
         .markdown-body h4 {
-            color: var(--note-primary);
+            color: var(--c-blue);
             margin: 0;
             font-weight: 600;
         }
 
         .markdown-body h4 {
-            color: var(--note-secondary);
+            color: var(--c-indigo);
         }
 
         .markdown-body hr {
@@ -1558,14 +1555,14 @@
             border-radius: 8px;
         }
 
-        .markdown-body mark[style*="--note-bg-primary"] {
-            background-color: var(--note-bg-primary);
-            color: var(--note-text-primary);
+        .markdown-body mark[style*="--bg-blue"] {
+            background-color: var(--bg-blue);
+            color: var(--t-dark);
         }
 
-        .markdown-body mark[style*="--note-bg-cyan"] {
-            background-color: var(--note-bg-cyan);
-            color: var(--note-text-primary);
+        .markdown-body mark[style*="--bg-cyan"] {
+            background-color: var(--bg-cyan);
+            color: var(--t-dark);
         }
 
         /* 标记样式 */
@@ -1591,31 +1588,31 @@
 
         /* 提示框样式 */
         .markdown-body .note-tip {
-            background-color: var(--note-bg-primary);
-            border-left: 4px solid var(--note-border-primary);
+            background-color: var(--bg-blue);
+            border-left: 4px solid var(--b-blue);
             padding: 1em;
             margin: 1em 0;
             border-radius: 0 var(--border-radius) var(--border-radius) 0;
         }
 
         .markdown-body .note-warning {
-            background-color: var(--note-bg-warning);
-            border-left: 4px solid var(--note-border-warning);
+            background-color: var(--bg-yellow);
+            border-left: 4px solid var(--b-yellow);
         }
 
         .markdown-body .note-danger {
-            background-color: var(--note-bg-danger);
-            border-left: 4px solid var(--note-border-danger);
+            background-color: var(--bg-red);
+            border-left: 4px solid var(--b-red);
         }
 
         .markdown-body .note-info {
-            background-color: var(--note-bg-info);
-            border-left: 4px solid var(--note-border-info);
+            background-color: var(--bg-sky);
+            border-left: 4px solid var(--b-sky);
         }
 
         .markdown-body .note-success {
-            background-color: var(--note-bg-success);
-            border-left: 4px solid var(--note-border-success);
+            background-color: var(--bg-green);
+            border-left: 4px solid var(--b-green);
         }
 
         /* 仪表盘样式 */
@@ -4876,33 +4873,50 @@
             });
         }
 
-        // 渲染笔记
         function renderNotes(content = null, isStreaming = false) {
             const notesDisplay = document.getElementById('notesDisplay');
             const notesTextarea = document.getElementById('notesTextarea');
 
-            // 如果是流式内容,追加显示
+            // 配置 marked 选项
+            const markedOptions = {
+                breaks: true,
+                gfm: true,
+                tables: true,
+                headerIds: false,
+                html: true,
+                xhtml: true
+            };
+            marked.setOptions(markedOptions);
+
+            // 如果是流式内容，追加显示
             if (isStreaming && content) {
                 const currentContent = notesTextarea.value;
                 notesTextarea.value = currentContent + content;
+            } else {
+                let noteContent = content || currentQuestion.notes || '';
+                notesTextarea.value = noteContent;
+            }
 
-                // 配置marked选项
-                const markedOptions = {
-                    breaks: true,
-                    gfm: true,
-                    tables: true,
-                    headerIds: false,
-                    html: true,
-                    xhtml: true
-                };
+            // 获取完整的笔记内容
+            let noteContent = notesTextarea.value;
 
-                marked.setOptions(markedOptions);
-
+            if (noteContent) {
                 try {
-                    const wrappedContent = `<div class="markdown-body">${marked.parse(notesTextarea.value)}</div>`;
+
+                    // 预处理：将 • 开头的行转为 HTML 无序列表
+                    noteContent = noteContent.replace(/^([\s]*?)•\s+(.*?)$/gm, '<li>$2</li>');
+
+                    // 修复加粗文本问题
+                    noteContent = noteContent.replace(/\*\*([^\*]+)\*\*/g, '<strong>$1</strong>');
+
+                    // 先解析整个内容
+                    let htmlContent = marked.parse(noteContent);
+
+                    // 包裹最终内容
+                    const wrappedContent = `<div class="markdown-body">${htmlContent}</div>`;
                     notesDisplay.innerHTML = wrappedContent;
 
-                    // 处理并渲染Mermaid图表
+                    // 处理 Mermaid 图表
                     const mermaidDivs = notesDisplay.querySelectorAll('.language-mermaid');
                     mermaidDivs.forEach((div) => {
                         const mermaidCode = div.textContent;
@@ -4923,53 +4937,13 @@
                     notesTextarea.scrollTop = notesTextarea.scrollHeight;
                 } catch (error) {
                     console.error('Markdown渲染失败:', error);
-                }
-                return;
-            }
-
-            // 非流式显示的原有逻辑
-            let noteContent = content || currentQuestion.notes || '';
-            notesTextarea.value = noteContent;
-
-            if (noteContent) {
-                const markedOptions = {
-                    breaks: true,
-                    gfm: true,
-                    tables: true,
-                    headerIds: false,
-                    html: true // 启用 HTML 标签支持
-                };
-
-                marked.setOptions(markedOptions);
-
-                try {
-                    const wrappedContent = `<div class="markdown-body">${marked.parse(noteContent)}</div>`;
-                    notesDisplay.innerHTML = wrappedContent;
-
-                    const mermaidDivs = notesDisplay.querySelectorAll('.language-mermaid');
-                    mermaidDivs.forEach((div) => {
-                        const mermaidCode = div.textContent;
-                        const mermaidDiv = document.createElement('div');
-                        mermaidDiv.className = 'mermaid';
-                        mermaidDiv.textContent = mermaidCode;
-                        div.parentNode.replaceChild(mermaidDiv, div);
-                    });
-
-                    try {
-                        mermaid.init(undefined, '.mermaid');
-                    } catch (error) {
-                        console.error('Mermaid初始化失败:', error);
-                    }
-                } catch (error) {
-                    console.error('Markdown渲染失败:', error);
                     notesDisplay.innerHTML = '<p class="text-muted">笔记渲染失败</p>';
                 }
             } else {
                 notesDisplay.innerHTML = '<p class="text-muted">这道题目还没有笔记...</p>';
             }
-        }
+        }       // 切换笔记编辑模式
 
-        // 切换笔记编辑模式
         function toggleNotesEditor() {
             const notesDisplay = document.getElementById('notesDisplay');
             const notesEditor = document.getElementById('notesEditor');
