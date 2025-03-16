@@ -1,42 +1,51 @@
-# Simple workflow for deploying static content to GitHub Pages
-name: Deploy static content to Pages
+name: Deploy to Organization GitHub Pages
 
 on:
-  # Runs on pushes targeting the default branch
   push:
     branches: ["main"]
-
-  # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
-# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
 permissions:
-  contents: read
-  pages: write
-  id-token: write
-
-# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
-# However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
-concurrency:
-  group: "pages"
-  cancel-in-progress: false
+  contents: write  # 需要写权限来推送代码
 
 jobs:
-  # Single deploy job since we're just deploying
   deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout source repository
         uses: actions/checkout@v4
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
-        with:
-          token: ${{ secrets.ACCESS_TOKEN }}
-          repository-name: elyxira/elyxira.github.io
-          branch: main
-          folder: . # 如果有构建过程，改为构建输出目录
-          clean: true # 清理目标分支上的旧文件
+
+      # 如果需要构建（比如前端项目），取消注释并调整以下步骤
+      # - name: Setup Node.js
+      #   uses: actions/setup-node@v3
+      #   with:
+      #     node-version: '18'
+      # - name: Install dependencies
+      #   run: npm install
+      # - name: Build
+      #   run: npm run build
+
+      - name: Deploy to target repository
+        env:
+          GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+        run: |
+          # 配置 git 用户
+          git config --global user.name "GitHub Actions Bot"
+          git config --global user.email "actions@users.noreply.github.com"
+
+          # 创建临时目录
+          mkdir -p deploy_temp
+          
+          # 复制需要部署的文件（如果有构建过程，改为构建输出目录）
+          cp -r ./* deploy_temp/  # 如果有构建，改为 cp -r ./dist/* deploy_temp/
+
+          # 切换到临时目录
+          cd deploy_temp
+
+          # 初始化 git 并推送到目标仓库
+          git init
+          git add .
+          git commit -m "Deploy from source repo: ${{ github.sha }}"
+          
+          # 推送到的目标仓库地址和分支
+          git push --force "https://${{ secrets.PERSONAL_ACCESS_TOKEN }}@github.com/elyxira/elyxira.github.io.git" main:main
