@@ -136,5 +136,5 @@ E. 选项E
   <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh">
     <img src="https://mirrors.creativecommons.org/presskit/buttons/88x31/svg/by-nc-sa.svg" width="120" alt="CC BY-NC-SA 4.0">
   </a>
-  <p>© 2025 Elyxira - 开源医学学习平台</p>
+  <p>© 2025 Elyxira - 东方医学 </p>
 </div>
