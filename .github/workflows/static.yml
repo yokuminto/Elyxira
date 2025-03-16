@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write  # 需要写权限来推送代码
+  contents: write
 
 jobs:
   deploy:
@@ -25,27 +25,10 @@ jobs:
       # - name: Build
       #   run: npm run build
 
-      - name: Deploy to target repository
-        env:
-          GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-        run: |
-          # 配置 git 用户
-          git config --global user.name "GitHub Actions Bot"
-          git config --global user.email "actions@users.noreply.github.com"
-
-          # 创建临时目录
-          mkdir -p deploy_temp
-          
-          # 复制需要部署的文件（如果有构建过程，改为构建输出目录）
-          cp -r ./* deploy_temp/  # 如果有构建，改为 cp -r ./dist/* deploy_temp/
-
-          # 切换到临时目录
-          cd deploy_temp
-
-          # 初始化 git 并推送到目标仓库
-          git init
-          git add .
-          git commit -m "Deploy from source repo: ${{ github.sha }}"
-          
-          # 推送到的目标仓库地址和分支
-          git push --force "https://${{ secrets.PERSONAL_ACCESS_TOKEN }}@github.com/elyxira/elyxira.github.io.git" main:main
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          personal_token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+          external_repository: elyxira/elyxira.github.io
+          publish_branch: main
+          publish_dir: ./  # 如果有构建过程，改为构建输出目录，例如 ./dist
