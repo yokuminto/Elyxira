@@ -3,7 +3,7 @@
 ![MIT](https://img.shields.io/badge/协议-MIT-green)
 ![CC-BY-NC-SA-4.0](https://img.shields.io/badge/协议-CC--BY--NC--SA--4.0-orange)
 
-> 样式美观&开源&在线的题目练习平台，基于html，支持AI解析、自定义题库
+> 样式美观&开源&在线的题目练习平台/刷题小网站，基于html，支持AI解析、自定义题库
 
 ## 📋 功能特点
 
