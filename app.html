@@ -178,32 +178,6 @@
             }
         }
 
-        /* 离线队列样式 */
-        .offline-queue-content {
-            padding: 20px;
-            max-height: 400px;
-            overflow-y: auto;
-        }
-
-        #offlineQueueList {
-            margin-bottom: 20px;
-        }
-
-        .queue-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px;
-            margin-bottom: 10px;
-            background: var(--surface-card);
-            border-radius: var(--border-radius);
-        }
-
-        .queue-item .timestamp {
-            font-size: 0.9em;
-            color: var(--t-light);
-        }
-
         /* 合并预览样式 */
         .merge-content {
             padding: 20px;
@@ -2765,7 +2739,7 @@
                     <div class="notes-title">
                         <h3>笔记</h3>
                         <div class="notes-actions">
-                            <button class="btn-group-item sync-status" onclick="showOfflineQueue()" title="同步状态"
+                            <button class="btn-group-item sync-status" onclick="showSyncStatus()" title="同步状态"
                                 aria-label="同步状态">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                     stroke-width="2">
@@ -3117,6 +3091,17 @@
             </div>
 
             <div class="api-config-group">
+                <div class="setting-item">
+                    <div class="setting-description">
+                        <div class="setting-name">自动生成笔记</div>
+                        <div class="setting-detail">加载题目时，若下题未生成AI笔记，则自动生成下一题的AI笔记</div>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="autoGenerateNotesToggle">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
                 <div class="api-config-item">
                     <label class="api-config-label">API地址</label>
                     <div class="api-config-description">AI服务的API端点URL</div>
@@ -3321,21 +3306,17 @@
     </div>
 
     <!-- 离线队列模态框 -->
-    <div id="offlineQueueModal" class="modal-overlay">
+    <div id="syncStatusModal" class="modal-overlay">
         <div class="settings-modal">
             <div class="modal-header">
-                <h2>离线队列</h2>
-                <button id="closeOfflineQueueModal" class="modal-close">&times;</button>
+                <h2>同步设置</h2>
+                <button id="closesyncStatusModal" class="modal-close">&times;</button>
             </div>
-            <div class="offline-queue-content">
-                <div id="offlineQueueList"></div>
-                <div>
-                    <button id="clearQueueBtn" class="btn-danger">清空队列</button>
-                    <button id="syncQueueBtn" class="btn-group btn-secondary"
-                        onclick="syncNotesToGithub()">手动同步</button>
-                </div>
-            </div>
+
+            <button id="syncStatusBtn" class="btn-group btn-secondary" onclick="syncNotesToGithub()">手动同步</button>
+
         </div>
+    </div>
     </div>
 
     <!-- 数据合并模态框 -->
@@ -3380,6 +3361,7 @@
         let lockAnswerAfterWrong = false; // 选错后不能更改答案
         let showProgress = true;       // 显示进度区域
         let streamOutput = true;       // 启用流式输出，默认为true
+        let autoGenerateNotes = false; // 自动生成笔记开关
 
         // 刷题模式变量
         let randomMode = false;        // 随机刷题模式
@@ -3389,8 +3371,8 @@
         let reviewMode = false;        // 背题模式
         let answersCache = {};       // 答题缓存，切换章节/模式时刷新
 
+        let isGeneratingNote = false; // 用于跟踪AI是否正在生成笔记
         let autoSync = true;    // 自动同步开关
-        let offlineQueue = JSON.parse(localStorage.getItem('offlineQueue') || '[]');
 
 
         // 获取字体URL（如果有配置的话）
@@ -3615,7 +3597,6 @@
 
 
         // 监听网络状态
-        window.addEventListener('online', processOfflineQueue);
         window.addEventListener('offline', () => updateSyncStatus('offline'));
 
         // 初始化移动端UI功能
@@ -3754,6 +3735,7 @@
             lockAnswerAfterWrong = localStorage.getItem('lockAnswerAfterWrong') === 'true'; // 默认为false
             showProgress = localStorage.getItem('showProgress') !== 'false'; // 默认为true
             streamOutput = localStorage.getItem('streamOutput') !== 'false'; // 默认为true
+            autoGenerateNotes = localStorage.getItem('autoGenerateNotes') === 'true'; // 默认为false
 
             // 加载刷题模式设置
             randomMode = localStorage.getItem('randomMode') === 'true'; // 默认为false
@@ -3772,6 +3754,7 @@
             document.getElementById('lockAnswerAfterWrongToggle').checked = lockAnswerAfterWrong;
             document.getElementById('showProgressToggle').checked = showProgress;
             document.getElementById('streamOutputToggle').checked = streamOutput;
+            document.getElementById('autoGenerateNotesToggle').checked = autoGenerateNotes;
             document.getElementById('swipeGestureToggle').checked = swipeGestureEnabled;
 
 
@@ -3800,6 +3783,7 @@
             lockAnswerAfterWrong = document.getElementById('lockAnswerAfterWrongToggle').checked;
             showProgress = document.getElementById('showProgressToggle').checked;
             streamOutput = document.getElementById('streamOutputToggle').checked;
+            autoGenerateNotes = document.getElementById('autoGenerateNotesToggle').checked;
 
             // 保存到本地存储
             localStorage.setItem('autoSubmit', autoSubmit);
@@ -3812,6 +3796,7 @@
             localStorage.setItem('lockAnswerAfterWrong', lockAnswerAfterWrong);
             localStorage.setItem('showProgress', showProgress);
             localStorage.setItem('streamOutput', streamOutput);
+            localStorage.setItem('autoGenerateNotes', autoGenerateNotes);
             localStorage.setItem('swipeGestureEnabled', swipeGestureEnabled);
 
             // 关闭设置弹窗
@@ -4801,7 +4786,22 @@
                     optionKeyElement.classList.remove('correct', 'incorrect');
                 });
             }
+            if (autoGenerateNotes) {
+                if (currentIndex < questions.length) {
+                    const nextQuestion = questions[currentIndex + 1];
+
+                    if (!nextQuestion.notes || nextQuestion.notes.trim() === '') {
+                        console.log('开始自动生成下一题的AI笔记');
+                        // 如果没有笔记，自动生成
+                        setTimeout(() => {
+                            generateAINotes(nextQuestion);
+                        }, 500); // 延迟500ms，让UI先渲染完成
+                    }
+                }
+            }
         }
+
+
 
         // 显示题目和选项
         function displayQuestion() {
@@ -5190,6 +5190,10 @@
 
         // 上一题
         function previousQuestion() {
+            if (isGeneratingNote) {
+                showToast('笔记生成中，请等待完成后再切换题目', 'warning');
+                return;
+            }
             if (currentIndex > 0) {
                 currentIndex--;
                 loadQuestion();
@@ -5198,6 +5202,10 @@
 
         // 下一题
         function nextQuestion() {
+            if (isGeneratingNote) {
+                showToast('笔记生成中，请等待完成后再切换题目', 'warning');
+                return;
+            }
             currentIndex++;
             if (currentIndex >= questions.length) {
                 showToast('恭喜！您已完成所有题目', 'success');
@@ -5408,12 +5416,14 @@
             rangeStart = parseInt(localStorage.getItem('rangeStart')) || 1;
             rangeEnd = parseInt(localStorage.getItem('rangeEnd')) || 9999;
 
+
             // 初始化控件状态
             document.getElementById('randomModeToggle').checked = randomMode;
             document.getElementById('reviewModeToggle').checked = reviewMode;
             document.getElementById('rangeEnabledToggle').checked = rangeEnabled;
             document.getElementById('modeRangeStart').value = rangeStart;
             document.getElementById('modeRangeEnd').value = rangeEnd;
+
         }
 
         // 事件监听器添加部分
@@ -5452,7 +5462,13 @@
             });
         }
 
-        async function generateAINotes() {
+        async function generateAINotes(value = currentQuestion) {
+            if (isGeneratingNote) {
+                showToast('笔记正在生成中，请稍候...', 'info');
+                return;
+            }
+
+            isGeneratingNote = true;
             const apiConfig = getAIAPIConfig();
 
             // 验证必要的API配置
@@ -5477,9 +5493,9 @@
 
             // 获取当前问题信息
             const questionData = {
-                question: currentQuestion.question,
-                options: currentQuestion.options,
-                answer: currentQuestion.answer
+                question: value.question,
+                options: value.options,
+                answer: value.answer
             };
 
             try {
@@ -5556,11 +5572,13 @@
                 }
 
                 // 更新问题的笔记
-                currentQuestion.notes = generatedNote;
-                renderNotes();
+                value.notes = generatedNote;
+                if(!autoGenerateNotes){
+                    renderNotes();
+                }
 
                 // 保存到缓存
-                saveQuestionToCache(currentQuestion);
+                saveQuestionToCache(value);
 
                 showToast('AI笔记生成完成！', 'success');
 
@@ -5576,7 +5594,8 @@
                     generateBtn.disabled = false;
                     generateBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>';
                 }, 2000);
-                autoSyncNotes();
+                isGeneratingNote = false;
+                await autoSyncNotes();
 
             }
         }
@@ -5588,7 +5607,8 @@
                 model: localStorage.getItem('ai_model') || 'deepseek-r1-250120',
                 systemPrompt: localStorage.getItem('ai_system_prompt') || '你是一个医学专家助手，擅长解释医学概念和知识点。',
                 temperature: parseFloat(localStorage.getItem('ai_temperature')) || 0.7,
-                topP: parseFloat(localStorage.getItem('ai_top_p')) || 0.9
+                topP: parseFloat(localStorage.getItem('ai_top_p')) || 0.9,
+                autoGenerate:localStorage.getItem('autoGenerateNotes') === 'true'
             };
         }
 
@@ -5598,11 +5618,11 @@
             const apiKey = document.getElementById('aiApiKey').value;
             const model = document.getElementById('aiModel').value;
             const systemPrompt = document.getElementById('aiSystemPrompt').value;
-
             localStorage.setItem('ai_api_url', apiUrl);
             localStorage.setItem('ai_api_key', apiKey);
             localStorage.setItem('ai_model', model);
             localStorage.setItem('ai_system_prompt', systemPrompt);
+
 
             showToast('API配置已保存', 'success');
             closeModal('apiConfigModal');
@@ -5617,8 +5637,10 @@
             document.getElementById('aiModel').value = config.model;
             document.getElementById('aiSystemPrompt').value = config.systemPrompt;
             document.getElementById('streamOutputToggle').checked = localStorage.getItem('streamOutput') !== 'false';
+            document.getElementById('autoGenerateNotesToggle').checked = localStorage.getItem('autoGenerateNotes') !== 'false';
             document.getElementById('temperature').value = config.temperature;
             document.getElementById('topP').value = config.topP;
+
 
             // 加载提示词预设
             loadPromptPresets();
@@ -5676,7 +5698,6 @@
             document.getElementById('closeAPIConfig').addEventListener('click', function () {
                 closeModal('apiConfigModal');
             });
-
             document.getElementById('apiConfigModal').addEventListener('click', function (e) {
                 if (e.target === this) {
                     closeModal('apiConfigModal');
@@ -6016,6 +6037,7 @@
             const model = document.getElementById('aiModel').value;
             const systemPrompt = document.getElementById('aiSystemPrompt').value;
             const streamOutput = document.getElementById('streamOutputToggle').checked;
+            const autoGenerate = document.getElementById('autoGenerateNotesToggle').checked;
             const temperature = parseFloat(document.getElementById('temperature').value);
             const topP = parseFloat(document.getElementById('topP').value);
 
@@ -6024,6 +6046,7 @@
             localStorage.setItem('ai_model', model);
             localStorage.setItem('ai_system_prompt', systemPrompt);
             localStorage.setItem('streamOutput', streamOutput);
+            localStorage.setItem('autoGenerateNotes', autoGenerate);
             localStorage.setItem('ai_temperature', temperature);
             localStorage.setItem('ai_top_p', topP);
 
@@ -6052,6 +6075,7 @@
             document.getElementById('aiModel').value = config.model;
             document.getElementById('aiSystemPrompt').value = config.systemPrompt;
             document.getElementById('streamOutputToggle').checked = streamOutput;
+            document.getElementById('autoGenerateNotesToggle').checked = autoGenerateNotes;
             document.getElementById('temperature').value = config.temperature;
             document.getElementById('topP').value = config.topP;
 
@@ -6162,40 +6186,6 @@
             closeModal('repoConfigModal');
         }
 
-        // 保存到离线队列
-        function addToOfflineQueue(operation) {
-            offlineQueue = [{
-                timestamp: new Date().toISOString(),
-                operation,
-                data: JSON.stringify(quizData)
-            }];
-            localStorage.setItem('offlineQueue', JSON.stringify(offlineQueue));
-            updateSyncStatus('offline');
-            showToast('操作已加入离线队列', 'info');
-        }
-
-        function clearOfflineQueue() {
-            offlineQueue = [];
-            localStorage.setItem('offlineQueue', '[]');
-            updateSyncStatus('success');
-            showToast('离线队列已清空', 'success');
-        }
-        // 检查网络状态并处理队列
-        async function processOfflineQueue() {
-            if (navigator.onLine && offlineQueue.length > 0) {
-                showToast('网络已恢复，正在处理离线队列...', 'info');
-                for (let i = 0; i < offlineQueue.length; i++) {
-                    const item = offlineQueue[i];
-                    quizData = JSON.parse(item.data);
-                    await syncNotesToGithub(); // 等待同步完成
-                }
-                offlineQueue = [];
-                localStorage.setItem('offlineQueue', JSON.stringify(offlineQueue));
-                updateSyncStatus('success');
-                showToast('离线队列已处理完成', 'success');
-            }
-        }
-
         // 使用全局锁防止重复提交
         let isSyncing = false;
 
@@ -6269,7 +6259,6 @@
                         );
 
                         if (updateResponse.ok) {
-                            clearOfflineQueue();
                             console.log('笔记已成功强制同步到 GitHub！');
                             showToast('笔记已成功强制同步到 GitHub！', 'success');
                             updateSyncStatus('success');
@@ -6301,26 +6290,10 @@
             }
         }
         // 显示离线队列
-        function showOfflineQueue() {
-            const modal = document.getElementById('offlineQueueModal');
+        function showSyncStatus() {
+            const modal = document.getElementById('syncStatusModal');
             modal.classList.add('active');
-
-            const list = document.getElementById('offlineQueueList');
-            list.innerHTML = offlineQueue.length === 0 ? '<p>队列为空</p>' : '';
-
-            offlineQueue.forEach((item, index) => {
-                const div = document.createElement('div');
-                div.className = 'queue-item';
-                div.innerHTML = `<span>${item.operation} - ${item.timestamp}</span>`;
-                list.appendChild(div);
-            });
-
-            document.getElementById('closeOfflineQueueModal').onclick = () => closeModal('offlineQueueModal');
-            document.getElementById('clearQueueBtn').onclick = () => {
-                clearOfflineQueue();
-                list.innerHTML = '<p>队列为空</p>';
-                showToast('离线队列已清空', 'success');
-            };
+            document.getElementById('closesyncStatusModal').onclick = () => closeModal('syncStatusModal');
         }
 
 
@@ -6472,7 +6445,7 @@
                     await syncNotesToGithub();
                 } catch (error) {
                     console.error('自动同步笔记出错:', error);
-                    addToOfflineQueue('sync');
+                    updateSyncStatus('error');
                     showToast('同步失败，已加入离线队列', 'warning');
                 }
             }
@@ -6604,7 +6577,8 @@
                 viewWrongAfterAll: localStorage.getItem('viewWrongAfterAll'),
                 lockAnswerAfterWrong: localStorage.getItem('lockAnswerAfterWrong'),
                 showProgress: localStorage.getItem('showProgress'),
-                streamOutput: localStorage.getItem('streamOutput')
+                streamOutput: localStorage.getItem('streamOutput'),
+                autoGenerateNotes: localStorage.getItem('autoGenerateNotes'),
             };
 
             // 创建并下载配置文件
@@ -6852,7 +6826,6 @@
 
         // 初始化时更新状态
         document.addEventListener('DOMContentLoaded', () => {
-            offlineQueue = JSON.parse(localStorage.getItem('offlineQueue') || '[]');
             updateSyncStatus(navigator.onLine ? 'success' : 'offline');
             const cachedQuizData = localStorage.getItem('quizData');
             if (cachedQuizData) {
