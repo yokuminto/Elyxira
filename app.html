@@ -3097,7 +3097,7 @@
                         <div class="setting-detail">加载题目时，若下题未生成AI笔记，则自动生成下一题的AI笔记</div>
                     </div>
                     <label class="toggle-switch">
-                        <input type="checkbox" id="autoGenerateNotesToggle">
+                        <input type="checkbox" id="autoGenerateNotesToggle" checked>
                         <span class="slider"></span>
                     </label>
                 </div>
@@ -3621,7 +3621,6 @@
             updateMobileSelectors();
         }
 
-        // 初始化滑动手势
         // 初始化滑动手势
         function initSwipeGesture() {
 
@@ -5555,7 +5554,10 @@
                                     if (data.choices && data.choices[0].delta && data.choices[0].delta.content) {
                                         const content = data.choices[0].delta.content;
                                         generatedNote += content;
-                                        renderNotes(content, true);
+                                        if (value.id === currentQuestion.id) {
+                                            renderNotes(content, true);
+                                        }
+
                                     }
                                 } catch (e) {
                                     console.error('解析流式响应出错:', e);
@@ -5567,13 +5569,15 @@
                     const data = await response.json();
                     if (data.choices && data.choices[0] && data.choices[0].message) {
                         generatedNote = data.choices[0].message.content;
-                        notesTextarea.value = generatedNote;
+                        if (value.id === currentQuestion.id) {
+                            notesTextarea.value = generatedNote;
+                        }
                     }
                 }
 
                 // 更新问题的笔记
                 value.notes = generatedNote;
-                if(!autoGenerateNotes){
+                if (value.id === currentQuestion.id) {
                     renderNotes();
                 }
 
@@ -5608,7 +5612,7 @@
                 systemPrompt: localStorage.getItem('ai_system_prompt') || '你是一个医学专家助手，擅长解释医学概念和知识点。',
                 temperature: parseFloat(localStorage.getItem('ai_temperature')) || 0.7,
                 topP: parseFloat(localStorage.getItem('ai_top_p')) || 0.9,
-                autoGenerate:localStorage.getItem('autoGenerateNotes') === 'true'
+                autoGenerate: localStorage.getItem('autoGenerateNotes') === 'true'
             };
         }
 
@@ -5637,7 +5641,7 @@
             document.getElementById('aiModel').value = config.model;
             document.getElementById('aiSystemPrompt').value = config.systemPrompt;
             document.getElementById('streamOutputToggle').checked = localStorage.getItem('streamOutput') !== 'false';
-            document.getElementById('autoGenerateNotesToggle').checked = localStorage.getItem('autoGenerateNotes') !== 'false';
+            document.getElementById('autoGenerateNotesToggle').checked = config.autoGenerate;
             document.getElementById('temperature').value = config.temperature;
             document.getElementById('topP').value = config.topP;
 
@@ -5703,6 +5707,13 @@
                     closeModal('apiConfigModal');
                 }
             });
+            document.getElementById('autoGenerateNotesToggle').addEventListener('change', function () {
+                localStorage.setItem('autoGenerateNotes', this.checked);
+            });
+            document.getElementById('streamOutputToggle').addEventListener('change', function () {
+                localStorage.setItem('streamOutput', this.checked);
+            });
+
         }
 
         // 提示词预设相关变量
