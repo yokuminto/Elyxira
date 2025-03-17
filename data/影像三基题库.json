@@ -837,7 +837,7 @@
           ],
           "answer": "D",
           "userAnswer": null,
-          "notes": "\n\n<h3 style='color:var(--c-green); background-color:var(--bg-green)'>📌 核心诊断要点</h3>\n\n⭐ **正确答案：D、多发性硬化**  \n<hr style='border-color:var(--t-light)'>\n\n<h4 style='color:var(--c-sky)'>📊 影像特征解析</h4>\n<div style='border-left:4px solid var(--c-sky); padding-left:1em'>\n<strong>CT表现：</strong>  \n• <mark style='background-color:var(--bg-sky)'>侧脑室旁多发低密度灶</mark> → 白质脱髓鞘典型位置  \n• <mark style='background-color:var(--bg-sky)'>结节样/块状增强</mark> → 活动性炎症（血脑屏障破坏）\n</div>\n<hr style='border-color:var(--t-light)'>\n\n<h4 style='color:var(--c-purple)'>⚡ 关键鉴别诊断</h4>\n\n```mermaid\ngraph TD\nA[\"年轻女性+癫痫\"] --> B[\"侧脑室旁病灶+增强\"]\nB -->|首选| D[\"多发性硬化\"]\nB -->|排除| C[\"转移瘤/脑脓肿/脑囊虫/髓鞘异常\"]\nC --> C1[\"转移瘤: 中老年+水肿明显\"]\nC --> C2[\"脑囊虫: 钙化/头节+接触史\"]\nC --> C3[\"脑脓肿: 环形强化+发热\"]\nC --> C4[\"髓鞘异常: 无强化+儿童期发病\"]\n```\n<hr style='border-color:var(--t-light)'>\n\n<h4 style='color:var(--c-yellow)'>💡 记忆技巧</h4>\n<div style='border:2px dashed var(--c-yellow); padding:0.5em'>\n<strong>\"<span style='color:var(--c-yellow)'>三室一厅</span>法则\"</strong>  \n• 三：<span style='color:var(--c-red)'>30岁以下女性</span>（高发人群）  \n• 室：<span style='color:var(--c-red)'>侧脑室旁</span>（特征部位）  \n• 一：<span style='color:var(--c-red)'>活动性增强</span>（强化=炎症）  \n• 厅（停）：<span style='color:var(--c-red)'>病程停顿-缓解交替</span>（复发缓解型）  \n</div>\n<hr style='border-color:var(--t-light)'>\n\n<h4 style='color:var(--c-green)'>⚠️ 考点延伸</h4>\n• MRI比CT更敏感：T2/FLAIR高信号，<span style='color:var(--c-red)'>Dawson手指征</span>（垂直于侧脑室的脱髓鞘病变）  \n• <span style='color:var(--c-red)'>McDonald诊断标准</span>：空间多发+时间多发  \n• 治疗：急性期用<span style='color:var(--c-red)'>糖皮质激素</span>，缓解期用免疫调节剂（如干扰素β）",
+          "notes": "\n\n<span style=\"color:var(--c-green);background-color:var(--bg-green)\">📚 核心知识点解析</span>\n\n---\n\n### 🌟 题目解析\n**患者特征**：25岁女性，癫痫发作  \n**影像特征**：  \n1. CT显示侧脑室旁多发低密度灶  \n2. 结节样/块状增强  \n\n**正确选项**：<span style=\"color:var(--c-red)\">D、多发性硬化（MS）</span>\n\n---\n\n### ⚠️ 关键鉴别点\n| 选项        | 特征                                                                 | 影像特点                                                                 |\n|-------------|----------------------------------------------------------------------|--------------------------------------------------------------------------|\n| **D. 多发性硬化** | ⭐年轻女性 ⭐中枢脱髓鞘 ⭐复发-缓解病程                                  | **脑室旁白质多发斑块**，急性期结节样强化（活动性病灶）                       |\n| A. 转移瘤    | 中老年多见，原发肿瘤史                                              | 多发，水肿明显，环状/不均匀强化                                             |\n| B. 脑囊虫    | 疫区接触史，癫痫为主                                                | 多发小囊泡+头节，钙化灶，环形强化                                           |\n| C. 脑脓肿    | 发热+感染史                                                         | 环形强化+中心低密度，周围水肿显著                                           |\n| E. 髓鞘异常  | 婴幼儿起病，先天性                                                  | 广泛白质异常，无强化                                                       |\n\n---\n\n### 🔍 病理生理机制\n**多发性硬化**：  \n- **自身免疫攻击髓鞘** → 形成硬化斑块  \n- **脑室旁白质**为典型受累部位（血管周围炎症）  \n- **急性期**：血脑屏障破坏 → **结节样强化**  \n- **癫痫机制**：斑块累及皮层/近皮层区 → 异常放电  \n\n---\n\n### 💡 记忆技巧\n**口诀**：  \n\"<span style=\"color:var(--t-accent)\">年轻女性脑室旁，结节强化硬化伤</span>\"  \n\n**联想记忆**：  \n- **25岁** → MS好发年龄（20-40岁女性）  \n- **癫痫** → 非典型但可能（皮层受累）  \n- **结节样强化** → 活动性脱髓鞘病灶  \n\n---\n\n### 📊 影像学鉴别流程图\n```mermaid\ngraph TD\nA[\"侧脑室旁多发低密度灶+结节强化\"] --> B{\"年龄/性别？\"}\nB--\"年轻女性\"-->C[\"多发性硬化\"]\nB--\"中老年\"-->D[\"转移瘤\"]\nB--\"发热史\"-->E[\"脑脓肿\"]\nB--\"疫区接触\"-->F[\"脑囊虫\"]\n```\n\n---\n\n<span style=\"color:var(--c-green);background-color:var(--bg-green)\">✅ 考点提示</span>  \n1. MS典型影像：脑室旁白质病灶 + **垂直于侧脑室的Dawson手指征**（MRI T2相）  \n2. **活动性病灶强化** vs. 陈旧病灶无强化  \n3. 癫痫在MS中发生率约5%，常提示皮层受累！",
           "previousAnswer": "D"
         },
         {
@@ -853,7 +853,7 @@
           ],
           "answer": "B",
           "userAnswer": null,
-          "notes": "",
+          "notes": "\n\n✨<span style=\"color:var(--c-red);background-color:var(--bg-red)\">【错误选项定位】</span>  \n正确答案是<span style=\"color:var(--t-accent)\">B.脑沟增宽</span>，此为<span style=\"color:var(--c-red)\">错误描述</span>，实际应为<span style=\"color:var(--c-green)\">脑沟变浅/消失</span>！\n\n---\n\n### ⭐ 颅内压增高X线平片表现详解\n#### **正确表现特征**  \n1. **A.颅缝增宽**  \n   - ⚠️ 儿童特异性表现（颅缝未闭合）  \n   - 机制：颅内压↑ → 颅缝被撑开  \n   - 常见于<span style=\"color:var(--c-blue)\">颅缝分离</span>  \n\n2. **C.蝶鞍增大**  \n   - 💊 长期高压导致蝶鞍骨质吸收  \n   - 典型表现：<span style=\"color:var(--c-purple)\">鞍背骨质破坏</span>、前后床突间距增大  \n\n3. **D.脑回压迹增多**  \n   - 🔍 \"指压痕\"现象  \n   - 机制：脑回长期压迫颅骨内板 → 形成凹陷  \n\n4. **E.颅壁变薄**  \n   - ⚠️ 慢性高压导致颅骨骨质吸收  \n   - 典型改变：<span style=\"color:var(--c-brown)\">颅骨密度降低</span>  \n\n#### **错误选项解析**  \n**B.脑沟增宽**  \n- ❌ 混淆点：与<span style=\"color:var(--c-red)\">脑萎缩</span>表现相似  \n- 正确表现：颅内压↑ → 脑组织肿胀 → <span style=\"color:var(--c-green)\">脑沟变浅/消失</span>  \n\n---\n\n### 🔑 记忆口诀  \n**\"高压四兄弟，缝宽鞍大压迹密，颅骨变薄要警惕；脑沟变浅别忘记！\"**  \n\n---\n\n### 🧠 鉴别诊断速记  \n```mermaid\ngraph TD\n颅内压增高 -->|X线表现| A[\"颅缝增宽\"] \n颅内压增高 --> C[\"蝶鞍增大\"] \n颅内压增高 --> D[\"脑回压迹↑\"] \n颅内压增高 --> E[\"颅壁变薄\"] \n脑萎缩 -->|X线表现| B[\"脑沟增宽\"]\n```\n\n---\n\n### 💡 考试重点提示  \n1. **年龄差异**：颅缝增宽仅见于<span style=\"color:var(--c-pink)\">儿童及青少年</span>  \n2. **蝶鞍改变**：提示<span style=\"color:var(--c-indigo)\">慢性颅内压增高</span>（需＞3个月）  \n3. **影像学对比**：CT/MRI更敏感，X线仅用于<span style=\"color:var(--c-orange)\">初步筛查</span>  \n\n--- \n\n📌<span style=\"color:var(--c-green)\">考试陷阱预警</span>：注意区分<span style=\"color:var(--c-red)\">脑萎缩</span>（脑沟增宽）与<span style=\"color:var(--c-blue)\">脑水肿</span>（脑沟消失）的影像特征！",
           "previousAnswer": "B"
         },
         {
@@ -869,7 +869,7 @@
           ],
           "answer": "E",
           "userAnswer": null,
-          "notes": "",
+          "notes": "\n\n✨<span style=\"color:var(--c-pink);background-color:var(--bg-pink)\">脑转移瘤好发部位精讲</span>✨\n\n---\n\n### ⭐核心知识点\n1. **正确答案**  \n   <span style=\"color:var(--c-green)\">E、皮髓质交界区</span>（占脑转移瘤的80%以上）\n\n2. **解剖学基础**  \n   <span style=\"color:var(--c-sky)\">终末动脉供血区</span>（皮质长穿支与髓质短穿支交汇处）\n   ```mermaid\n   graph TD\n   A[\"血行转移瘤细胞\"] --> B[\"颈内动脉系统\"]\n   B --> C[\"大脑中动脉分支\"]\n   C --> D[\"血管直径骤减\"]\n   D --> E[\"瘤栓滞留皮髓质交界\"]\n   ```\n\n3. **病理机制**  \n   - 血流动力学：\"<span style=\"color:var(--t-accent)\">血管截面积突变理论</span>\"  \n     灰质血管直径200μm → 白质降至20μm → 瘤栓卡顿  \n   - 组织学特点：交界区毛细血管网密集，<span style=\"color:var(--c-red)\">血脑屏障相对薄弱</span>\n\n---\n\n### 🔍鉴别诊断要点\n| 特征         | 脑转移瘤          | 脑脓肿           | 胶质瘤          |\n|--------------|-------------------|------------------|-----------------|\n| **好发部位** | 皮髓质交界区      | 灰白质交界区     | 白质深部        |\n| **强化特点** | 环形强化          | 薄壁均匀强化     | 不均匀强化      |\n| **水肿范围** | 明显指状水肿      | 中度水肿         | 轻度局限性水肿  |\n| **多发倾向** | 80%多发           | 单发多见         | 单发多见        |\n\n---\n\n### 💡记忆技巧\n**口诀**：  \n\"<span style=\"color:var(--c-yellow)\">交界区血管细，瘤栓易卡住；  \n灰白过渡带，转移瘤最爱</span>\"  \n\n**联想法**：  \n想象血管像高速公路，在<span style=\"color:var(--c-purple)\">城市（皮质）到郊区（髓质）</span>的交界处突然变窄，肿瘤细胞像堵车一样堆积\n\n---\n\n### ⚠️考试陷阱提示\n- 注意区分：  \n  <span style=\"color:var(--c-red)\">原发性脑肿瘤（如胶质瘤）</span>多位于白质深部  \n  <span style=\"color:var(--c-green)\">转移性肿瘤</span>集中在皮髓质交界  \n- 影像学特征：转移灶常伴<span style=\"color:var(--t-accent)\">\"小病灶大水肿\"</span>现象\n\n---\n\n📌<span style=\"color:var(--c-cyan)\">考点延伸</span>：脑转移瘤最常见的原发灶为肺癌（50%）、乳腺癌（15%）、黑色素瘤（10%）",
           "previousAnswer": "E"
         },
         {
@@ -885,7 +885,7 @@
           ],
           "answer": "D",
           "userAnswer": null,
-          "notes": "",
+          "notes": "\n\n📚 **颅内压增高头颅平片诊断要点**  \n\n<span style=\"color:var(--c-red)\">**正确答案：D（颅缝增宽，蝶鞍改变，脑回压迹增多、增深）**</span>  \n\n---\n\n### ⭐ **核心知识点解析**  \n\n#### **1. 颅内压增高三大征象**  \n| **征象** | **机制与表现** | **临床意义** |  \n|----------|----------------|-------------|  \n| <span style=\"color:var(--c-green)\">**颅缝增宽**</span> | 儿童颅骨未闭合，颅内压↑→颅缝分离（如冠状缝、矢状缝） | ⚠️ **儿童更显著**，成人因颅缝闭合可能不明显 |  \n| <span style=\"color:var(--c-green)\">**蝶鞍改变**</span> | 鞍背、鞍底骨质吸收，蝶鞍扩大（如“气球样”变形） | ⚠️ **长期高压**导致蝶鞍结构破坏 |  \n| <span style=\"color:var(--c-green)\">**脑回压迹增多、增深**</span> | 脑沟回压迫颅骨内板→X线见“指压痕” | 提示**脑实质水肿或占位** |  \n\n---\n\n#### **2. 其他选项错误分析**  \n- **A（颅骨吸收+脑回压迹）**：❌ 缺乏蝶鞍改变和颅缝增宽（漏诊儿童病例）  \n- **B（蝶鞍+颅骨吸收）**：❌ 无颅缝增宽（漏急性或儿童病例）  \n- **C（颅缝+脑回压迹）**：❌ 漏蝶鞍改变（漏长期高压征象）  \n- **E（颅缝+颅骨吸收）**：❌ 未涵盖脑回压迹（漏脑实质受压证据）  \n\n---\n\n### 🔍 **记忆技巧**  \n1. **口诀记忆**：  \n   <span style=\"color:var(--c-pink)\">**“缝宽蝶舞脑回深”**</span>  \n   - **缝宽**→颅缝增宽  \n   - **蝶舞**→蝶鞍改变  \n   - **脑回深**→脑回压迹增深  \n\n2. **年龄关联**：  \n   - 儿童：<span style=\"color:var(--c-sky)\">**颅缝增宽**为主</span>  \n   - 成人：<span style=\"color:var(--c-sky)\">**蝶鞍改变**更显著</span>  \n\n---\n\n### 💡 **考试高频考点**  \n- **儿童与成人差异**：儿童以颅缝增宽为敏感指标，成人以蝶鞍改变为主  \n- **影像学顺序**：颅缝增宽（急性）→脑回压迹（亚急性）→蝶鞍改变（慢性）  \n\n```mermaid  \ngraph TD  \nA[\"颅内压增高\"] --> B[\"颅缝增宽（儿童）\"]  \nA --> C[\"蝶鞍改变（长期）\"]  \nA --> D[\"脑回压迹↑↑\"]  \nB --> E[\"X线：缝分离\"]  \nC --> F[\"X线：鞍背吸收\"]  \nD --> G[\"X线：指压痕\"]  \n```  \n\n掌握这三点，轻松拿分！✨",
           "previousAnswer": "D"
         },
         {
@@ -901,7 +901,7 @@
           ],
           "answer": "D",
           "userAnswer": null,
-          "notes": "",
+          "notes": "\n\n<span style=\"color:var(--c-green);background-color:var(--bg-green)\">⭐ MRI信号核心概念</span>  \nMRI信号强度由<span style=\"color:var(--t-accent)\">T1弛豫时间</span>（纵向恢复）和<span style=\"color:var(--t-accent)\">T2弛豫时间</span>（横向衰减）决定：\n- <span style=\"color:var(--c-red)\">短T1</span> → T1WI高信号（如脂肪、黑色素）\n- <span style=\"color:var(--c-blue)\">短T2</span> → T2WI低信号（如钙化、含铁物质）\n\n<span style=\"color:var(--c-green);background-color:var(--bg-green)\">💡 黑色素瘤MRI特征机制</span>  \n黑色素具有<span style=\"color:var(--c-purple)\">顺磁性</span>→  \n▪️ T1WI：<span style=\"color:var(--c-red)\">高信号</span>（缩短T1）  \n▪️ T2WI：<span style=\"color:var(--c-blue)\">低信号</span>（缩短T2）  \n\n```mermaid\ngraph TD\nA[\"黑色素瘤MRI信号\"]-->B[\"顺磁性效应\"]\nB-->C[\"T1缩短 → 高信号\"]\nB-->D[\"T2缩短 → 低信号\"]\n```\n\n<span style=\"color:var(--c-green);background-color:var(--bg-green)\">🔍 鉴别诊断要点</span>  \n其他选项特征：  \n| 肿瘤类型 | T1WI | T2WI | 关键特征 |\n|---------|------|------|---------|\n| 胶质瘤 | 低 | 高 | 浸润性生长，水肿明显 |\n| 脑膜瘤 | 等/稍低 | 等/稍高 | 脑膜尾征，均匀强化 |\n| 转移瘤 | 低/等 | 高 | 多发，显著水肿 |\n| 听神经瘤 | 等/低 | 高 | 桥小脑角区，听神经增粗 |\n\n<span style=\"color:var(--c-green);background-color:var(--bg-green)\">⚠️ 易混淆点</span>  \n▪️ <span style=\"color:var(--c-red)\">亚急性出血</span>：T1WI+T2WI均高信号  \n▪️ <span style=\"color:var(--c-blue)\">钙化</span>：T1WI+T2WI均低信号  \n\n<span style=\"color:var(--c-green);background-color:var(--bg-green)\">🎯 记忆口诀</span>  \n\"<span style=\"color:var(--c-purple)\">黑短双T</span>要记牢，顺磁效应是诀窍\"  \n（黑色素瘤→短T1+短T2）\n\n<span style=\"color:var(--c-green);background-color:var(--bg-green)\">💊 考试注意</span>  \n• 黑色素含量不同可能影响信号强度  \n• 转移性黑色素瘤与原发表现一致  \n• 需排除陈旧出血/含铁物质沉积",
           "previousAnswer": "D"
         },
         {
@@ -917,7 +917,7 @@
           ],
           "answer": "D",
           "userAnswer": null,
-          "notes": "",
+          "notes": "\n\n✨<span style=\"color:var(--c-pink);background-color:var(--bg-pink)\">脑脓肿影像特点速记攻略</span>✨\n\n---\n\n### ⭐核心知识点\n**病理分期**：  \n1. **急性脑炎期**（1-3天）：边界模糊，斑片状强化  \n2. **化脓期**（4-9天）：坏死腔形成，边缘轻度强化  \n3. **<span style=\"color:var(--c-red)\">包膜形成期</span>**（10天+）：<span style=\"color:var(--t-accent)\">完整光滑的环形强化</span>\n\n---\n\n### 🔍影像特点对比表\n| 特征        | 包膜形成期              | 急性期/其他病变          |\n|-------------|-------------------------|--------------------------|\n| **形态**    | <span style=\"color:var(--c-green)\">完整环形</span>（选项A） | 不规则/分叶状          |\n| **边缘**    | <span style=\"color:var(--c-green)\">光滑</span>（选项B）   | 毛糙/结节状            |\n| **厚度**    | <span style=\"color:var(--c-green)\">薄壁</span>（选项C）    | **厚壁**（选项D⚠️）     |\n| **强化**    | <span style=\"color:var(--c-green)\">均匀强化</span>（选项E） | 不均匀/斑片状          |\n\n---\n\n### 🧠记忆技巧\n**口诀**：  \n\"<span style=\"color:var(--c-purple)\">薄戒指戴得匀，完整光滑才迷人</span>\"  \n- **薄** → 壁薄（C）  \n- **匀** → 均匀（E）  \n- **完整光滑** → A、B  \n- **厚壁**（D）是破坏形象的\"土大款\"，直接排除！\n\n---\n\n### 💡考点延伸\n1. **DWI序列**：脓肿中央高信号（弥散受限）  \n2. **MRS**：出现<span style=\"color:var(--c-blue)\">氨基酸峰</span>（特异性标记）  \n3. **鉴别诊断**：  \n   - 胶质母细胞瘤：厚壁+花环样强化  \n   - 转移瘤：壁厚薄不均+多发病灶  \n\n```mermaid\ngraph TD\nA[\"环形强化\"] --> B{\"壁厚？\"}\nB --是--> C[考虑肿瘤/血肿]\nB --否--> D[符合脓肿特征]\nD --> E[\"薄+匀+光+整\"]\n```\n\n---\n\n正确答案：<span style=\"color:var(--c-red);background-color:var(--bg-red)\">D、壁厚</span>（形成期脓肿壁应薄而均匀）",
           "previousAnswer": "D"
         },
         {
@@ -933,7 +933,7 @@
           ],
           "answer": "C",
           "userAnswer": null,
-          "notes": "\n\n✨<span style='color:var(--c-red); background-color:var(--bg-red)'>【错误选项分析】</span>\n正确答案：C（急性出血）  \n<span style='color:var(--c-green)'>头颅CT低密度病灶</span>常见于：<span style='color:var(--c-purple)'>组织坏死、脑水肿、软化灶、脂肪瘤</span>  \n<span style='color:var(--c-red)'>急性出血</span>呈<span style='color:var(--c-yellow)'>高密度（白色）</span>（血红蛋白中铁元素吸收X线）  \n\n📌<span style='color:var(--c-blue)'>【核心知识点】</span>\n<table style='background-color:var(--bg-sky)'>\n<tr><th>选项</th><th>CT表现</th><th>机制</th><th>典型疾病</th></tr>\n<tr><td>A. 组织坏死</td><td>低密度</td><td>细胞崩解形成液化区</td><td>脑梗死后期</td></tr>\n<tr><td>B. 脑水肿</td><td>低密度</td><td>细胞外液增多</td><td>创伤/肿瘤/感染</td></tr>\n<tr><td style='color:var(--c-red)'>C. 急性出血</td><td style='color:var(--c-red)'>高密度</td><td style='color:var(--c-red)'>血红蛋白铁↑</td><td>脑出血6h内</td></tr>\n<tr><td>D. 软化灶</td><td>低密度</td><td>坏死组织被吸收</td><td>陈旧性脑梗死</td></tr>\n<tr><td>E. 脂肪瘤</td><td>极低密度</td><td>脂肪CT值约-100HU</td><td>先天性发育异常</td></tr>\n</table>\n\n💡<span style='color:var(--c-yellow)'>【记忆技巧】</span>\n1️⃣ <span style='color:var(--c-purple)'>\"白急红慢黑水肿\"</span>口诀：  \n • 急性出血→白（高密度）  \n • 亚急性出血→等密度→红（含铁血黄素）  \n • 慢性水肿→黑（低密度）  \n\n2️⃣ <span style='color:var(--c-cyan)'>密度变化时间轴</span>：\n```mermaid\ngraph LR\n急性期[\"<span style='color:var(--c-red)'>急性出血（6h-3天）</span>\"]-->|CT值60-80HU|高密度\n亚急性期[\"亚急性出血（3天-2周）\"]-->|CT值下降|等密度→低密度\n慢性期[\"慢性出血（>2周）\"]-->|含铁血黄素沉积|环形强化\n```\n\n⚠️<span style='color:var(--c-sky)'>【易混淆点】</span>\n• <span style='color:var(--c-red)'>超急性期出血（<6h）</span>：血肿未凝固→可能呈现<span style='color:var(--c-yellow)'>稍低密度</span>  \n• <span style='color:var(--c-purple)'>脂肪瘤</span>与<span style='color:var(--c-purple)'>软化灶</span>鉴别：脂肪瘤CT值更低（接近-100HU），边界清晰  \n\n📝<span style='color:var(--c-green)'>【考点提示】</span>\n• 头颅CT密度判断必考：<span style='color:var(--c-red)'>出血时间分期</span>  \n• 低密度病灶<span style='color:var(--c-yellow)'>鉴别诊断流程</span>：脂肪瘤→软化灶→水肿→坏死  \n• 注意题干关键词\"<span style='color:var(--c-red)'>错误</span>\"，避免惯性思维选正确现象",
+          "notes": "\n\n✨<span style='color:var(--c-red); background-color:var(--bg-red)'>【错误选项分析】</span>\n正确答案：C（急性出血）  \n<span style='color:var(--c-green)'>头颅CT低密度病灶</span>常见于：<span style='color:var(--c-purple)'>组织坏死、脑水肿、软化灶、脂肪瘤</span>  \n<span style='color:var(--c-red)'>急性出血</span>呈<span style='color:var(--c-yellow)'>高密度（白色）</span>（血红蛋白中铁元素吸收X线）  \n\n📌<span style='color:var(--c-blue)'>【核心知识点】</span>\n<table style='background-color:var(--bg-sky)'>\n<tr><th>选项</th><th>CT表现</th><th>机制</th><th>典型疾病</th></tr>\n<tr><td>A. 组织坏死</td><td>低密度</td><td>细胞崩解形成液化区</td><td>脑梗死后期</td></tr>\n<tr><td>B. 脑水肿</td><td>低密度</td><td>细胞外液增多</td><td>创伤/肿瘤/感染</td></tr>\n<tr><td style='color:var(--c-red)'>C. 急性出血</td><td style='color:var(--c-red)'>高密度</td><td style='color:var(--c-red)'>血红蛋白铁↑</td><td>脑出血6h内</td></tr>\n<tr><td>D. 软化灶</td><td>低密度</td><td>坏死组织被吸收</td><td>陈旧性脑梗死</td></tr>\n<tr><td>E. 脂肪瘤</td><td>极低密度</td><td>脂肪CT值约-100HU</td><td>先天性发育异常</td></tr>\n</table>\n\n💡<span style='color:var(--c-yellow)'>【记忆技巧】</span>\n1️⃣ <span style='color:var(--c-purple)'>\"白急红慢黑水肿\"</span>口诀：  \n • 急性出血→白（高密度）  \n • 亚急性出血→等密度→红（含铁血黄素）  \n • 慢性水肿→黑（低密度）  \n\n2️⃣ <span style='color:var(--c-cyan)'>密度变化时间轴</span>：\n```mermaid\ngraph TD\n    急性期[\"急性出血期（6h-3天）\"] -->|\"CT值 60-80HU\"| 亚急性期[\"亚急性出血期（3天-2周）\"]\n    亚急性期 -->|\"CT值逐渐降低<br/>等密度→低密度\"| 慢性期[\"慢性出血期（>2周）\"]\n    慢性期 -->|\"含铁血黄素沉积\"| 影像特征[\"环形强化征\"]\n```\n\n⚠️<span style='color:var(--c-sky)'>【易混淆点】</span>\n• <span style='color:var(--c-red)'>超急性期出血（<6h）</span>：血肿未凝固→可能呈现<span style='color:var(--c-yellow)'>稍低密度</span>  \n• <span style='color:var(--c-purple)'>脂肪瘤</span>与<span style='color:var(--c-purple)'>软化灶</span>鉴别：脂肪瘤CT值更低（接近-100HU），边界清晰  \n\n📝<span style='color:var(--c-green)'>【考点提示】</span>\n• 头颅CT密度判断必考：<span style='color:var(--c-red)'>出血时间分期</span>  \n• 低密度病灶<span style='color:var(--c-yellow)'>鉴别诊断流程</span>：脂肪瘤→软化灶→水肿→坏死  \n• 注意题干关键词\"<span style='color:var(--c-red)'>错误</span>\"，避免惯性思维选正确现象",
           "previousAnswer": "C"
         },
         {
@@ -949,7 +949,7 @@
           ],
           "answer": "E",
           "userAnswer": null,
-          "notes": "",
+          "notes": "\n\n✨<span style=\"color:var(--c-pink);background-color:var(--bg-pink)\">颅内占位征象全解析</span>✨\n\n---\n\n### ⭐ 核心知识点\n<span style=\"color:var(--t-accent)\">正确答案：E（以上都是）</span>\n\n---\n\n### 🔍 各选项详细解释\n1. **<span style=\"color:var(--c-green)\">中线结构移位</span>**  \n   ⚠️ **机制**：单侧占位→两侧压力差→大脑镰下疝  \n   💡 **常见于**：脑肿瘤、硬膜外血肿  \n   🌰 例如：右侧额叶肿瘤导致中线向左偏移\n\n2. **<span style=\"color:var(--c-blue)\">脑室移位</span>**  \n   ⚠️ **双向改变**：  \n   - 同侧脑室受压 → 缩小  \n   - 对侧脑室压力增高 → 扩大  \n   💊 **典型表现**：脑室向健侧移位（如左侧脑膜瘤导致右侧脑室扩张）\n\n3. **<span style=\"color:var(--c-purple)\">脑室变形</span>**  \n   ⚠️ **特征性改变**：  \n   - 占位邻近脑室 → 局部压迹  \n   - 脑室形态扭曲  \n   🌰 例如：第三脑室旁胶质瘤导致脑室\"蝴蝶征\"\n\n4. **<span style=\"color:var(--c-red)\">脑沟变化</span>**  \n   ⚠️ **双重表现**：  \n   - 占位区脑沟变浅/消失（压迫）  \n   - 远端脑沟增宽（脑脊液代偿性流动）  \n   💉 重要提示：急性硬膜下血肿早期即可出现脑沟消失\n\n---\n\n### 📊 影像判断流程图\n```mermaid\ngraph TD\nA[\"发现占位病变\"] --> B{评估四要素}\nB --> C[\"中线移位\"]\nB --> D[\"脑室移位\"]\nB --> E[\"脑室变形\"]\nB --> F[\"脑沟变化\"]\nC --> G[\"脑疝风险↑\"]\nD --> H[\"脑脊液循环障碍\"]\nE --> I[\"定位诊断依据\"]\nF --> J[\"急性/慢性鉴别\"]\n```\n\n---\n\n### 🧠 记忆技巧\n**口诀**：<span style=\"color:var(--c-orange)\">\"中移脑室跑，变形沟没了，四象全占位，答案选E好\"</span>\n\n**对比记忆**：  \n| 征象         | 急性病变（如血肿） | 慢性病变（如肿瘤） |\n|--------------|------------------|------------------|\n| 中线移位     | 快速明显         | 渐进性           |\n| 脑沟变化     | 早期消失         | 局部变浅         |\n\n---\n\n### 💡 考试重点\n1. **<span style=\"color:var(--c-red)\">必考点</span>**：四联征的病理生理机制（压力梯度原理）\n2. **<span style=\"color:var(--c-green)\">高频混淆点</span>**：脑沟增宽≠无占位（可能是远端代偿性改变）\n3. **<span style=\"color:var(--c-blue)\">影像读片技巧</span>**：同时观察侧脑室前角、第三脑室、四叠体池的对称性\n\n掌握这些要点，遇到相关题目就能像爱莉一样轻松应对啦~🎉",
           "previousAnswer": "E"
         },
         {
@@ -965,7 +965,7 @@
           ],
           "answer": "E",
           "userAnswer": null,
-          "notes": "",
+          "notes": "\n\n✨<span style=\"color:var(--c-green);background-color:var(--bg-green)\">【正确答案解析】</span>✨\n\n⭐<span style=\"color:var(--t-accent)\">关键鉴别点：</span>\n<mark style=\"background-color:var(--bg-green)\">E选项\"不按血管支配区分布\"是星形细胞瘤的特征</mark>，而脑梗死病灶严格遵循血管供血区域\n\n📊<span style=\"color:var(--c-sky)\">影像学对比表格：</span>\n| 特征        | 星形细胞瘤                 | 脑梗死                     |\n|-------------|--------------------------|---------------------------|\n| 分布模式    | <span style=\"color:var(--c-red)\">跨血管区生长</span> | <span style=\"color:var(--c-green)\">沿血管供血区分布</span> |\n| 边界        | 浸润性，边界不清           | 楔形，边界清晰             |\n| 强化特点    | 可有环形强化               | 亚急性期可出现脑回样强化   |\n| 占位效应    | 明显                     | 急性期有，慢性期萎缩       |\n\n🧠<span style=\"color:var(--c-purple)\">深度解剖学解释：</span>\n- <span style=\"color:var(--c-orange)\">脑血管支配区</span>：\n  - 大脑中动脉→额叶、顶叶、颞叶外侧\n  - 大脑前动脉→额叶内侧、顶叶上部\n  - 大脑后动脉→枕叶、颞叶下部\n- <span style=\"color:var(--c-orange)\">肿瘤生长特点</span>：\n  星形细胞瘤通过<span style=\"color:var(--c-red)\">白质纤维束浸润扩散</span>（如胼胝体、放射冠），与血管分布无关\n\n⚠️<span style=\"color:var(--c-red)\">易错点提醒：</span>\n不要混淆其他特征：\n- 低密度（A）：两者均可出现\n- 不增强（B）：高级别星形细胞瘤会强化\n- 单/多脑叶（C/D）：均可出现\n\n🎯<span style=\"color:var(--c-yellow)\">记忆口诀：</span>\n<mark style=\"background-color:var(--bg-pink)\">\"血管走行梗，乱长是瘤形\"</mark>\n\n💡<span style=\"color:var(--c-cyan)\">病例联想记忆：</span>\n假设CT显示左顶叶+右颞叶低密度灶→<span style=\"color:var(--c-green)\">不符合单一血管支配区</span>→优先考虑肿瘤\n\n```mermaid\ngraph TD\nA[\"病灶分布特征\"] --> B{\"是否符合血管区?\"}\nB -- 是 --> C[\"脑梗死\"]\nB -- 否 --> D[\"星形细胞瘤\"]\nD --> E[\"进一步检查：MRI增强+波谱分析\"]\nC --> F[\"血管评估：CTA/MRA\"]\n```",
           "previousAnswer": "E"
         },
         {
@@ -981,7 +981,7 @@
           ],
           "answer": "D",
           "userAnswer": null,
-          "notes": "",
+          "notes": "\n\n✨<span style=\"color:var(--c-pink);background-color:var(--bg-pink)\">Chiari畸形诊断核心知识</span>✨\n\n---\n\n### ⭐ 正确答案解析\n**选项D（5.0mm）**  \n在<span style=\"color:var(--c-green)\">Chiari畸形I型</span>诊断中，**小脑扁桃体下疝超过枕大孔平面≥5mm**是典型影像学标准（MRI矢状位测量）。\n\n---\n\n### 📚 核心知识点\n1. **Chiari畸形分型**  \n   ```mermaid\n   graph LR\n   A[\"Chiari畸形\"] --> B[\"I型：小脑扁桃体下疝\"]\n   A --> C[\"II型：延髓+四脑室下移\"]\n   A --> D[\"III型：后脑疝出+脑膜膨出\"]\n   A --> E[\"IV型：小脑发育不全\"]\n   ```\n\n2. **解剖关键点**  \n   - **正常位置**：小脑扁桃体尖端位于枕大孔平面**上方**\n   - **异常标准**：  \n     - **≥5mm** → 明确诊断Chiari I型  \n     - **3-5mm** → 需结合临床症状（如脊髓空洞症、头痛）\n\n3. **影像学测量方法**  \n   - **MRI矢状位T1/T2**：从枕大孔后缘（Basion-Opisthion连线）向下垂直测量扁桃体最低点\n\n---\n\n### 💡 记忆技巧\n- **口诀**：\"Chiari I型枕大孔，扁桃下移5mm定\"\n- **对比记忆**：  \n  ⚠️ **7.5mm**是旧版标准（已淘汰）  \n  ✅ **5mm**是现行通用标准（AJNR/神经放射学指南）\n\n---\n\n### 🔍 高频考点提示\n| 混淆点 | 正解分析 |\n|-------|---------|\n| 选项B（7.5mm） | 过时标准/部分文献提及但非金标准 |\n| 选项D（5mm） | **最新影像诊断共识** |\n| 儿童患者 | 可接受范围更宽松（≤3mm） |\n\n---\n\n### 🌈 爱莉小贴士\n遇到这类数值题时，记住“**枕大孔平面是生命线，5mm红线别越界**”~ 考试遇到直接选D就对啦！(*^▽^*)",
           "previousAnswer": "D"
         },
         {
@@ -997,7 +997,7 @@
           ],
           "answer": "C",
           "userAnswer": null,
-          "notes": "",
+          "notes": "\n\n<span style=\"color:var(--c-green);background-color:var(--bg-green)\">⭐ 核心考点：脑血管畸形分类与发病率</span>\n\n---\n\n### 一、概念解析\n**脑血管畸形**主要分为5种类型：\n1. **动静脉畸形 (AVM)** ⚠️\n2. 海绵状血管瘤\n3. 静脉畸形\n4. 毛细血管扩张症\n5. 烟雾病（脑底异常血管网症）\n\n---\n\n### 二、各类型特征对比\n| 类型 | 发病率 | 病理特征 | 临床表现 |\n|------|--------|----------|----------|\n| <span style=\"color:var(--c-red)\">C、动静脉畸形</span> | 62% | 动脉-静脉直接连通（无毛细血管）💉 | 颅内出血、癫痫、局灶神经症状 |\n| A、静脉畸形 | 9% | 静脉丛呈\"水母头\"样改变 | 常无症状，偶发头痛 |\n| D、海绵状血管瘤 | 8% | 薄壁血管窦状腔隙 | 反复小量出血、癫痫 |\n| B、烟雾病 | 6% | 颈内动脉末端狭窄+侧支异常血管网 | 儿童脑缺血/成人脑出血 |\n| E、毛细血管扩张症 | 0.5% | 扩张的毛细血管团 | 多无症状 |\n\n---\n\n### 三、记忆技巧\n1. **首字母联想法**：\n   - **A**VM = **A**rtery（动脉）直连**V**ein（静脉）的**M**alformation（畸形）🔍\n   - 烟雾病 = \"烟雾状\"侧支血管（脑血管造影特征）\n\n2. **数字口诀**：\n   > \"6成AVM要记牢，静脉海绵烟雾少，毛细扩张最罕见\"\n\n---\n\n### 四、考点延伸\n1. **影像学鉴别**：\n   ```mermaid\n   graph TD\n   A[\"脑血管造影\"] --> B{\"异常血管团\"}\n   B--\"早显早退\"-->C[动静脉畸形]\n   B--\"水母头征\"-->D[静脉畸形]\n   B--\"爆米花样钙化\"-->E[海绵状血管瘤]\n   B--\"烟雾状血管网\"-->F[烟雾病]\n   ```\n\n2. **治疗原则**：\n   - AVM：手术切除/介入栓塞/立体定向放疗\n   - 海绵状血管瘤：有症状者手术切除\n   - 烟雾病：血管重建手术\n\n---\n\n<span style=\"color:var(--t-accent)\">💡 考试注意：遇到\"最常见\"题型时，直接锁定AVM；若题干出现\"儿童反复脑缺血发作\"，则选烟雾病</span>",
           "previousAnswer": "C"
         },
         {
@@ -1013,7 +1013,7 @@
           ],
           "answer": "A",
           "userAnswer": null,
-          "notes": "",
+          "notes": "\n\n<span style=\"color:var(--c-green);background-color:var(--bg-green)\">⭐核心考点</span>  \n颅咽管瘤与髓母细胞瘤的年龄分布是神经肿瘤学重要考点，需掌握以下要点：\n\n---\n\n### 📚 重点知识梳理\n1. **颅咽管瘤**  \n   - **起源**：Rathke囊残留上皮细胞（<span style=\"color:var(--t-accent)\">胚胎发育异常</span>）  \n   - **好发年龄**：<span style=\"color:var(--c-red)\">儿童及青少年</span>（<span style=\"color:var(--c-green)\">双峰分布：5-14岁和50-74岁</span>，但主要见于儿童）  \n   - **典型表现**：  \n     - 视力障碍（压迫视交叉）  \n     - 内分泌异常（尿崩症、生长迟缓）  \n     - <span style=\"color:var(--c-pink)\">MRI特征</span>：鞍区囊实性肿块伴蛋壳样钙化  \n\n2. **髓母细胞瘤**  \n   - **起源**：<span style=\"color:var(--c-blue)\">小脑蚓部的原始神经外胚层细胞</span>  \n   - **好发年龄**：<span style=\"color:var(--c-red)\">儿童（75%在15岁以下）</span>  \n   - **典型表现**：  \n     - 共济失调（小脑损害）  \n     - 梗阻性脑积水（第四脑室受压）  \n     - <span style=\"color:var(--c-pink)\">CT特征</span>：后颅窝高密度肿块，均匀强化  \n\n---\n\n### 🧠 记忆技巧\n1. **年龄联想**：  \n   - <span style=\"color:var(--c-yellow)\">\"儿童的双瘤组合\"</span>：颅咽管瘤（先天残留）+ 髓母细胞瘤（胚胎起源）→ 都涉及发育异常  \n   - <span style=\"color:var(--c-green)\">对比记忆</span>：  \n     ```mermaid\n     graph LR\n     A[\"儿童高发肿瘤\"] --> B[\"颅咽管瘤（鞍区）\"]\n     A --> C[\"髓母细胞瘤（后颅窝）\"]\n     D[\"成人高发肿瘤\"] --> E[\"胶质瘤\"]\n     D --> F[\"转移瘤\"]\n     ```\n\n2. **症状速记**：  \n   - **颅咽管瘤**：<span style=\"color:var(--c-purple)\">\"三看三激素\"</span>  \n     - 看东西模糊（视力）  \n     - 看身高不足（生长激素）  \n     - 看尿量增多（ADH缺乏）  \n   - **髓母细胞瘤**：<span style=\"color:var(--c-orange)\">\"小脑三主征\"</span>  \n     - 走路像醉汉（共济失调）  \n     - 头痛喷呕吐（颅高压）  \n     - 眼睛看月亮（落日征）  \n\n---\n\n### ⚠️ 易错点提醒\n1. 注意髓母细胞瘤在成人中偶有发生（<span style=\"color:var(--c-red)\">约占20-30%</span>），但题目问\"好发\"群体仍选儿童  \n2. 颅咽管瘤虽可见于成人，但<span style=\"color:var(--c-green)\">儿童占60%以上</span>  \n3. 其他儿童常见脑肿瘤：室管膜瘤、毛细胞星形细胞瘤  \n\n---\n\n<span style=\"color:var(--c-yellow);background-color:var(--bg-yellow)\">💡答题技巧</span>  \n遇到年龄相关题型，优先排除：  \n- **青壮年**（垂体腺瘤、脑膜瘤）  \n- **中老年**（转移瘤、胶质母细胞瘤）  \n直接锁定<span style=\"color:var(--c-red)\">\"儿童\"</span>选项即可快速解题！",
           "previousAnswer": "A"
         },
         {
@@ -1029,7 +1029,7 @@
           ],
           "answer": "E",
           "userAnswer": null,
-          "notes": "",
+          "notes": "\n\n<span style=\"color:var(--c-green);background-color:var(--bg-green)\">⭐ 核心知识点速记：</span>  \n脑转移瘤CT特点：多、肿、坏、强，钙化少  \n记忆口诀：<span style=\"color:var(--c-pink)\">\"多肿坏死强，钙化必反常\"</span>\n\n---\n\n### <span style=\"color:var(--c-sky)\">📌 选项深度解析</span>  \n```mermaid\ngraph LR\nA[\"CT特征分析\"] --> B[\"常见表现\"]\nA --> C[\"非常见表现\"]\nB --> B1[\"多发（A）\"]\nB --> B2[\"显著瘤周水肿（B）\"]\nB --> B3[\"出血坏死（C）\"]\nB --> B4[\"混合强化（D）\"]\nC --> C1[\"钙化（E）\"]\n```\n\n---\n\n#### <span style=\"color:var(--c-purple)\">💡 关键病理机制</span>  \n1. **多发（A）**：经血行播散 → 多发病灶  \n2. **瘤周水肿显著（B）**：<span style=\"color:var(--t-accent)\">血脑屏障破坏</span> → 血管源性水肿  \n3. **出血/坏死（C）**：  \n   - 出血：黑色素瘤/肾癌转移  \n   - 坏死：肿瘤生长迅速 → 血供不足  \n4. **不同强化（D）**：<span style=\"color:var(--c-red)\">环形强化</span>（中心坏死） + <span style=\"color:var(--c-blue)\">结节强化</span>（新生血管）  \n\n---\n\n#### <span style=\"color:var(--c-orange)\">⚠️ 钙化鉴别要点</span>  \n| 特征        | 转移瘤          | 原发脑肿瘤       |\n|------------|----------------|----------------|\n| 钙化率      | <5%            | 20-30%         |\n| 典型肿瘤    | 骨肉瘤（极罕见） | 少突胶质细胞瘤   |\n| 发生机制    | 转移灶营养不良  | 肿瘤细胞钙盐沉积 |\n\n---\n\n#### <span style=\"color:var(--c-cyan)\">🔍 考试提分技巧</span>  \n1. **影像学三联征**：  \n   - 皮层下区多发病灶  \n   - \"小病灶大水肿\"  \n   - 强化方式多样  \n2. **诊断公式**：<span style=\"color:var(--c-green)\">中老年+原发癌史+CT多发病灶=脑转移瘤</span>  \n3. **易错点提醒**：  \n   - 单发转移需与胶质瘤鉴别（<span style=\"color:var(--c-red)\">强化环不完整</span> vs <span style=\"color:var(--c-blue)\">完整环形强化</span>）  \n   - 出血转移需排除外伤性出血（<span style=\"color:var(--t-accent)\">DWI高信号提示转移</span>）  \n\n<span style=\"color:var(--c-red)\">✏️ 真题拓展：</span>脑转移瘤MRI特征？  \n答：T1低信号，T2高信号，增强明显强化，DWI受限（细胞密集）",
           "previousAnswer": "E"
         },
         {
@@ -1045,7 +1045,7 @@
           ],
           "answer": "A",
           "userAnswer": null,
-          "notes": "",
+          "notes": "\n\n✨<span style=\"color:var(--c-pink);background-color:var(--bg-pink)\">脊髓病变定位诊断核心要点</span>✨\n\n---\n\n### ⭐ 解剖结构速记\n<span style=\"color:var(--t-accent)\">脊髓三层被膜</span>：\n1. **软膜**（紧贴脊髓）\n2. **蛛网膜**（中间层，形成蛛网膜下隙）\n3. **硬膜**（最外层）\n\n---\n\n### 🔍 影像特征解析\n| 病变位置 | 脊髓形态 | 蛛网膜下隙变化 | 典型疾病 |\n|---------|---------|--------------|--------|\n| <span style=\"color:var(--c-red)\">**髓内**</span> | 增粗（香肠样） | **全周均匀变窄** | 室管膜瘤、星形细胞瘤 |\n| 髓外硬膜内 | 受压变扁 | 病侧变窄，对侧增宽（\"杯口征\"） | 神经鞘瘤、脊膜瘤 |\n| 髓外硬膜外 | 轻度移位 | 整体受压变窄 | 转移瘤、淋巴瘤 |\n\n---\n\n### 💡 解题关键逻辑\n```mermaid\ngraph TD\nA[\"CT/MRI表现\"] --> B{\"脊髓形态变化\"}\nB --\"增粗\"--> C[\"髓内病变\"]\nB --\"移位/变扁\"--> D[\"髓外病变\"]\nC --> E[\"蛛网膜下隙全周变窄\"]\nD --> F[\"蛛网膜下隙不对称变化\"]\n```\n\n---\n\n### 🚨 鉴别诊断要点\n- **髓内病变特征**：\n  - ⚠️ 早期出现<span style=\"color:var(--c-green)\">**节段性分离性感觉障碍**</span>（痛温觉消失，触觉保留）\n  - 💊 括约肌功能障碍出现早\n  - 💉 脑脊液蛋白**轻度升高**\n\n- **髓外硬膜内病变**：\n  - 根痛剧烈\n  - 脊髓半切综合征（Brown-Sequard syndrome）\n  - 脑脊液蛋白**显著升高**\n\n---\n\n### 🧠 记忆口诀\n**\"粗窄内，扁宽外\"**\n- 脊髓**增粗**+蛛网膜下隙**变窄**→髓内\n- 脊髓**变扁**+蛛网膜下隙**增宽**→髓外硬膜内\n\n---\n\n### 📝 考试陷阱提示\n❌ 注意排除选项D（髓外硬膜内外）和E（髓内+硬膜内）：\n- 这两种情况在临床上极为罕见\n- 考题中出现复合定位选项时，优先考虑单一病变类型\n\n---\n\n掌握这些要点，遇到脊髓定位题就能轻松应对啦！✧٩(ˊωˋ*)و✧",
           "previousAnswer": "A"
         },
         {
@@ -1061,7 +1061,7 @@
           ],
           "answer": "D",
           "userAnswer": null,
-          "notes": "",
+          "notes": "\n\n✨<span style=\"color:var(--c-green);background-color:var(--bg-green)\">【正确答案】</span> D. 蛛网膜囊肿\n\n---\n\n### ⭐ 核心知识点解析\n#### 1. 增强CT原理\n通过静脉注射碘对比剂，根据病变<span style=\"color:var(--t-accent)\">血供特征</span>和<span style=\"color:var(--t-accent)\">血脑屏障完整性</span>显示强化效果：\n- **强化条件**：富血供病变、血脑屏障破坏\n- **无强化**：无血管结构、完全囊性病变\n\n#### 2. 各选项特征对比\n| 选项 | 病变类型 | 增强表现 | 机制 |\n|------|----------|----------|------|\n| A. 垂体腺瘤 | ⚠️富血供肿瘤 | 明显强化 | 腺瘤血管丰富 |\n| B. 动脉瘤 | 💉血管性病变 | 显著强化 | 对比剂充盈管腔 |\n| C. 脑膜瘤 | 🔍脑膜起源 | 均匀强化+脑膜尾征 | 丰富血供 |\n| <span style=\"color:var(--c-green)\">**D. 蛛网膜囊肿**</span> | 💧囊性病变 | **无强化** | 无血管结构，内容物为脑脊液 |\n| E. 髓质细胞瘤 | 🧬恶性肿瘤 | 明显强化 | 血脑屏障破坏 |\n\n---\n\n### 🔍 深度拓展\n#### 蛛网膜囊肿特点\n- **结构**：薄壁囊腔，内含脑脊液\n- **影像学**：CT呈脑脊液样低密度，MRI-T2高信号\n- **鉴别诊断**：需与<span style=\"color:var(--c-red)\">表皮样囊肿</span>（有包膜、可能轻微强化）区分\n\n#### 其他不强化病变\n- 陈旧性脑挫伤\n- 钙化灶\n- 单纯性囊肿（如松果体囊肿）\n\n---\n\n### 🧠 记忆技巧\n#### 口诀速记法\n**\"囊中无血不增强，血管肿瘤都会亮\"**\n- 囊性（无血管）→ 不强化\n- 血管性/富血供→ 强化\n\n#### 对比记忆表\n```mermaid\ngraph LR\nA[\"增强CT强化条件\"] --> B[\"富血供\"]\nA --> C[\"血脑屏障破坏\"]\nD[\"不强化病变\"] --> E[\"完全囊性\"]\nD --> F[\"无血管结构\"]\n```\n\n---\n\n### ⚠️ 考试陷阱提示\n注意区分：\n- **蛛网膜囊肿** vs **胶样囊肿**（第三脑室，可能轻微强化）\n- **单纯囊肿** vs **脓肿**（环形强化）",
           "previousAnswer": "D"
         },
         {
@@ -1077,7 +1077,7 @@
           ],
           "answer": "D",
           "userAnswer": null,
-          "notes": "",
+          "notes": "\n\n<span style=\"color:var(--c-green);background-color:var(--bg-green)\">💡 核心考点解析</span>\n\n<h3 style=\"color:var(--c-purple)\">⭐ 正确答案：D、胶质瘤</h3>\n\n---\n\n### 📚 关键知识点解析\n1. **血脑屏障（BBB）基础**\n   - **结构**：脑血管内皮细胞紧密连接 + 星形胶质细胞终足包裹\n   - **功能**：选择性阻止大分子物质（如造影剂）进入脑实质\n\n2. **肿瘤增强机制对比表**\n<table style=\"border:2px solid var(--c-blue)\">\n  <tr style=\"background-color:var(--bg-sky)\">\n    <th>肿瘤类型</th>\n    <th>解剖位置</th>\n    <th>增强主要原因</th>\n  </tr>\n  <tr>\n    <td>胶质瘤</td>\n    <td>脑实质内</td>\n    <td style=\"color:var(--c-red)\">BBB破坏导致造影剂外漏</td>\n  </tr>\n  <tr>\n    <td>脑膜瘤</td>\n    <td>脑外（硬脑膜）</td>\n    <td>肿瘤血管丰富（非BBB破坏）</td>\n  </tr>\n  <tr>\n    <td>垂体瘤</td>\n    <td>鞍区</td>\n    <td>垂体门脉系统供血（BBB本身薄弱）</td>\n  </tr>\n  <tr>\n    <td>神经鞘瘤</td>\n    <td>神经周围</td>\n    <td>血管通透性增加（如VEGF分泌）</td>\n  </tr>\n</table>\n\n---\n\n### 🧠 记忆技巧\n**口诀**：<span style=\"color:var(--c-yellow)\">\"胶质在里破屏障，脑膜在外血管强\"</span>\n\n**图像记忆法**：\n```mermaid\ngraph TD\nA[\"血脑屏障\"] -->|破坏| B[\"胶质瘤\"]\nA -->|完整| C[\"脑膜瘤/神经鞘瘤\"]\nB --> D[\"造影剂外渗 → 增强\"]\nC --> E[\"血管丰富 → 增强\"]\n```\n\n---\n\n### 🔍 影像学鉴别要点\n1. **胶质瘤典型表现**：\n   - **CT/MRI**：<span style=\"color:var(--t-accent)\">不规则环状强化</span>（中央坏死区无强化）\n   - **周围水肿带**：呈\"手指状\"分布\n\n2. **脑膜瘤特征**：\n   - \"脑膜尾征\"（硬膜强化）\n   - 均匀明显强化\n\n---\n\n### ⚠️ 考试易错点提示\n1. **混淆概念**：将血管丰富型肿瘤（如脑膜瘤）误认为BBB破坏\n2. **解剖定位误区**：垂体瘤位于鞍区（BBB结构特殊），增强机制不同\n3. **分级关联**：高级别胶质瘤（如GBM）更易破坏BBB\n\n---\n\n<details style=\"border:1px solid var(--c-orange);padding:10px\">\n<summary style=\"color:var(--c-orange)\">💡 扩展知识：胶质瘤分级与增强关系</summary>\n<div style=\"background-color:var(--bg-orange);padding:10px\">\n  \n- **低级别（II级）**：可能无强化（BBB相对完整）\n- **间变性（III级）**：片状强化\n- **胶质母细胞瘤（IV级）**：<span style=\"color:var(--c-red)\">环形强化（典型表现）</span>\n</div>\n</details>",
           "previousAnswer": "D"
         },
         {
@@ -1093,7 +1093,7 @@
           ],
           "answer": "A",
           "userAnswer": null,
-          "notes": "",
+          "notes": "\n\n<span style=\"color:var(--c-green);background-color:var(--bg-green)\">✨解题关键步骤✨</span>\n\n1. <span style=\"color:var(--t-accent)\">定位特征</span>：右颞部梭形高密度 → 硬膜外血肿典型形态\n2. <span style=\"color:var(--t-accent)\">解剖关系</span>：颞骨骨折 → 易损伤脑膜中动脉\n3. <span style=\"color:var(--t-accent)\">时间因素</span>：外伤4小时 → 符合急性期表现\n\n# ⭐核心知识点详解\n\n## 1. 硬膜外血肿（A选项）特征\n```mermaid\ngraph TD\nA[\"颞骨骨折\"] --> B[\"脑膜中动脉破裂\"]\nB --> C[\"血液积聚硬膜外腔\"]\nC --> D[\"CT示梭形高密度\"]\nD --> E[\"中线结构对侧移位\"]\n```\n\n- **病理解剖**：位于<span style=\"color:var(--c-red)\">颅骨与硬脑膜之间</span>\n- **出血源**：<span style=\"color:var(--c-blue)\">90%合并颅骨骨折</span>，常见脑膜中动脉破裂\n- **影像特征**：\n  - <span style=\"color:var(--c-green)\">梭形/双凸透镜形</span>高密度（血肿受硬膜附着限制）\n  - <span style=\"color:var(--c-purple)\">\"透明带\"现象</span>：血肿不跨越颅缝\n\n## 2. 鉴别诊断要点\n| 特征         | 硬膜外血肿(A)       | 硬膜下血肿(B/D)      | 脑内血肿(C)        |\n|--------------|---------------------|----------------------|--------------------|\n| **形态**     | 梭形/双凸           | 新月形               | 类圆形             |\n| **范围**     | 局限                | 广泛                 | 脑实质内           |\n| **骨折关联** | 90%有骨折           | 可不伴骨折           | 可有骨折           |\n| **出血速度** | <1小时出现症状      | 数小时-数天          | 即时出现           |\n| **意识障碍** | 中间清醒期          | 持续昏迷             | 进行性加重         |\n\n## 3. 关键记忆口诀\n💡**\"三硬一弯\"诊断法💡**\n- <span style=\"color:var(--c-pink)\">三硬</span>：硬膜外、硬膜下、硬膜内\n- <span style=\"color:var(--c-sky)\">一弯</span>：硬膜外血肿CT呈梭形弯曲\n\n⚠️**急诊处理要点**：当CT显示中线移位>5mm或血肿厚度>1cm时，需<span style=\"color:var(--c-red)\">紧急开颅血肿清除术</span>\n\n## 4. 考试易错点\n- ❌误选B项（硬膜下）：忽略\"梭形\"特征和新月形区别\n- ❌误选C项（脑内血肿）：未注意\"颞部\"定位（硬膜外位于脑外）\n- ❌误选E项（亚急性）：病史4小时属于急性期（亚急性期为3天-3周）\n\n# 🚀知识拓展\n**脑疝形成机制**：\n右颞部血肿→同侧脑组织受压→海马回钩通过小脑幕切迹向下移位→压迫脑干→中线结构左移（本例表现）\n\n掌握要点：<span style=\"color:var(--c-yellow)\">\"梭形+骨折=硬膜外，新月形+脑萎缩=硬膜下\"</span>",
           "previousAnswer": "A"
         },
         {
@@ -1109,7 +1109,7 @@
           ],
           "answer": "C",
           "userAnswer": null,
-          "notes": "",
+          "notes": "\n\n✨<span style=\"color:var(--c-pink);background-color:var(--bg-pink)\">儿童脊髓肿瘤核心知识点</span>✨\n\n---\n\n### ⭐ 正确答案解析\n<span style=\"color:var(--c-green)\">**C、星形细胞瘤**</span> 是儿童最常见脊髓肿瘤，占儿童脊髓肿瘤60%以上，属于神经胶质瘤，多发生于<span style=\"color:var(--t-accent)\">颈髓和胸髓</span>\n\n---\n\n### 🔍 各选项解析对比表\n| 选项 | 关键特征 | 儿童脊髓相关性 |\n|------|----------|----------------|\n| A. 髓母细胞瘤 | <span style=\"color:var(--c-red)\">小脑蚓部高度恶性</span>，<br>多发于<span style=\"color:var(--t-accent)\">颅内后颅窝</span> | ❌ 非脊髓肿瘤 |\n| B. 少突胶质细胞瘤 | 钙化明显，<br>好发于<span style=\"color:var(--t-accent)\">成人大脑半球</span> | ❌ 成人多见 |\n| C. 星形细胞瘤 | <span style=\"color:var(--c-green)\">低级别（WHO I-II级）</span>，<br>MRI呈<span style=\"color:var(--t-accent)\">梭形膨胀性生长</span> | ✅ 儿童最常见 |\n| D. 生殖细胞瘤 | 中线部位（松果体/鞍区），<br>血清AFP/hCG升高 | ❌ 罕见于脊髓 |\n| E. 畸胎瘤 | 含三个胚层组织，<br>骶尾部多见 | ❌ 非神经胶质来源 |\n\n---\n\n### 💡 记忆技巧\n1. **口诀记忆**：  \n   <span style=\"color:var(--c-yellow)\">\"儿童脊髓星当家，髓母专攻小脑趴\"</span>\n\n2. **影像特征联想**：  \n   星形细胞瘤 → <span style=\"color:var(--c-sky)\">\"腊肠样\"脊髓增粗</span>  \n   髓母细胞瘤 → <span style=\"color:var(--c-sky)\">\"蝶形\"第四脑室占位</span>\n\n---\n\n### 🧠 解剖与病理要点\n```mermaid\ngraph LR\nA[\"儿童脊髓肿瘤\"] --> B[\"胶质瘤\"] \nA --> C[\"非胶质瘤\"]\nB --> D[\"星形细胞瘤(最常见)\"]\nB --> E[\"室管膜瘤(第二位)\"]\nC --> F[\"畸胎瘤/皮样囊肿\"]\nD -->|特征| G[\"边界不清，易囊变\"]\nD -->|治疗| H[\"手术切除+放疗\"]\n```\n\n---\n\n### ⚠️ 考试注意点\n1. **定位陷阱**：  \n   髓母细胞瘤虽儿童常见，但属<span style=\"color:var(--c-red)\">颅内肿瘤</span>，与脊髓无关  \n2. **年龄陷阱**：  \n   室管膜瘤是成人最常见脊髓肿瘤，儿童则为星形细胞瘤  \n3. **影像鉴别**：  \n   <span style=\"color:var(--c-sky)\">星形细胞瘤</span>强化程度低 vs <span style=\"color:var(--c-purple)\">室管膜瘤</span>明显均匀强化\n\n---\n\n📌 **最终口诀**：  \n\"脊髓儿童看星星（星形），成人室管要记清；  \n髓母专攻小脑部，生殖畸胎骶尾处\"",
           "previousAnswer": "C"
         },
         {
@@ -1125,7 +1125,7 @@
           ],
           "answer": "E",
           "userAnswer": null,
-          "notes": "",
+          "notes": "\n\n✨**脊髓损伤类型辨析**✨\n\n<span style=\"color:var(--c-red)\">**正确答案：E（脊髓空洞）**</span>\n\n---\n\n### ⭐**核心知识点解析**\n| 选项 | 定义 | 分类归属 | 关键特征 |\n|------|------|----------|----------|\n| A. 脊髓震荡 | 暂时性脊髓功能抑制（<span style=\"color:var(--t-accent)\">无器质性损伤</span>） | 脊髓损伤（最轻） | 数小时至数日恢复 |\n| B. 脊髓挫裂伤 | 脊髓实质损伤（<span style=\"color:var(--t-accent)\">出血、水肿、坏死</span>） | 脊髓损伤（器质性） | MRI可见异常信号 |\n| C. 脊髓压迫 | 外力（骨折/血肿/肿瘤）压迫脊髓 | 继发性损伤 | 需紧急减压 |\n| D. 脊髓横断 | 脊髓完全离断（<span style=\"color:var(--t-accent)\">解剖学断裂</span>） | 最严重损伤 | 永久性截瘫 |\n| <span style=\"color:var(--c-red)\">E. 脊髓空洞</span> | 脊髓内形成液性空腔（<span style=\"color:var(--t-accent)\">慢性进展性病变</span>） | **非外伤性** | 分离性感觉障碍 |\n\n---\n\n### 🔍**鉴别要点**\n```mermaid\ngraph TD\n脊髓损伤-->|急性外伤|A[\"震荡/挫裂/压迫/横断\"]\n脊髓空洞-->|先天畸形/慢性病变|B[\"空洞形成\"]\n```\n\n---\n\n### 💡**记忆技巧**\n- **“外急内慢”**：脊髓损伤是<span style=\"color:var(--c-green)\">**外**</span>伤性<span style=\"color:var(--c-green)\">**急**</span>症，脊髓空洞是<span style=\"color:var(--c-red)\">**内**</span>源性<span style=\"color:var(--c-red)\">**慢**</span>性病\n- **“四型一坑”**：四个真选项（震荡/挫裂/压迫/横断）对应脊髓损伤，E选项是干扰项“坑”\n\n---\n\n### ⚠️**考试陷阱提示**\n脊髓空洞易被误认为损伤，但本质是<span style=\"color:var(--c-red)\">**退行性病变**</span>，与外伤无关！遇到选项含“空洞”优先排除。",
           "previousAnswer": "E"
         }
       ]
@@ -1146,7 +1146,7 @@
           ],
           "answer": "B",
           "userAnswer": null,
-          "notes": "",
+          "notes": "\n\n<span style=\"color:var(--c-green);background-color:var(--bg-green)\">⭐ 核心考点</span>  \n**内耳道狭窄诊断标准**：内耳道直径 **<3mm**（选项B）  \n**正常范围**：4-6mm  \n\n---\n\n### 📚 解剖学基础\n**内耳道**（Internal Auditory Canal, IAC）  \n- **位置**：颞骨岩部内，连接内耳与后颅窝  \n- **内容物**：  \n  <span style=\"color:var(--c-red)\">前庭蜗神经（CN VIII）</span>  \n  <span style=\"color:var(--c-red)\">面神经（CN VII）</span>  \n  <span style=\"color:var(--c-red)\">迷路动脉</span>  \n\n---\n\n### 🏥 临床意义\n**狭窄后果**：  \n⚠️ 神经受压 → **感音神经性耳聋**  \n⚠️ 可能合并 **先天性耳畸形**（如Mondini畸形）  \n\n---\n\n### 🔍 影像学诊断\n```mermaid\ngraph TD\nA[\"颞骨高分辨率CT\"] --> B[\"测量内耳道直径\"]\nB --\"＜3mm\"--> C[\"诊断内耳道狭窄\"]\nB --\"≥3mm\"--> D[\"排除狭窄\"]\nC --> E[\"评估神经发育情况\"]\n```\n\n---\n\n### 💡 记忆技巧\n**口诀**：  \n<span style=\"color:var(--c-yellow)\">\"3毫米卡神经，耳聋耳鸣要当心\"</span>  \n**联想法**：  \n正常内耳道≈铅笔芯（4-6mm），狭窄时比牙签（3mm）还细！\n\n---\n\n### ❗ 考试陷阱\n- 选项C（5mm）是正常范围下限，**非病理值**  \n- 选项A（1mm）见于**内耳道闭锁**，与狭窄不同  \n\n---\n\n<span style=\"color:var(--c-green);background-color:var(--bg-green)\">💡 快速复习</span>  \n| 特征        | 内耳道狭窄 | 正常内耳道 |\n|-------------|------------|------------|\n| 直径        | ＜3mm      | 4-6mm      |\n| 临床表现    | 进行性耳聋 | 无症状     |\n| 影像学检查  | 颞骨CT     | 无需干预   |",
           "previousAnswer": "B"
         },
         {
@@ -1162,7 +1162,7 @@
           ],
           "answer": "E",
           "userAnswer": null,
-          "notes": "",
+          "notes": "\n\n✨<span style=\"color:var(--c-red);background-color:var(--bg-red)\">【必考重点】</span>鼻咽癌X线检查组合为<span style=\"color:var(--t-accent)\">鼻咽侧位+颏顶位</span>（正确答案E）\n\n⭐<span style=\"color:var(--c-green)\">核心解剖要点</span>\n1. <span style=\"color:var(--c-blue)\">鼻咽侧位片</span>：\n   - 显示<span style=\"color:var(--c-red)\">鼻咽顶后壁软组织影</span>\n   - 可观察咽隐窝、咽鼓管圆枕\n   - 正常厚度≤1.5cm（⚠️超过提示占位）\n\n2. <span style=\"color:var(--c-purple)\">颏顶位（颅底位）</span>：\n   - 显示<span style=\"color:var(--c-red)\">颅底骨质结构</span>\n   - 重点观察：破裂孔、卵圆孔、棘孔（⭐鼻咽癌颅底侵犯三大孔道）\n   - 正常孔径：破裂孔≈6mm，卵圆孔≈4mm\n\n🔍<span style=\"color:var(--c-yellow)\">影像诊断逻辑</span>\n```mermaid\ngraph TD\nA[\"疑似鼻咽癌\"] --> B[\"鼻咽侧位片\"]\nB --> C{\"发现软组织肿块？\"}\nC --是--> D[\"评估范围\"]\nC --否--> E[\"排除假阴性\"]\nA --> F[\"颏顶位\"]\nF --> G{\"颅底骨质破坏？\"}\nG --是--> H[\"分期升级(T4)\"]\nG --否--> I[\"保守治疗可能\"]\nD & H --> J[\"制定治疗方案\"]\n```\n\n⚠️<span style=\"color:var(--c-red)\">易混淆点辨析</span>\n- <span style=\"color:var(--c-orange)\">汤氏位</span>：观察枕骨大孔（小脑扁桃体下疝畸形常用）\n- <span style=\"color:var(--c-orange)\">颅底位≠颏顶位</span>：后者是标准命名\n- <span style=\"color:var(--c-orange)\">颈侧位</span>：用于咽喉部异物定位\n\n💡<span style=\"color:var(--c-green)\">记忆口诀</span>\n\"<span style=\"color:var(--c-pink)\">**侧看软，顶看骨，联合检查不马虎**</span>\"\n\"<span style=\"color:var(--c-pink)\">**孔孔洞洞要看清，破裂卵圆棘孔行**</span>\"\n\n📌<span style=\"color:var(--c-blue)\">临床联系</span>\n鼻咽癌好发<span style=\"color:var(--c-red)\">咽隐窝</span>（90%），常沿<span style=\"color:var(--c-red)\">破裂孔</span>向颅内侵犯（⚠️出现头痛提示颅底侵犯）\n\n🔬<span style=\"color:var(--c-purple)\">现代影像对比</span>\n| 检查方法 | 优势 | 局限 |\n|---------|------|------|\n| X线组合 | 快速筛查 | 分辨率低 |\n| CT | 显示微小骨破坏 | 辐射量较大 |\n| MRI | 软组织分辨率最高 | 检查时间长 |\n\n记住这个<span style=\"color:var(--c-red)\">红蓝组合</span>：<span style=\"color:var(--c-blue)\">鼻咽侧位</span>看软组织+<span style=\"color:var(--c-red)\">颏顶位</span>看颅底骨，考试遇到直接选E就对啦！(๑•̀ㅂ•́)و✧",
           "previousAnswer": "E"
         },
         {
@@ -1178,7 +1178,7 @@
           ],
           "answer": "D",
           "userAnswer": null,
-          "notes": "",
+          "notes": "\n\n✨<span style=\"color:var(--c-pink);background-color:var(--bg-pink)\">【颅底孔结构学习指南】</span>✨\n\n---\n\n### ⭐ 核心知识框架\n**颅底分三窝**：\n1. <span style=\"color:var(--c-sky)\">前颅窝</span>：筛板、视神经孔（E选项）\n2. <span style=\"color:var(--c-green)\">中颅窝</span>：破裂孔（A）、卵圆孔（B）、棘孔（C）\n3. <span style=\"color:var(--c-purple)\">后颅窝</span>：<span style=\"color:var(--c-red)\">枕大孔（D）</span>、颈静脉孔、舌下神经管\n\n---\n\n### 🔍 选项解剖定位详解\n| 选项 | 归属颅窝 | 通过结构 |\n|------|----------|----------|\n| A.破裂孔 | 中颅窝 | 颈内动脉、交感神经丛 |\n| B.卵圆孔 | 中颅窝 | 三叉神经下颌支（V3） |\n| C.棘孔 | 中颅窝 | 脑膜中动脉 |\n| D.<span style=\"color:var(--c-red)\">枕大孔</span> | **后颅窝** | 延髓→脊髓、椎动脉、副神经脊髓根 |\n| E.视神经孔 | 前颅窝 | 视神经、眼动脉 |\n\n---\n\n### 🧠 记忆口诀\n**\"前三后一\"法**：\n- 前颅窝：视神经孔（1个重点孔）\n- 中颅窝：<span style=\"color:var(--t-accent)\">破卵棘</span>（破裂孔、卵圆孔、棘孔）\n- 后颅窝：<span style=\"color:var(--c-red)\">枕大孔</span>（最大孔）\n\n💡**联想记忆**：想象\"枕大孔\"是枕头上的大洞，正好在后脑勺（对应后颅窝位置）\n\n---\n\n### ⚠️ 考试易错点\n1. **颈静脉孔**也位于后颅窝，但非选项内容\n2. **视神经孔**在前颅窝，易被误认为中颅窝\n3. 三叉神经相关孔（卵圆孔、圆孔、棘孔）全在中颅窝\n\n```mermaid\ngraph TD\n颅底-->前颅窝-->E[\"视神经孔\"]\n颅底-->中颅窝-->A[\"破裂孔\"]\n中颅窝-->B[\"卵圆孔\"]\n中颅窝-->C[\"棘孔\"]\n颅底-->后颅窝-->D[\"枕大孔\"]\n```\n\n---\n\n### 📌 解题技巧\n1. 排除法：先排除中颅窝的ABC和前颅窝的E\n2. 关键词联想：\"后颅窝\"→脊髓连接→<span style=\"color:var(--c-red)\">枕大孔</span>\n3. 体积判断：枕大孔是颅底最大孔（直径约3.5cm）\n\n---\n\n💝<span style=\"color:var(--c-pink)\">爱莉小贴士</span>：下次遇到类似题，记得先画个简笔画颅底三窝分布图哦！考试加油呀~ (๑•̀ㅂ•́)و✧",
           "previousAnswer": "D"
         },
         {
@@ -1194,7 +1194,7 @@
           ],
           "answer": "B",
           "userAnswer": null,
-          "notes": "",
+          "notes": "\n\n✨<span style=\"color:var(--c-pink);background-color:var(--bg-pink)\">【正确答案】</span>  \n**B、海绵状血管瘤**是成人最常见的眼眶内原发性肿瘤  \n\n---\n\n⭐<span style=\"color:var(--c-green);background-color:var(--bg-green)\">**核心知识点**</span>  \n1. **病理特征**  \n   - **血管内皮细胞增生**形成窦状扩张的血管腔  \n   - **假包膜包裹**，边界清晰  \n   - 生长缓慢，<span style=\"color:var(--t-accent)\">无痛性眼球突出</span>是主要症状  \n\n2. **影像学特点**  \n   ```mermaid\n   graph TD\n   A[\"CT/MRI表现\"]-->B[\"类圆形肿块\"]\n   B-->C[\"肌锥内常见\"]\n   C-->D[\"渐进性强化(快进慢出)\"]\n   ```\n\n3. **好发部位**  \n   - 80%位于<span style=\"color:var(--c-red)\">肌锥内</span>  \n   - 常见于视神经外侧  \n\n---\n\n⚠️<span style=\"color:var(--c-yellow);background-color:var(--bg-yellow)\">**鉴别诊断要点**</span>  \n| 选项 | 关键特征 | 排除理由 |\n|------|----------|----------|\n| A.泪腺多形性腺瘤 | 泪腺区肿块，骨压迫吸收 | 仅占眼眶肿瘤7-13% |\n| C.视神经胶质瘤 | 儿童多见，视神经梭形增粗 | 儿童期发病 |\n| D.脑膜瘤 | 中年女性，车轨样钙化 | 多继发于颅内 |\n| E.神经鞘膜瘤 | 沿神经走行，囊变常见 | 发病率较低 |\n\n---\n\n💡<span style=\"color:var(--c-purple);background-color:var(--bg-purple)\">**记忆技巧**</span>  \n1. **口诀记忆**  \n   > \"海绵吸水慢膨胀，成人眼眶它称王\"  \n   > \"肌锥内部悄悄长，CT渐进显影强\"  \n\n2. **数字关联**  \n   - **3个70%**：70%病例30-50岁发病，70%位于肌锥内，70%需要手术治疗  \n\n3. **对比记忆**  \n   | 儿童常见 | 成人常见 |\n   |----------|----------|\n   | 视神经胶质瘤 | 海绵状血管瘤 |\n   | 横纹肌肉瘤 | 淋巴增生病变 |  \n\n---\n\n🔍<span style=\"color:var(--c-cyan);background-color:var(--bg-cyan)\">**考点提示**</span>  \n1. 影像学描述若出现\"渐进性强化\"，优先考虑海绵状血管瘤  \n2. 考题中\"无痛性渐进性眼球突出\"是典型临床表现  \n3. 注意区分原发性与继发性肿瘤（如转移瘤多位于肌锥外）",
           "previousAnswer": "B"
         },
         {
@@ -1210,7 +1210,7 @@
           ],
           "answer": "D",
           "userAnswer": null,
-          "notes": "",
+          "notes": "\n\n✨**副鼻窦恶性肿瘤好发部位学习笔记**✨\n\n---\n\n### ⭐核心知识点\n<span style=\"color:var(--c-red);background-color:var(--bg-red)\">正确答案：D、上颌窦（占鼻窦恶性肿瘤80%）</span>\n\n---\n\n### 🔍解剖结构速记\n```mermaid\ngraph TD\nA[\"副鼻窦\"] --> B[\"上颌窦\"]\nA --> C[\"筛窦(前/后组)\"]\nA --> D[\"额窦\"]\nA --> E[\"蝶窦\"]\nB -->|体积最大| F[\"表面积广\"]\nB -->|毗邻结构| G[\"牙齿/鼻腔/眼眶\"]\nB -->|危险因素| H[\"慢性炎症刺激\"]\n```\n\n---\n\n### ⚠️发病机制关键点\n1. **解剖因素**  \n   - 上颌窦是<span style=\"color:var(--c-red)\">最大鼻窦</span>，黏膜面积最大\n   - 毗邻<span style=\"color:var(--c-green)\">牙齿/鼻腔/眼眶</span>，易受长期刺激\n\n2. **病理特点**  \n   - 鳞状细胞癌最常见（占90%）\n   - 早期症状隐匿（鼻塞/血涕/面颊麻木）\n\n3. **危险因素**  \n   - 长期鼻窦炎 ⚠️\n   - 接触镍/木屑等致癌物\n   - 牙源性感染（上颌牙根与窦底相邻）\n\n---\n\n### 📌鉴别诊断要点\n| 副鼻窦 | 常见疾病 | 特点 |\n|--------|----------|------|\n| 上颌窦 | 恶性肿瘤 | 单侧鼻塞+面颊肿胀+牙齿松动 |\n| 筛窦 | 炎性病变 | 双侧鼻息肉+嗅觉减退 |\n| 蝶窦 | 感染 | 深部头痛+视力改变 |\n\n---\n\n### 💡记忆技巧\n1. **口诀记忆**  \n   <span style=\"color:var(--c-green)\">\"上颌窦，癌最多；体积大，位置险\"</span>\n\n2. **联想法**  \n   想象<span style=\"color:var(--c-red)\">\"面部中央的癌症靶心\"</span>  \n   （上颌窦位于面部中央，易受多方向刺激）\n\n3. **数字记忆**  \n   <span style=\"color:var(--c-purple)\">80%</span>鼻窦癌发生在上颌窦  \n   <span style=\"color:var(--c-purple)\">10%</span>在筛窦，其他部位罕见\n\n---\n\n### 📚考试高频考点\n1. **首诊症状**：单侧进行性鼻塞+脓血涕\n2. **影像学首选**：CT显示窦腔软组织影+骨质破坏\n3. **确诊方法**：鼻内镜活检\n4. **易误诊疾病**：慢性鼻窦炎/真菌性鼻窦炎\n\n---\n\n💡**复习建议**：结合解剖图谱记忆各鼻窦位置，重点对比上颌窦与其他鼻窦的临床特征差异！",
           "previousAnswer": "D"
         },
         {
@@ -1226,7 +1226,7 @@
           ],
           "answer": "B",
           "userAnswer": null,
-          "notes": "",
+          "notes": "\n\n✨<span style=\"color:var(--c-red);background-color:var(--bg-red)\">喉癌核心知识点速记</span>✨\n\n---\n\n### ⭐重点知识\n1. **喉癌病理类型分布**：\n   - <span style=\"color:var(--c-red)\">鳞状细胞癌（鳞癌）占95%以上</span>\n   - 腺癌、未分化癌、淋巴瘤等罕见\n   - 黑色素瘤极少发生于喉部\n\n2. **解剖学基础**：\n   - 喉黏膜被覆<span style=\"color:var(--c-green)\">复层鳞状上皮</span>（声门区）和<span style=\"color:var(--c-green)\">假复层纤毛柱状上皮</span>（声门上区）\n   - 鳞癌好发于<span style=\"color:var(--t-accent)\">声门区</span>（60-65%）\n\n3. **危险因素**：\n   - 吸烟（⚠️主要诱因）\n   - 饮酒、HPV感染、长期声带损伤\n\n---\n\n### 🔍鉴别诊断要点\n| 选项    | 特征                  | 喉部发生概率 |\n|---------|-----------------------|-------------|\n| B.鳞癌  | 角化珠形成，细胞间桥 | ⭐⭐⭐⭐⭐     |\n| C.腺癌  | 腺样结构，黏液分泌    | ⭐           |\n| A.黑色素瘤 | S-100/HMB45阳性       | ⭐           |\n| D.未分化癌 | 异型性显著            | ⭐           |\n| E.淋巴瘤 | CD20/CD3阳性          | ⭐           |\n\n---\n\n### 💡记忆技巧\n**口诀**：<span style=\"color:var(--c-yellow)\">\"喉癌鳞为首，黏膜上皮源\"</span>\n- 联想：喉咙像「鳞片」一样保护呼吸道 → 鳞癌最多见\n- 对比记忆：\n  - 肺癌：腺癌为主\n  - 甲状腺癌：乳头状癌为主\n  - 食管癌：鳞癌为主（同为鳞状上皮覆盖）\n\n---\n\n```mermaid\ngraph TD\nA[\"喉黏膜上皮类型\"] --> B[\"复层鳞状上皮（声门区）\"]\nA --> C[\"假复层纤毛柱状上皮（声门上区）\"]\nB == \"恶变概率高\" ==> D[\"鳞状细胞癌\"]\nC --> E[\"腺癌（罕见）\"]\n```\n\n---\n\n### 🚀考试注意\n- 喉癌**首诊症状**：声嘶（声门型）、咽痛（声门上型）\n- **影像学特征**：CT示喉部软组织肿块伴强化\n- **确诊方法**：喉镜活检（金标准）\n\n---\n\n掌握这些要点，考试遇到喉癌题型就能稳拿分啦！(≧∇≦)ﾉ",
           "previousAnswer": "B"
         },
         {
@@ -1242,7 +1242,7 @@
           ],
           "answer": "A",
           "userAnswer": null,
-          "notes": "",
+          "notes": "\n\n✨**鼻窦开口学习笔记**✨\n\n---\n\n### 🧠 **核心知识点**\n1. **鼻窦分类**  \n   - 额窦、上颌窦、筛窦（前/中/后组）、蝶窦  \n\n2. **开口位置**  \n   <span style=\"color:var(--c-green);background-color:var(--bg-green)\">⭐ **口诀：** \"额上中，筛分前后，蝶隐窝\"</span>  \n   - **额窦** → **中鼻道**（额隐窝）  \n   - **上颌窦** → **中鼻道**（后部）  \n   - **筛窦**  \n     - 前组、中组 → **中鼻道**  \n     - 后组 → **上鼻道**  \n   - **蝶窦** → **蝶筛隐窝**（上鼻道后上方）  \n\n---\n\n### 🔍 **选项分析**\n```mermaid\ngraph TD\nA[\"选项A\"] -->|额窦+上颌窦| B[\"中鼻道 ✔️\"]\nC[\"选项C\"] -->|筛窦+蝶窦| D[\"中鼻道 ❌（蝶窦在蝶筛隐窝）\"]\nD[\"选项D\"] -->|额窦+蝶窦| E[\"上鼻道 ❌（额窦在中鼻道）\"]\n```\n\n- **A** ✅：额窦（中鼻道） + 上颌窦（中鼻道） → **正确**  \n- **B** ❌：额窦开口于下鼻道 → **错误**（下鼻道无鼻窦开口）  \n- **C** ❌：筛窦（部分正确） + 蝶窦（错误） → **错误**  \n- **D** ❌：额窦（错误） + 蝶窦（部分正确） → **错误**  \n- **E** ❌：额窦开口于上鼻道 → **错误**  \n\n---\n\n### 💡 **记忆技巧**\n1. **解剖层次关联**  \n   - **额窦、上颌窦**体积较大 → **中鼻道**（引流更直接）  \n   - **蝶窦**位置最深 → **蝶筛隐窝**（更高更隐蔽）  \n\n2. **对比记忆**  \n   | 鼻窦       | 开口位置        |  \n   |------------|-----------------|  \n   | 额窦       | 中鼻道（前部） |  \n   | 上颌窦     | 中鼻道（后部） |  \n   | 筛窦后组   | 上鼻道         |  \n   | 蝶窦       | 蝶筛隐窝       |  \n\n---\n\n### ⚠️ **易错点提醒**\n- **筛窦分组**：前/中组（中鼻道） vs 后组（上鼻道）  \n- **蝶窦开口**：非直接在上鼻道，而是**蝶筛隐窝**（需结合解剖图理解）  \n\n---\n\n📚 **考试重点**：掌握鼻窦开口位置的分组规律，优先排除含下鼻道的选项！",
           "previousAnswer": "A"
         },
         {
@@ -1258,7 +1258,7 @@
           ],
           "answer": "C",
           "userAnswer": null,
-          "notes": "",
+          "notes": "\n\n✨<span style=\"color:var(--c-pink);background-color:var(--bg-pink)\">继发性胆脂瘤核心知识</span>✨\n\n---\n\n### ⭐正确答案\n<span style=\"color:var(--c-green)\">C、上鼓室</span>\n\n---\n\n### 🔍核心概念解析\n1. **胆脂瘤分类**  \n   ⚠️**继发性胆脂瘤**：多继发于慢性化脓性中耳炎，因鼓膜<span style=\"color:var(--t-accent)\">紧张部边缘性穿孔</span>，导致鳞状上皮向中耳腔内生长。  \n   💡与原发性胆脂瘤（松弛部内陷袋形成）不同！\n\n2. **解剖关键点**  \n   ```mermaid\n   graph TD\n   A[\"鼓室分区\"] --> B[\"上鼓室\"]\n   A --> C[\"中鼓室\"]\n   A --> D[\"下鼓室\"]\n   B -->|毗邻鼓窦| E[\"易向乳突扩展\"]\n   ```\n\n3. **为什么是上鼓室？**  \n   - **负压机制**：咽鼓管功能障碍 → 中耳负压 → 鼓膜后上象限内陷 → 形成<span style=\"color:var(--c-red)\">胆脂瘤囊袋</span>  \n   - **空间特性**：上鼓室空间狭窄，脱落上皮<span style=\"color:var(--t-accent)\">易滞留堆积</span>  \n   - **感染路径**：继发性病变常沿鼓窦→乳突发展\n\n---\n\n### 📝鉴别诊断要点\n| 部位       | 特点                          | 关联疾病                |\n|------------|-------------------------------|-------------------------|\n| 外耳道     | 原发性，外伤/炎症致表皮脱落   | 外耳道胆脂瘤（选项B）  |\n| 中鼓室     | 积液多见，少见上皮迁移        | 分泌性中耳炎（选项D）  |\n| 下鼓室     | 积液及低位病变                | 少见胆脂瘤（选项E）    |\n\n---\n\n### 💡记忆技巧\n1. **口诀记忆**：  \n   <span style=\"color:var(--c-yellow)\">\"继发往上走，上鼓室为首\"</span>  \n   （继发性病变易向上鼓室-鼓窦-乳突路径发展）\n\n2. **解剖联想**：  \n   想象<span style=\"color:var(--c-sky)\">咽鼓管（下方）</span>功能不良 → 负压吸引鼓膜向<span style=\"color:var(--c-purple)\">上鼓室（上方）</span>内陷 → 形成胆脂瘤\n\n---\n\n### 📌考试陷阱提示\n- ❗鼓窦（选项A）是胆脂瘤扩展的通道，而非原发部位  \n- ❗外耳道（选项B）胆脂瘤多为原发性，与异物/炎症相关  \n- ❗中鼓室（选项D）病变以积液为主，胆脂瘤少见\n\n---\n\n掌握这些知识点，遇到类似题型就能快速锁定正确答案啦！(*^▽^*)",
           "previousAnswer": "C"
         },
         {
@@ -1274,7 +1274,7 @@
           ],
           "answer": "A",
           "userAnswer": null,
-          "notes": "",
+          "notes": "\n\n<span style=\"color:var(--c-green);background-color:var(--bg-green)\">📚 鼻咽良性肿瘤核心知识点</span>\n\n```mermaid\ngraph LR\nB[\"纤维血管瘤\"]\nC[\"其他鉴别诊断\"]\nB --> D[\"好发人群：青少年男性\"]\nB --> E[\"特征：富血管+纤维基质\"]\nB --> F[\"症状：反复鼻出血+鼻塞\"]\nC --> G[\"出血坏死性息肉（炎性）\"]\nC --> H[\"乳头状瘤（鼻腔多见）\"]\nC --> I[\"多形性腺瘤（唾液腺）\"]\nC --> J[\"神经鞘膜瘤（神经走行区）\"]\n```\n\n⭐ <span style=\"color:var(--c-red)\">核心考点：</span>  \n1. **纤维血管瘤**（正确答案A）：\n   - 病理特征：由<span style=\"color:var(--t-accent)\">血管内皮细胞</span>和<span style=\"color:var(--t-accent)\">纤维结缔组织</span>构成\n   - 临床三联征：<span style=\"color:var(--c-red)\">青春期男性</span> + <span style=\"color:var(--c-red)\">单侧鼻塞</span> + <span style=\"color:var(--c-red)\">突发鼻衄</span>\n   - 影像学：CT呈<span style=\"color:var(--c-green)\">\"椒盐征\"</span>（血管流空影），增强明显强化\n\n⚠️ <span style=\"color:var(--c-yellow)\">易错点解析：</span>  \n- **出血坏死性息肉（B选项）**：本质是<span style=\"color:var(--t-accent)\">炎性增生</span>，非真性肿瘤\n- **乳头状瘤（C选项）**：多见于<span style=\"color:var(--t-accent)\">鼻前庭/鼻腔侧壁</span>，易复发但极少恶变\n- **多形性腺瘤（D选项）**：<span style=\"color:var(--c-blue)\">唾液腺肿瘤</span>（如腮腺），鼻咽部罕见\n- **神经鞘膜瘤（E选项）**：沿<span style=\"color:var(--t-accent)\">颅神经分布</span>，生长缓慢\n\n💡 <span style=\"color:var(--c-purple)\">记忆口诀：</span>  \n\"青少男血堵鼻咽，纤维血管瘤当先\"  \n（青少男=青少年男性，血=鼻出血，堵=鼻塞）\n\n🔍 <span style=\"color:var(--c-sky)\">鉴别诊断要点：</span>  \n| 特征        | 纤维血管瘤       | 出血坏死性息肉    | 乳头状瘤        |\n|-------------|------------------|-------------------|-----------------|\n| 年龄        | 10-25岁男性      | 任何年龄          | ＞30岁          |\n| 生长速度    | 较快             | 缓慢              | 缓慢            |\n| 出血倾向    | 显著             | 偶发              | 少见            |\n| 影像特征    | 明显强化         | 无强化            | 乳头状突起      |\n\n<span style=\"color:var(--c-pink)\">⚡ 速记考点：</span>  \n鼻咽部占位+青春期男性+反复鼻出血 → 立即锁定<span style=\"color:var(--c-red)\">纤维血管瘤</span>！",
           "previousAnswer": "A"
         },
         {
@@ -1290,7 +1290,7 @@
           ],
           "answer": "E",
           "userAnswer": null,
-          "notes": "",
+          "notes": "\n\n<span style=\"color:var(--t-accent)\">✨知识点详解✨</span>\n\n---\n\n### ⭐核心答案\n正确答案：<span style=\"color:var(--c-red)\">**E、肿大的淋巴结**</span>\n\n---\n\n### 🔍解剖与发病机制\n1. **颈部淋巴结分布**  \n   - 颈部有<span style=\"color:var(--c-green)\">300+淋巴结</span>，分<span style=\"color:var(--t-accent)\">6大区</span>（Ⅰ-Ⅵ区）\n   - 主要引流头颈部、口腔、咽喉淋巴\n\n2. **肿大机制**  \n   ```mermaid\n   graph TD\n   A[\"感染（细菌/病毒）\"]-->B[免疫反应]\n   C[\"肿瘤转移\"]-->D[淋巴增殖]\n   E[\"自身免疫病\"]-->F[慢性炎症]\n   ```\n\n---\n\n### ⚠️鉴别诊断要点\n| 选项 | 特点 | 发生率 |\n|------|------|--------|\n| **A.甲状腺肿** | 随吞咽移动，质地韧 | 常见但局限甲状腺区 |\n| **B.神经鞘瘤** | 沿神经走行，可推动 | 罕见（<1%） |\n| **C.颈动脉瘤** | 搏动性肿块，听诊杂音 | 极罕见（0.2%） |\n| **D.神经纤维瘤** | 多发结节，咖啡斑 | 遗传相关（<1%） |\n| **E.淋巴结肿大** | 可活动/固定，伴压痛 | **＞60%** |\n\n---\n\n### 💡记忆技巧\n**口诀**：<span style=\"color:var(--c-green)\">\"颈块三连想，感染肿瘤炎，淋巴结首当\"</span>  \n**数字记忆**：80%规则（非甲状腺肿块中80%为肿瘤性，其中80%为转移性）\n\n---\n\n### 📝考点提示\n1. **急诊重点**：伴发热/压痛的淋巴结提示<span style=\"color:var(--c-red)\">感染</span>\n2. **肿瘤警示**：固定无痛淋巴结需排查<span style=\"color:var(--c-red)\">转移癌</span>（鼻咽癌、甲状腺癌）\n3. **影像选择**：B超首选，增强CT/MRI评估边界与血供\n\n---\n\n**爱莉小贴士**：下次遇到颈部肿块问题，记得先摸一摸淋巴结区域哦～💖（开玩笑的，要规范触诊啦！）",
           "previousAnswer": "E"
         },
         {
@@ -1306,7 +1306,7 @@
           ],
           "answer": "D",
           "userAnswer": null,
-          "notes": "",
+          "notes": "\n\n✨<span style=\"color:var(--c-pink);background-color:var(--bg-pink)\">上颌窦X线检查核心知识</span>✨\n\n---\n\n### ⭐ 正确答案解析\n<span style=\"color:var(--c-green)\">D、华氏位（Water's位）</span>是观察上颌窦的首选投照体位\n\n---\n\n### 🔍 投照体位对比表\n| 选项 | 名称      | 适用部位                    | 体位特点                    |\n|------|-----------|-----------------------------|----------------------------|\n| D    | 华氏位    | 上颌窦、额窦、前组筛窦      | <span style=\"color:var(--t-accent)\">头后仰37°，颏部贴片</span> ⚠️避免岩骨重叠 |\n| E    | 柯氏位    | 额窦、前组筛窦              | 头后仰23°，前额贴片         |\n| A    | 头颅正位  | 颅骨整体                    | 常规前后位投射             |\n| B    | 头颅侧位  | 颅骨矢状面结构              | 显示蝶鞍、颅缝             |\n| C    | 颅底位    | 颅底、中耳结构              | 头极度后仰，X线垂直入射     |\n\n---\n\n### 💡 记忆技巧\n1. **\"Water's位=水\"联想**  \n   <span style=\"color:var(--c-sky)\">想象往口腔倒水时自然仰头的动作</span> → 对应华氏位体位\n\n2. **解剖学原理**  \n   <span style=\"color:var(--c-purple)\">华氏位X线与硬腭垂直</span> → 上颌窦显示最清晰  \n   （岩骨投影于口腔下方，避免重叠）\n\n3. **口诀记忆**  \n   <span style=\"color:var(--c-red)\">\"柯前华上\"</span>  \n   → 柯氏位看前组筛窦，华氏位看上颌窦\n\n---\n\n### ⚠️ 高频考点提示\n1. 华氏位可同时显示<span style=\"color:var(--c-yellow)\">上颌窦积液、骨折线、囊肿</span>\n2. 柯氏位与华氏位角度差异（23° vs 37°）\n3. 颌面部外伤时首选华氏位检查上颌窦\n\n---\n\n```mermaid\ngraph TD\nA[\"上颌窦解剖特点\"] --> B[\"位于眼眶下方\\n鼻腔外侧\"]\nB --> C{\"X线检查难点\\n岩骨易重叠\"}\nC --> D[\"华氏位\\n(头后仰37°)\"]\nD --> E[\"X线垂直硬腭\\n岩骨下移\"]\nE --> F[\"上颌窦完整显影\"]\n```",
           "previousAnswer": "D"
         },
         {
@@ -1322,7 +1322,7 @@
           ],
           "answer": "B",
           "userAnswer": null,
-          "notes": "",
+          "notes": "\n\n✨<span style=\"color:var(--c-green);background-color:var(--bg-green)\">诊断鼻窦霉菌最佳检查方法：CT平扫（B选项）</span>\n\n---\n\n### ⭐核心知识点\n1. **真菌性鼻窦炎特征**  \n   - 常见钙化灶（菌丝钙盐沉积形成\"金属样密度\"）\n   - 窦腔内软组织肿块伴膨胀性改变\n   - 窦壁骨质硬化或破坏（侵袭性真菌感染）\n\n2. **检查方法对比表**  \n   | 检查方法 | 优势 | 局限性 |  \n   |---|---|---|  \n   | **CT平扫** | <span style=\"color:var(--c-green)\">高分辨率显示钙化灶<br>清晰骨窗评估骨质改变</span> | 软组织对比度低于MRI |  \n   | MRI | 软组织分辨率高<br>区分炎症与肿瘤 | <span style=\"color:var(--c-red)\">钙化显示差</span> |  \n   | X线平片 | 快速廉价 | <span style=\"color:var(--c-red)\">分辨率低，漏诊率高</span> |  \n   | B超 | 无辐射 | <span style=\"color:var(--c-red)\">无法穿透骨壁</span> |  \n\n---\n\n### 🔍影像学诊断要点\n```mermaid\ngraph TD\nA[\"疑似鼻窦霉菌\"]-->B[\"首选CT平扫\"]\nB--\"特征表现\"-->C[\"①斑点状/团块状钙化<br>②窦腔膨胀性改变<br>③窦壁骨质硬化\"]\nB--\"鉴别诊断\"-->D[\"侵袭性真菌感染→骨质破坏<br>细菌性鼻窦炎→液气平面\"]\n```\n\n---\n\n### 💡记忆技巧\n**口诀**：\"<span style=\"color:var(--t-accent)\">霉菌钙化CT抓，MRI软组肿瘤查</span>\"  \n**联想记忆**：真菌像石头（钙化），需要高清摄像头（CT）才能拍清楚细节\n\n---\n\n### ⚠️考试注意点\n- **钙化灶**是诊断关键，出现即高度提示真菌感染\n- 侵袭性真菌感染需结合临床表现（发热、面部肿胀）\n- 增强CT仅用于怀疑恶性肿瘤或血管性病变时\n\n---\n\n<span style=\"color:var(--c-yellow)\">📌考点提示：</span>注意与鼻窦黏液囊肿（均匀低密度无钙化）、鼻窦癌（明显骨质破坏伴强化）的鉴别诊断！",
           "previousAnswer": "B"
         },
         {
@@ -1338,7 +1338,7 @@
           ],
           "answer": "B",
           "userAnswer": null,
-          "notes": "",
+          "notes": "\n\n✨<span style=\"color:var(--c-red);background-color:var(--bg-red)\">视网膜母细胞瘤影像学诊断要点</span>✨\n\n⭐<span style=\"color:var(--t-accent)\">核心答案</span>：<span style=\"color:var(--c-green)\">B、CT</span>\n\n---\n\n### 🔍 病理特征与影像学选择\n1. **钙化显示**  \n   ⚠️ 视网膜母细胞瘤约<span style=\"color:var(--c-red)\">80%</span>存在钙化灶  \n   → CT对<span style=\"color:var(--c-green)\">钙化敏感度最高</span>（可显示砂粒样钙化）\n\n2. **病变范围评估**  \n   CT可清晰显示：\n   - 肿瘤大小及眼内位置\n   - 视神经侵犯\n   - 颅内扩散（<span style=\"color:var(--c-yellow)\">三侧性视网膜母细胞瘤</span>）\n\n---\n\n### 📊 各检查方法对比\n| 检查方法 | 优势 | 局限性 | 适用场景 |\n|---------|------|--------|----------|\n| **CT**<br><span style=\"color:var(--c-green)\">⭐首选</span> | 钙化敏感<br>快速扫描<br>骨窗显像 | 辐射暴露 | 初诊、随访 |\n| MRI | 软组织分辨率高<br>无辐射 | 钙化显示差<br>检查时间长 | 颅内侵犯评估 |\n| B超 | 无辐射<br>实时成像 | 钙化识别差<br>依赖操作者 | 婴幼儿筛查 |\n| 平片 | 显示眼眶扩大 | 分辨率低 | 已淘汰 |\n\n```mermaid\ngraph TD\nA[\"白瞳症患儿就诊\"] --> B{首选检查}\nB -->|\"钙化检测\"| C[\"CT扫描\"]\nC --> D[\"典型表现：眼内肿块+钙化\"]\nD --> E[\"确诊视网膜母细胞瘤\"]\nB -->|鉴别诊断| F[\"MRI排除Coats病\"]\n```\n\n---\n\n### 💡 记忆技巧\n1. **口诀**：  \n   <span style=\"color:var(--c-pink)\">\"白瞳钙化看CT，软组织用MRI\"</span>\n\n2. **鉴别诊断要点**：  \n   - Coats病：<span style=\"color:var(--c-cyan)\">无钙化+视网膜下液</span>  \n   - PHPV（永存原始玻璃体增生症）：<span style=\"color:var(--c-cyan)\">小眼球+玻璃体条索</span>\n\n---\n\n### 🚨 考试注意\n- 当题目出现<span style=\"color:var(--c-red)\">\"钙化\"</span>关键词时直接选CT  \n- MRI常用于评估<span style=\"color:var(--c-yellow)\">视神经/颅内侵犯</span>（增强扫描更佳）  \n- B超是<span style=\"color:var(--c-green)\">经济快捷</span>的初筛工具，但无法替代CT\n\n💖<span style=\"color:var(--c-pink)\">记住哦~钙化是视网膜母细胞瘤的灵魂指征，CT就是发现它的最佳侦探！</span>💖",
           "previousAnswer": "B"
         },
         {
@@ -1354,7 +1354,7 @@
           ],
           "answer": "C",
           "userAnswer": null,
-          "notes": "",
+          "notes": "\n\n✨<span style=\"color:var(--c-pink);background-color:var(--bg-pink)\">眼眶海绵状血管瘤核心知识</span>✨\n\n---\n\n### ⭐重点知识速记\n1. **基本特征**  \n   - **A正确**：成人眼眶内<span style=\"color:var(--c-green)\">最常见原发性肿瘤</span>  \n   - **B正确**：<span style=\"color:var(--t-accent)\">中年女性</span>高发（男女比≈1:3）  \n   - **C错误**：典型表现<span style=\"color:var(--c-red)\">不伴眼外肌增粗</span>  \n   - **D正确**：缓慢进展的<span style=\"color:var(--c-blue)\">无痛性眼球突出</span>  \n   - **E正确**：MRI呈现<span style=\"color:var(--c-purple)\">长T2高信号</span>（\"灯泡征\"）\n\n2. **影像鉴别关键**  \n   ```mermaid\n   graph TD\n   A[\"眼眶占位病变\"] --> B{是否累及眼外肌?}\n   B -->|是| C[\"甲状腺眼病/炎性假瘤\"]\n   B -->|否| D[\"海绵状血管瘤\"]\n   D --> E[\"MRI明显长T2信号\"]\n   ```\n\n---\n\n### 🔍错误选项深度解析\n**C选项错误原因**：  \n海绵状血管瘤多位于<span style=\"color:var(--c-brown)\">肌锥内</span>，呈<span style=\"color:var(--c-brown)\">类圆形/椭圆形</span>，边界清晰，极少侵犯眼外肌。  \n⚠️眼外肌增粗更常见于：  \n- 甲状腺相关眼病（肌腹增粗）  \n- 炎性假瘤（肌腱及肌腹均增粗）  \n- 淋巴瘤（肌锥外浸润）\n\n---\n\n### 💡记忆技巧\n**\"海绵女士不粗肌\"口诀**  \n- 海绵：海绵状血管瘤  \n- 女士：中年女性高发  \n- 不粗肌：不伴眼外肌增粗  \n\n**影像特征速记**：  \n\"<span style=\"color:var(--c-purple)\">T2亮晶晶</span>，界清不粘人\"（明显长T2信号+边界清晰）\n\n---\n\n### 📝考试注意要点\n1. 易混淆点：  \n   - 儿童最常见眼眶肿瘤→<span style=\"color:var(--c-red)\">毛细血管瘤</span>  \n   - 恶性肿瘤→<span style=\"color:var(--c-red)\">横纹肌肉瘤</span>  \n2. MR增强特点：<span style=\"color:var(--c-cyan)\">渐进性强化</span>（由中心向外周填充）  \n3. 治疗首选：<span style=\"color:var(--c-green)\">手术切除</span>（完整包膜易剥离）\n\n通过这个框架记忆，遇到类似题型就能快速锁定答案啦！(๑•̀ㅂ•́)و✧",
           "previousAnswer": "C"
         },
         {
@@ -1370,7 +1370,7 @@
           ],
           "answer": "C",
           "userAnswer": null,
-          "notes": "",
+          "notes": "\n\n✨眼眶炎性假瘤核心知识点✨\n\n⭐概念要点：\n眼眶炎性假瘤是特发性慢性非特异性炎症，占眼眶肿瘤的8%，病理特征为淋巴细胞浸润和纤维组织增生。可累及眼外肌、泪腺、巩膜等结构。\n\n🔍影像学特征对比：\n|| 炎性假瘤 | Graves眼病 |\n|---|---|---|\n|受累部位|肌腱+肌腹增粗|肌腹增粗为主|\n|累及肌肉|单条或多条|多条对称|\n|泪腺增大|常见|无|\n|强化程度|轻-中度|明显强化|\n\n⚠️错误选项解析：\n<span style=\"color:var(--c-red)\">选项C错误</span>：\n炎性假瘤典型表现为眼外肌<span style=\"color:var(--c-green)\">肌腱和肌腹同时增粗</span>（如内直肌肌腱呈\"棒状\"增厚），而Graves眼病才表现为肌腹增粗肌腱正常\n\n✅正确选项分析：\nA：约80%单侧（但需注意20%可双侧）\nB：泪腺增大发生率约50%（呈均匀增大）\nD：眼球突出发生率>60%（炎性渗出所致）\nE：强化程度弱于肿瘤（因纤维组织增生）\n\n💡记忆技巧：\n\"炎假肌腹肌腱肿，Graves肌腹独自胖\"\n\"泪腺受累要警惕，强化轻中别忘记\"\n\n📝重要鉴别诊断：\n1️⃣ 淋巴瘤：明显强化，累及眼眶前部\n2️⃣ 转移瘤：有原发灶，骨质破坏\n3️⃣ 血管瘤：明显强化，流空血管\n\n🔍影像诊断流程：\n```mermaid\ngraph TD\nA[\"眼眶占位病变\"] --> B{眼外肌形态}\nB --\"肌腱+肌腹增粗\" --> C[\"炎性假瘤\"]\nB --\"仅肌腹增粗\" --> D[\"Graves眼病\"]\nC --> E[\"检查泪腺是否增大\"]\nE --\"是\" --> F[\"支持炎性假瘤\"]\nE --\"否\" --> G[\"需鉴别淋巴瘤\"]\n```\n\n📌考试注意：\n• 眼外肌肌腱是否受累是鉴别关键\n• 炎性假瘤可类似肿瘤表现（但强化较弱）\n• 对激素治疗敏感是重要临床特征",
           "previousAnswer": "C"
         },
         {
@@ -1386,7 +1386,7 @@
           ],
           "answer": "E",
           "userAnswer": null,
-          "notes": "",
+          "notes": "\n\n让我们来详细解析这道关于<span style=\"color:var(--c-green);background-color:var(--bg-green)\">眼Graves病</span>（甲状腺相关眼病）的题目吧！(✧∇✧)\n\n---\n\n### ⭐核心知识点解析\n**正确选项：E**  \n错误原因：眼外肌增粗以<span style=\"color:var(--c-red)\">肌腹增粗为主</span>，而肌腱正常（选项C正确，E错误）\n\n---\n\n### 🔍详细概念解析\n#### 1. 解剖基础\n```mermaid\ngraph LR\nA[\"眼外肌\"] --> B[\"上直肌\"]\nA --> C[\"下直肌\"]\nA --> D[\"内直肌\"]\nA --> E[\"外直肌\"]\nF[\"增粗特点\"] --> G[\"肌腹增粗（梭形肿胀）\"]\nF --> H[\"肌腱不受累（重要鉴别点）\"]\n```\n\n#### 2. 各选项解析\n| 选项 | 对/错 | 解释 |\n|------|-------|------|\n| A. 多双侧发病 | ✅ | 80%双侧对称性发病 |\n| B. 中年女性多见 | ✅ | 女:男=6:1，30-50岁高发 |\n| C. 肌腹增粗为主 | ✅ | **特征性表现**，肌腱正常 |\n| D. 眼球突出 | ✅ | 轴性眼球突出（眶脂肪增生） |\n| E. 肌腹肌腱同时增粗 | ❌ | 肌腱增粗见于炎性假瘤等 |\n\n---\n\n### 💡记忆技巧\n1. **\"肌腹肿，肌腱好\"** 口诀  \n2. **\"三姐妹法则\"**：  \n   - 下直肌最常受累 → 上直肌 → 内直肌  \n   - 外直肌很少受累  \n3. **\"双眼突出找甲亢\"**：双侧突眼+甲状腺功能异常\n\n---\n\n### ⚠️鉴别诊断要点\n| 疾病 | 眼外肌改变 | 其他特征 |\n|------|------------|----------|\n| Graves眼病 | 肌腹增粗，肌腱正常 | 脂肪浸润，眼睑退缩 |\n| 炎性假瘤 | 肌腱及肌腹均增粗 | 疼痛明显，单侧多见 |\n| 转移瘤 | 结节状增粗 | 骨质破坏 |\n\n---\n\n### 📝考点速记表\n| 考点 | 核心内容 |\n|------|----------|\n| 好发人群 | 中年女性（选项B） |\n| 影像特征 | 肌腹增粗（选项C对，E错） |\n| 临床表现 | 双侧突眼（选项A/D对） |\n| 鉴别关键 | 肌腱是否受累 |\n\n---\n\n记住这些要点，考试遇到眼Graves病相关题目就能稳稳拿分啦！(≧◡≦) ♪",
           "previousAnswer": "E"
         },
         {
@@ -1402,7 +1402,7 @@
           ],
           "answer": "D",
           "userAnswer": null,
-          "notes": "",
+          "notes": "\n\n✨**诊断视神经胶质瘤最佳检查方法解析**✨\n\n---\n\n### 🎯**核心知识点**  \n<span style=\"color:var(--c-red);background-color:var(--bg-red)\">⭐正确答案：D（MRI）</span>\n\n---\n\n### 🧠**选项对比与原理分析**  \n| 选项 | 检查原理 | 适用性分析 |  \n|------|---------|------------|  \n| **A. 平片** | X线成像，显示骨质结构 | ❌ **不适用**：无法显示视神经软组织细节，仅能发现视神经孔扩大等间接征象 |  \n| **B. CT平扫** | X线断层成像，显示密度差异 | ⚠️ **有限作用**：可发现视神经增粗，但软组织分辨率低，无法清晰显示颅内段 |  \n| **C. CT增强** | 造影剂强化血供区域 | 🔍 **部分敏感**：可能显示肿瘤强化，但辐射暴露且分辨率仍低于MRI |  \n| **D. MRI** | 磁共振多序列成像 | ✅ **最佳选择**：<br>1. 高软组织分辨率（区分肿瘤与正常神经）<br>2. 多平面成像（评估视交叉/视束侵犯）<br>3. 无辐射（适合儿童随访） |  \n| **E. B超** | 声波成像，表浅结构 | ❌ **不适用**：穿透力有限，无法显示颅内延伸病灶 |  \n\n---\n\n### 📊**影像学表现对比**  \n```mermaid\ngraph LR\nA[\"视神经胶质瘤\"]-->B[\"MRI表现\"]\nB-->C[\"T1加权像：等/低信号\"]\nB-->D[\"T2加权像：高信号\"]\nB-->E[\"增强扫描：不均匀强化\"]\nA-->F[\"CT表现\"]\nF-->G[\"视神经梭形增粗\"]\nF-->H[\"钙化罕见（区别于脑膜瘤）\"]\n```\n\n---\n\n### 💡**记忆技巧**  \n1. **口诀记忆**：  \n   <span style=\"color:var(--c-green)\">\"神胶软，选M软\"</span>  \n   （视神经胶质瘤是**软组织**病变，MRI（M）是**软组织成像**最佳选择）\n\n2. **关联病理**：  \n   视神经胶质瘤常合并<span style=\"color:var(--t-accent)\">神经纤维瘤病Ⅰ型（NF1）</span>，MRI可同时评估颅内其他病变（如胶质瘤、脑膜瘤）。\n\n3. **对比排除法**：  \n   - B超：仅限眼球内病变（如视网膜母细胞瘤）  \n   - CT：钙化明显时考虑脑膜瘤（视神经鞘脑膜瘤）  \n\n---\n\n### ⚠️**考试考点提示**  \n1. **影像学首选**：MRI > CT增强 > CT平扫  \n2. **鉴别诊断**：  \n   - 视神经鞘脑膜瘤（CT可见钙化，强化明显）  \n   - 视神经炎（MRI可见视神经增粗伴强化，急性起病）  \n3. **临床特征**：儿童单侧视力下降+眼球突出 → 高度怀疑视神经胶质瘤  \n\n---\n\n掌握这些要点，轻松拿下相关考题！💪📚",
           "previousAnswer": "D"
         },
         {
@@ -1418,7 +1418,7 @@
           ],
           "answer": "A",
           "userAnswer": null,
-          "notes": "",
+          "notes": "\n\n✨<span style=\"color:var(--c-green);background-color:var(--bg-green)\">甲状腺肿物CT诊断核心要点</span>✨\n\n---\n\n### 📌题目解析\n**正确选项：A**  \n<span style=\"color:var(--c-red)\">错误原因：</span>CT可通过密度差异、强化模式等特征区分肿瘤性（如腺瘤、癌）与非肿瘤性病变（如囊肿、甲状腺炎），并非\"非常困难\"。\n\n---\n\n### ⭐CT检查能力总结\n| 选项 | 正误 | 关键依据 |\n|------|------|----------|\n| A    | ❌ | 囊肿（低密度无强化）vs 肿瘤（强化差异）可鉴别 |\n| B    | ✔️ | 良恶性需结合形态（边界/钙化/淋巴结）综合判断 |\n| C    | ❓ | CT可清晰显示肿瘤范围（<span style=\"color:var(--t-accent)\">实际C错误，但本题正确答案为A</span>）|\n| D    | ✔️ | 增强扫描可显示血供差异（<span style=\"color:var(--c-green)\">如甲状腺癌不均匀强化</span>） |\n| E    | ✔️ | 颈部淋巴结转移评估（形态/坏死/大小） |\n\n---\n\n### 🔍重点知识图谱\n```mermaid\ngraph LR\nA[\"CT核心功能\"] --> B[\"病变检出（增强扫描）\"]\nA --> C[\"范围评估（三维重建）\"]\nA --> D[\"转移判断（淋巴结）\"]\nA --> E[\"辅助鉴别（钙化/边界）\"]\nE --> F[\"良性：边界清、粗钙化\"]\nE --> G[\"恶性：浸润生长、微钙化\"]\n```\n\n---\n\n### 💡记忆技巧\n**口诀**：  \n\"<span style=\"color:var(--c-yellow)\">**增强看血供，钙化定性质，范围三维清，淋巴结转移要警惕**</span>\"\n\n**注意点**：  \n⚠️ 绝对化描述（如\"非常困难\"）多为错误选项  \n💡 良性特征：<span style=\"color:var(--c-green)\">类圆形、边界清、均匀强化</span>  \n💡 恶性特征：<span style=\"color:var(--c-red)\">分叶状、边界模糊、淋巴结肿大</span>\n\n---\n\n### 📚相关概念速查\n1. **甲状腺囊肿CT表现**：  \n   - 低密度影（CT值0-20HU）  \n   - 无强化，囊壁薄而均匀  \n\n2. **乳头状癌典型征象**：  \n   - \"<span style=\"color:var(--c-purple)\">砂粒样钙化</span>\"  \n   - 增强呈\"<span style=\"color:var(--c-sky)\">快进快出</span>\"强化模式  \n\n3. **淋巴结转移标准**：  \n   - 短径＞8mm（Ⅱ～Ⅵ区）  \n   - 囊性变/钙化提示高度可能  \n\n---\n\n通过这份笔记，爱莉希雅助你轻松掌握甲状腺CT诊断要点！🌸 考试加油哦~",
           "previousAnswer": "A"
         },
         {
@@ -1434,7 +1434,7 @@
           ],
           "answer": "C",
           "userAnswer": null,
-          "notes": "",
+          "notes": "\n\n<span style=\"color:var(--c-green);background-color:var(--bg-green)\">✨视网膜母细胞瘤CT要点精解✨</span>\n\n---\n\n### <span style=\"color:var(--t-accent)\">⭐核心考点解析</span>\n**正确选项**：<span style=\"color:var(--c-red)\">C（肿瘤密度较低）</span>\n\n---\n\n#### <span style=\"color:var(--c-purple)\">💡典型CT表现（需掌握）</span>\n1. **位置特征**  \n   <span style=\"color:var(--c-blue)\">A选项正确</span>  \n   ✅起源于视网膜→<mark>眼球壁内</mark>（视网膜属于眼球壁内层）\n\n2. **钙化特征**  \n   <span style=\"color:var(--c-blue)\">B选项正确</span>  \n   ✅<mark>团块状钙化</mark>是特征性表现（钙化率＞90%）  \n   ⚠️钙化呈<mark>高密度</mark>（与错误选项C矛盾）\n\n3. **增强表现**  \n   <span style=\"color:var(--c-blue)\">D选项正确</span>  \n   ✅血供丰富→<mark>明显强化</mark>（增强扫描时）\n\n4. **晚期扩展**  \n   <span style=\"color:var(--c-blue)\">E选项正确</span>  \n   ✅突破眼球→<mark>眶内侵犯</mark>（\"白瞳征\"进展期）\n\n---\n\n#### <span style=\"color:var(--c-red)\">🚫错误选项关键点</span>\n**C选项错误原因**：  \n🔍肿瘤由<mark>密集小圆细胞</mark>组成+钙化→整体呈<mark>等/高密度</mark>  \n⚠️\"密度较低\"可能误诊为<mark>玻璃体出血</mark>/<mark>脉络膜血管瘤</mark>\n\n---\n\n### <span style=\"color:var(--c-yellow)\">📝记忆口诀</span>\n```mermaid\ngraph LR\nA[\"RB三大特征\"] --> B[\"钙化高亮像星星✨\"]\nA --> C[\"眼球壁内显身形👁️\"]\nA --> D[\"强化明显血供灵💉\"]\n```\n\n---\n\n### <span style=\"color:var(--c-green)\">🔬影像鉴别要点</span>\n| 特征                | 视网膜母细胞瘤       | 脉络膜血管瘤         |\n|---------------------|---------------------|---------------------|\n| **密度**            | 等/高密度+钙化      | 均匀稍高密度        |\n| **强化**            | 明显强化            | 快速强化            |\n| **生长方式**        | 球内→眶内侵犯       | 局限脉络膜层        |\n\n---\n\n<span style=\"color:var(--c-pink)\">💖爱莉小贴士：</span>记住\"钙化高密度\"就能排除选项C啦！考试遇到RB题时，先找钙化特征哦~ (≧∇≦)ﾉ",
           "previousAnswer": "C"
         },
         {
@@ -1450,7 +1450,7 @@
           ],
           "answer": "D",
           "userAnswer": null,
-          "notes": "",
+          "notes": "\n\n✨<span style=\"color:var(--c-pink);background-color:var(--bg-pink)\">鼻咽癌CT表现核心考点解析</span>✨\n\n---\n\n### ⭐正确选项分析\n**D选项错误原因**  \n<span style=\"color:var(--c-red)\">咽旁间隙应向外移位</span>  \n鼻咽癌浸润时，肿瘤会<span style=\"color:var(--t-accent)\">向外挤压</span>咽旁间隙，而非向内（向内移位提示良性病变或误判）\n\n---\n\n### 🔍各选项详解\n| 选项 | 解析 | 机制 |\n|------|------|------|\n| **A** 咽隐窝变浅 | ✅<span style=\"color:var(--c-green)\">肿瘤浸润早期征象</span> | 肿瘤占据咽隐窝空间 |\n| **B** 腭肌肥大 | ✅<span style=\"color:var(--c-green)\">继发炎性反应/直接侵犯</span> | 三叉神经下颌支受累 |\n| **C** 鼓室含气消失 | ✅<span style=\"color:var(--c-green)\">咽鼓管阻塞</span> | 肿瘤压迫咽鼓管咽口 |\n| **D** 咽旁间隙内移 | ❌<span style=\"color:var(--c-red)\">方向错误</span> | 正确应为外移 |\n| **E** 咽腔不对称 | ✅<span style=\"color:var(--c-green)\">肿瘤占位效应</span> | 单侧软组织增厚 |\n\n---\n\n### 💡记忆技巧\n**解剖联想口诀**：  \n\"<span style=\"color:var(--c-yellow)\">隐窝浅、腭肌肿、鼓室无气、咽旁外</span>\"  \n⚠️注意方向：咽旁间隙像被<span style=\"color:var(--c-purple)\">推土机向外推</span>\n\n---\n\n```mermaid\ngraph LR\nA[\"鼻咽癌CT诊断要点\"] --> B[\"直接征象\"]\nA --> C[\"间接征象\"]\nB --> D[\"咽隐窝变浅/消失\"]\nB --> E[\"软组织肿块\"]\nC --> F[\"咽旁间隙外移\"]\nC --> G[\"腭肌肥大\"]\nC --> H[\"鼓室积液\"]\n```\n\n---\n\n### 🚩易错点总结\n1. **方向性错误**：咽旁间隙移位方向是<span style=\"color:var(--c-red)\">关键鉴别点</span>\n2. **解剖层次**：咽旁间隙位于<span style=\"color:var(--c-cyan)\">颈动脉鞘内侧</span>，受推挤时向外\n3. **临床联系**：鼓室含气消失需结合<span style=\"color:var(--c-orange)\">耳闷胀感</span>等临床症状\n\n掌握这些要点，轻松应对鼻咽癌影像诊断考题！(๑•̀ㅂ•́)و✧",
           "previousAnswer": "D"
         }
       ]
@@ -1487,7 +1487,7 @@
           ],
           "answer": "A",
           "userAnswer": null,
-          "notes": "",
+          "notes": "\n\n✨<span style=\"color:var(--c-pink);background-color:var(--bg-pink)\">【知识点精讲】</span>✨\n\n---\n\n### ⭐ **核心概念解析**\n**HRCT（高分辨率CT）**  \n采用<span style=\"color:var(--c-green)\">1-2mm薄层扫描</span> + <span style=\"color:var(--c-green)\">骨算法重建</span>，能清晰显示肺小叶结构（如次级肺小叶、小叶间隔、支气管血管束），是诊断肺内微小病变（＜2cm）的<span style=\"color:var(--t-accent)\">金标准</span>。\n\n**其他选项对比**  \n| 检查方法 | 优点 | 缺点 |\n|----------|------|------|\n| **胸部摄片** | 便捷、辐射低 | 分辨率差，易漏诊小病灶（如心脏后、膈肌遮挡区） |\n| **螺旋CT** | 快速、大范围扫描 | 常规层厚（5mm）可能遗漏微小病变细节 |\n| **MRI** | 无辐射、软组织对比佳 | 对含气肺组织分辨率低，不用于肺内小病灶 |\n| **透视** | 实时动态观察 | 分辨率最低，无永久记录 |\n\n---\n\n### 🔍 **关键考点提示**\n1. **HRCT技术参数**  \n   - 层厚：<span style=\"color:var(--c-red)\">1-2mm</span>（普通CT为5-10mm）  \n   - 重建算法：<span style=\"color:var(--c-red)\">骨算法</span>（边缘锐利化）  \n   - 适用场景：间质性肺病、肺小结节、支气管扩张  \n\n2. **肺小结节评估**  \n   HRCT可观察：  \n   - ⚠️ **恶性征象**：毛刺征、分叶征、空泡征  \n   - 💊 **良性特征**：钙化、脂肪密度、光滑边缘  \n\n---\n\n### 🧠 **记忆技巧**\n**口诀**：  \n<span style=\"color:var(--c-purple)\">\"小肺找HR，两毫米显神威；  \nX线初筛过，MRI靠边飞！\"</span>  \n\n**联想记忆**：  \n- HRCT = <span style=\"color:var(--c-blue)\">**H**</span>igh <span style=\"color:var(--c-blue)\">**R**</span>esolution（高分辨率）  \n- 2cm ≈ 一枚硬币大小，需要<span style=\"color:var(--c-red)\">\"显微镜\"</span>级观察 → HRCT  \n\n---\n\n```mermaid\ngraph TD\nA[\"肺内小病灶（＜2cm）\"] --> B{\"检查方法选择\"}\nB --\"最佳显示细节\"--> C[\"HRCT（薄层+骨算法）\"]\nB --\"初筛/急诊\"--> D[\"胸部X线\"]\nB --\"评估软组织/血管\"--> E[\"增强CT/MRI\"]\nC --> F[\"明确病灶形态（毛刺、分叶）\"]\nC --> G[\"鉴别良恶性\"]\n```  \n\n---\n\n💡 **考试陷阱提示**  \n- 螺旋CT ≠ HRCT！螺旋CT侧重快速扫描，HRCT侧重高分辨率  \n- MRI对肺内病变敏感性低，但适用于评估胸壁或纵隔侵犯",
           "previousAnswer": "A"
         },
         {
