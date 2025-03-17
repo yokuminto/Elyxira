@@ -4,58 +4,83 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Elyxira</title>
+    <title>Elyxira - 专业医学学习平台</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
-        /* 主题变量系统 */
+        /* 主题变量系统 - 医学x二次元风格 */
         :root {
             /* 核心颜色系统 */
-            --primary-color: #5164f4;
-            --heading-color: #7684ef;
-            --primary-light: rgba(68, 104, 238, 0.12);
-            --secondary-color: #5a6bf2;
-            --tertiary-color: rgba(155, 175, 245, 0.12);
-            --success-color: #36b991;
-            --success-bg: rgba(54, 185, 145, 0.12);
-            --danger-color: #e54960;
-            --danger-bg: rgba(229, 73, 96, 0.1);
+            --primary-gradient: linear-gradient(135deg, #4361ee, #7209b7);
+            --primary-color: #4361ee;
+            --heading-color: #4361ee;
+            --anime-accent: #7209b7;
+            --logo-color: #ffb8b8;
+            --primary-light: rgba(67, 97, 238, 0.12);
+            --secondary-color: #3a56d4;
+            --tertiary-color: rgba(67, 97, 238, 0.05);
+            --success-color: #38b48b;
+            --success-bg: rgba(56, 180, 139, 0.08);
+            --danger-color: #e76f51;
+            --danger-bg: rgba(231, 111, 81, 0.08);
             
             /* 背景和文本颜色 */
-            --bg-color: #f9faff;
+            --bg-color: #f7fafd;
             --card-bg: #ffffff;
-            --text-color: #2a2a30;
-            --text-light: #5a5a68;
-            --border-color: #eaeef8;
+            --text-color: #344155;
+            --text-light: #64748b;
+            --border-color: #e9eef6;
             
             /* UI 样式变量 */
-            --border-radius: 8px;
-            --box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
-            --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            --border-radius: 18px;
+            --border-radius-sm: 10px;
+            --box-shadow: 0 10px 25px rgba(0, 34, 85, 0.06);
+            --transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+            
+            /* 医学风格元素 */
+            --medical-accent: #4361ee;
+            --medical-highlight: rgba(67, 97, 238, 0.08);
+            
+            /* 二次元风格元素 */
+            --anime-highlight: rgba(114, 9, 183, 0.08);
+            --anime-border: rgba(114, 9, 183, 0.2);
+            --thmed-color: #e53e3e; /* 东方图标红色 */
             
             /* 字体设置 */
-            --font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            --font-family: 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
         }
         
         /* 暗色模式样式 */
         [data-theme="dark"] {
-            --primary-color: #f39c12;
-            --heading-color: #f5b041;
-            --primary-light: rgba(128, 128, 128, 0.15);
-            --secondary-color: #b47e3c;
-            --tertiary-color: rgba(109, 109, 109, 0.15);
-            --success-color: #36a18c;
-            --success-bg: rgba(62, 181, 135, 0.2);
-            --danger-color: #9e414f;
-            --danger-bg: rgba(214, 95, 110, 0.2);
+            --primary-gradient: linear-gradient(135deg, #4cc9f0, #7209b7);
+            --primary-color: #4cc9f0;
+            --heading-color: #4cc9f0;
+            --anime-accent: #f72585;
+            --primary-light: rgba(76, 201, 240, 0.15);
+            --secondary-color: #3db1d5;
+            --tertiary-color: rgba(76, 201, 240, 0.08);
+            --success-color: #38b48b;
+            --success-bg: rgba(56, 180, 139, 0.12);
+            --danger-color: #f72585;
+            --danger-bg: rgba(247, 37, 133, 0.12);
             
-            --bg-color: #252628;
-            --card-bg: #313337;
-            --text-color: #E6E1E3;
-            --text-light: #b4bec9;
-            --border-color: #3f4255;
+            --bg-color: #111827;
+            --card-bg: #1e293b;
+            --text-color: #e2edf7;
+            --text-light: #94a3b8;
+            --border-color: #2d3748;
+            --thmed-color: #f72585; /* 东方图标暗色模式颜色 */
             
-            --box-shadow: 0 6px 16px rgba(0, 10, 30, 0.35);
+            --box-shadow: 0 10px 25px rgba(0, 10, 20, 0.2);
+            
+            /* 暗色医学风格元素 */
+            --medical-accent: #4cc9f0;
+            --medical-highlight: rgba(76, 201, 240, 0.12);
+            
+            /* 暗色二次元风格元素 */
+            --anime-highlight: rgba(247, 37, 133, 0.08);
+            --anime-border: rgba(247, 37, 133, 0.2);
         }
         
         /* 基础样式 */
@@ -68,11 +93,16 @@
         body {
             font-family: var(--font-family);
             background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(circle at 15% 50%, var(--anime-highlight) 0%, transparent 35%),
+                radial-gradient(circle at 85% 30%, var(--medical-highlight) 0%, transparent 35%);
+            background-attachment: fixed;
             color: var(--text-color);
             line-height: 1.6;
-            transition: background-color 0.5s ease, color 0.5s ease;
+            transition: background-color 0.6s ease, color 0.6s ease;
             -webkit-tap-highlight-color: transparent;
             min-height: 100vh;
+            overflow-x: hidden;
         }
         
         /* 页面容器 */
@@ -82,51 +112,273 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            padding: 2rem;
+            padding: 5rem 2rem;
             text-align: center;
             max-width: 1200px;
             margin: 0 auto;
+            position: relative;
         }
         
         /* 标题样式 */
+        .logo-wrapper {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+        
         .logo {
-            font-size: 3rem;
+            font-size: 4rem;
             font-weight: 700;
-            margin-bottom: 1rem;
-            color: var(--heading-color);
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
             transition: var(--transition);
+            letter-spacing: 1px;
+            display: inline-block;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .logo-glow {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100%;
+            height: 100%;
+            background: var(--logo-color);
+            filter: blur(35px);
+            opacity: 0.12;
+            z-index: 1;
+            border-radius: 50%;
+            transition: all 0.8s ease;
+        }
+        
+        .logo-wrapper:hover .logo-glow {
+            opacity: 0.18;
+            width: 110%;
+            height: 110%;
+        }
+        
+        .logo-decoration {
+            position: absolute;
+            font-size: 1.8rem;
+            animation: float 4s ease-in-out infinite;
+            opacity: 0.9;
+            transition: all 0.5s ease;
+        }
+        
+        .logo-decoration:nth-child(1) {
+            top: -0.5rem;
+            left: -2.5rem;
+            transform: rotate(-15deg);
+            animation-delay: 0s;
+        }
+        
+        .logo-decoration:nth-child(2) {
+            bottom: -0.5rem;
+            right: -2.5rem;
+            transform: rotate(10deg);
+            animation-delay: 1.5s;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(-15deg); }
+            50% { transform: translateY(-12px) rotate(-10deg); }
         }
         
         .tagline {
             font-size: 1.3rem;
-            margin-bottom: 3rem;
+            margin-bottom: 3.5rem;
             max-width: 700px;
             color: var(--text-light);
             transition: var(--transition);
+            position: relative;
+            line-height: 1.7;
+            font-weight: 400;
         }
         
-        /* 主按钮样式 */
+        .tagline::after {
+            content: "";
+            display: block;
+            width: 80px;
+            height: 3px;
+            background: var(--primary-gradient);
+            margin: 1.8rem auto 0;
+            border-radius: 4px;
+            opacity: 0.7;
+            transition: all 0.4s ease;
+        }
+        
+        .logo-wrapper:hover + .tagline::after {
+            width: 120px;
+            opacity: 1;
+        }
+        
+        /* 图片展示区 */
+        .showcase-container {
+            position: relative;
+            width: 100%;
+            max-width: 900px;
+            height: 400px;
+            margin: 2rem 0 4.5rem;
+            perspective: 1200px;
+        }
+        
+        .showcase-img {
+            position: absolute;
+            width: 60%;
+            height: 320px;
+            overflow: hidden;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            transition: all 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+            border: 3px solid var(--card-bg);
+        }
+        
+        .showcase-img::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--primary-gradient);
+            z-index: 3;
+            opacity: 0.7;
+            transition: opacity 0.3s ease;
+        }
+        
+        .showcase-img:hover::before {
+            opacity: 1;
+        }
+        
+        .showcase-img img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: top;
+            transition: transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        
+        .showcase-img:hover img {
+            transform: scale(1.05);
+        }
+        
+        .showcase-img:first-child {
+            left: 0;
+            top: 0;
+            z-index: 1;
+            transform: rotate(-4deg);
+        }
+        
+        .showcase-img:last-child {
+            right: 0;
+            top: 50px;
+            z-index: 2;
+            transform: rotate(4deg);
+        }
+        
+        .showcase-img:first-child:hover {
+            transform: rotate(-2deg) translateY(-12px);
+            box-shadow: 0 18px 35px rgba(67, 97, 238, 0.15);
+        }
+        
+        .showcase-img:last-child:hover {
+            transform: rotate(2deg) translateY(-12px);
+            box-shadow: 0 18px 35px rgba(114, 9, 183, 0.15);
+        }
+        
+        /* 按钮样式 */
         .main-button {
-            background-color: var(--primary-color);
+            background: var(--primary-gradient);
             color: white;
             text-decoration: none;
-            padding: 1.2rem 2.5rem;
+            padding: 1.2rem 2.6rem;
             border-radius: var(--border-radius);
             font-size: 1.2rem;
             font-weight: 600;
-            transition: var(--transition);
+            transition: all 0.5s cubic-bezier(0.22, 1, 0.36, 1);
             box-shadow: var(--box-shadow);
             display: inline-flex;
             align-items: center;
             justify-content: center;
             border: none;
             cursor: pointer;
+            margin-right: 1.2rem;
+            position: relative;
+            overflow: hidden;
+            letter-spacing: 1px;
+        }
+        
+        .main-button::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: 0.8s;
+        }
+        
+        .main-button:hover::before {
+            left: 100%;
         }
         
         .main-button:hover {
-            background-color: var(--secondary-color);
-            transform: translateY(-3px);
-            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+            transform: translateY(-4px);
+            box-shadow: 0 15px 30px rgba(67, 97, 238, 0.2);
+        }
+        
+        .second-button {
+            background-color: transparent;
+            color: var(--text-light);
+            text-decoration: none;
+            padding: 1.1rem 2.5rem;
+            border-radius: var(--border-radius);
+            font-size: 1.2rem;
+            font-weight: 500;
+            transition: all 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+        }
+        
+        .second-button::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 0;
+            height: 100%;
+            background-color: var(--primary-light);
+            transition: all 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+            z-index: -1;
+        }
+        
+        .second-button:hover {
+            color: var(--primary-color);
+            border-color: var(--primary-color);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.04);
+        }
+        
+        .second-button:hover::before {
+            width: 100%;
+        }
+        
+        .buttons {
+            display: flex;
+            justify-content: center;
+            margin-top: 1.2rem;
+            flex-wrap: wrap;
+            gap: 1.2rem;
         }
         
         /* 功能特性区域 */
@@ -134,82 +386,339 @@
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
-            margin-top: 5rem;
-            gap: 2rem;
+            margin-top: 6rem;
+            gap: 2.2rem;
             max-width: 1000px;
         }
         
         .feature {
             flex: 1 1 280px;
-            padding: 2rem;
+            padding: 2.2rem;
             background-color: var(--card-bg);
             border-radius: var(--border-radius);
             box-shadow: var(--box-shadow);
-            transition: var(--transition);
+            transition: all 0.5s cubic-bezier(0.22, 1, 0.36, 1);
             border: 1px solid var(--border-color);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .feature::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--primary-gradient);
+            transition: all 0.3s ease;
+            opacity: 0.5;
+            transform: scaleX(0.7);
+            transform-origin: center;
         }
         
         .feature:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+            transform: translateY(-6px);
+            box-shadow: 0 18px 36px rgba(0, 34, 85, 0.1);
+        }
+        
+        .feature:hover::before {
+            opacity: 1;
+            transform: scaleX(1);
         }
         
         .feature-icon {
-            font-size: 3rem;
-            margin-bottom: 1.5rem;
-            color: var(--primary-color);
+            font-size: 2.5rem;
+            margin-bottom: 1.8rem;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            width: 75px;
+            height: 75px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            margin-left: auto;
+            margin-right: auto;
+            position: relative;
+            transition: all 0.5s ease;
+        }
+        
+        .feature-icon::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: var(--primary-gradient);
+            opacity: 0.1;
+            z-index: -1;
+            transition: all 0.5s ease;
+        }
+        
+        .feature:hover .feature-icon {
+            transform: scale(1.08);
+        }
+        
+        .feature:hover .feature-icon::after {
+            opacity: 0.15;
+            transform: scale(1.15);
         }
         
         .feature-title {
             font-size: 1.4rem;
             font-weight: 600;
-            margin-bottom: 1rem;
+            margin-bottom: 1.2rem;
             color: var(--heading-color);
+            transition: all 0.3s ease;
         }
         
         .feature-desc {
             font-size: 1rem;
             color: var(--text-light);
+            line-height: 1.7;
+            transition: all 0.3s ease;
+        }
+        
+        /* 合作伙伴区域 */
+        .brand-section {
+            background-color: var(--card-bg);
+            padding: 2.4rem;
+            border-radius: var(--border-radius);
+            margin-top: 5rem;
+            max-width: 520px;
+            width: 100%;
+            box-shadow: var(--box-shadow);
+            border: 1px solid var(--border-color);
+            transition: all 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .brand-section::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.03;
+            z-index: 0;
+            transition: opacity 0.5s ease;
+        }
+        
+        .brand-section:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 18px 36px rgba(0, 34, 85, 0.08);
+        }
+        
+        .brand-section:hover::before {
+            opacity: 0.06;
+        }
+        
+        .brand-content {
+            position: relative;
+            z-index: 1;
+        }
+        
+        /* 东方图标样式 - 浅色模式下为红色 */
+        .logo-invert {
+            max-width: 180px;
+            border-radius: var(--border-radius-sm);
+            margin-bottom: 1.4rem;
+            transition: all 0.5s ease;
+            opacity: 0.9;
+            filter: brightness(0) saturate(100%) invert(23%) sepia(83%) saturate(3695%) hue-rotate(343deg) brightness(97%) contrast(95%);
+        }
+        
+        [data-theme="dark"] .logo-invert {
+            filter: brightness(0) saturate(100%) invert(27%) sepia(94%) saturate(1680%) hue-rotate(315deg) brightness(96%) contrast(98%);
+        }
+        
+        .logo-invert {
+            opacity: 1;
+            transform: scale(1.05);
+        }
+        
+        .brand-section b {
+            display: block;
+            margin: 0.6rem 0;
+            font-size: 1.25rem;
+            color: var(--text-color);
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        .brand-section b::after {
+            content: "";
+            display: block;
+            width: 40px;
+            height: 2px;
+            background: var(--primary-gradient);
+            margin: 0.6rem auto 0;
+            border-radius: 2px;
+            transition: all 0.5s ease;
+            opacity: 0.7;
+        }
+        
+        .brand-section:hover b::after {
+            width: 60px;
+            opacity: 1;
+        }
+        
+        .brand-section p {
+            color: var(--text-light);
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+            line-height: 1.7;
+            transition: all 0.3s ease;
         }
         
         /* 页脚样式 */
         footer {
             margin-top: 5rem;
-            padding: 2rem 0;
+            padding: 2.5rem 0;
             color: var(--text-light);
             font-size: 0.9rem;
             width: 100%;
-            transition: var(--transition);
+            transition: all 0.3s ease;
+            position: relative;
         }
         
-        .footer-link {
-            color: var(--primary-color);
-            text-decoration: none;
-            transition: var(--transition);
+        footer::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 2px;
+            background: var(--primary-gradient);
+            opacity: 0.4;
+            transition: all 0.5s ease;
+            border-radius: 2px;
         }
         
-        .footer-link:hover {
-            color: var(--secondary-color);
-            text-decoration: underline;
+        footer:hover::before {
+            width: 140px;
+            opacity: 0.6;
+        }
+        
+        /* 二次元装饰元素 */
+        .anime-decoration {
+            position: absolute;
+            opacity: 0.03;
+            z-index: -1;
+            transition: all 0.8s ease;
+            font-size: 20rem;
+            color: var(--anime-accent);
+            filter: blur(2px);
+        }
+        
+        .anime-deco-1 {
+            top: 5%;
+            left: -10%;
+            animation: floating-slow 18s infinite alternate ease-in-out;
+        }
+        
+        .anime-deco-2 {
+            bottom: 5%;
+            right: -10%;
+            transform: rotate(15deg);
+            animation: floating-slow 15s infinite alternate-reverse ease-in-out;
+        }
+        
+        @keyframes floating-slow {
+            0% { transform: translate(0, 0) rotate(-5deg); }
+            50% { transform: translate(10px, -15px) rotate(0deg); }
+            100% { transform: translate(-10px, 15px) rotate(5deg); }
         }
         
         /* 暗色模式切换按钮 */
         .theme-toggle {
-            position: absolute;
-            top: 1.5rem;
-            right: 1.5rem;
-            background: none;
+            position: fixed;
+            top: 1.8rem;
+            right: 1.8rem;
+            background: var(--card-bg);
             border: none;
             cursor: pointer;
             font-size: 1.5rem;
             color: var(--text-color);
-            transition: var(--transition);
+            z-index: 100;
+            transition: all 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: var(--box-shadow);
+            border: 1px solid var(--border-color);
+            opacity: 0.85;
         }
         
-        /* 响应式调整 */
+        .theme-toggle:hover {
+            transform: rotate(15deg) scale(1.1);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
+            border-color: var(--anime-accent);
+            color: var(--anime-accent);
+            opacity: 1;
+        }
+        
+        /* 移动优化 */
+        @media (max-width: 900px) {
+            .container {
+                padding: 3rem 1.5rem;
+            }
+            
+            .showcase-container {
+                height: 500px;
+                margin: 2.5rem 0;
+            }
+            
+            .showcase-img {
+                width: 75%;
+                height: 220px;
+            }
+            
+            .showcase-img:first-child {
+                top: 0;
+                left: 10%;
+                z-index: 1;
+            }
+            
+            .showcase-img:last-child {
+                top: 250px;
+                right: 10%;
+                z-index: 2;
+            }
+            
+            .anime-decoration {
+                opacity: 0.015;
+                font-size: 12rem;
+                filter: blur(3px);
+            }
+        }
+        
         @media (max-width: 768px) {
             .logo {
-                font-size: 2.5rem;
+                font-size: 3rem;
+            }
+            
+            .logo-decoration {
+                font-size: 1.2rem;
+            }
+            
+            .logo-decoration:nth-child(1) {
+                left: -1.5rem;
+            }
+            
+            .logo-decoration:nth-child(2) {
+                right: -1.5rem;
             }
             
             .tagline {
@@ -218,32 +727,123 @@
                 padding: 0 1rem;
             }
             
-            .main-button {
-                padding: 1rem 2rem;
+            .tagline::after {
+                width: 60px;
+                margin-top: 1.2rem;
+            }
+            
+            .showcase-container {
+                height: auto;
+                display: flex;
+                flex-direction: column;
+                gap: 2rem;
+            }
+            
+            .showcase-img {
+                position: static;
+                width: 70%;
+                height: 160px;
+                margin: 0 auto;
+            }
+            
+            .showcase-img:hover {
+                transform: translateY(-8px) !important;
+            }
+            
+            [data-theme="light"] .showcase-img:first-child {
+                display: none;
+            }
+
+            [data-theme="dark"] .showcase-img:last-child {
+                display: none;
+            }
+    
+            .buttons {
+                flex-direction: column;
+                width: 100%;
+                max-width: 300px;
+            }
+            
+            .main-button, .second-button {
+                padding: 1.1rem 1.8rem;
                 font-size: 1.1rem;
+                width: 100%;
+                margin: 0;
             }
             
             .features {
-                margin-top: 3rem;
-                gap: 1.5rem;
-                padding: 0 1rem;
+                margin-top: 4rem;
+                gap: 1.8rem;
             }
             
             .feature {
-                padding: 1.5rem;
+                padding: 2rem;
+                min-height: unset;
             }
             
             .feature-icon {
-                font-size: 2.5rem;
+                font-size: 2rem;
+                width: 65px;
+                height: 65px;
+                margin-bottom: 1.2rem;
             }
             
             .feature-title {
-                font-size: 1.2rem;
+                font-size: 1.3rem;
+                margin-bottom: 1rem;
+            }
+            
+            .feature-desc {
+                font-size: 0.95rem;
+            }
+            
+            .brand-section {
+                padding: 2rem;
+                margin-top: 4rem;
+            }
+            
+            .brand-section .logo-invert {
+                max-width: 150px;
+            }
+            
+            .brand-section b {
+                font-size: 1.15rem;
+            }
+            
+            .brand-section p {
+                font-size: 0.9rem;
             }
             
             footer {
-                margin-top: 3rem;
-                padding: 1.5rem 1rem;
+                margin-top: 4rem;
+                padding: 2rem 0;
+            }
+            
+            .theme-toggle {
+                top: 1.2rem;
+                right: 1.2rem;
+                width: 45px;
+                height: 45px;
+                font-size: 1.2rem;
+            }
+        }
+        
+        @media (max-width: 380px) {
+            .logo {
+                font-size: 2.6rem;
+            }
+            
+            .tagline {
+                font-size: 1rem;
+            }
+            
+            .showcase-img {
+                height: 160px;
+            }
+            
+            .feature-icon {
+                width: 55px;
+                height: 55px;
             }
         }
     </style>
@@ -252,68 +852,162 @@
 <body>
     <button class="theme-toggle" id="themeToggle">🌙</button>
     
+    <div class="anime-decoration anime-deco-1">✨</div>
+    <div class="anime-decoration anime-deco-2">✨</div>
+    
     <div class="container">
-        <div class="logo">Elyxira</div>
-        <p class="tagline">一站式医学学习平台，助力医学生高效备考与知识掌握</p>
+        <div class="logo-wrapper">
+            <div class="logo-glow"></div>
+            <span class="logo-decoration">🌡️</span>
+            <div class="logo">Elyxira</div>
+            <span class="logo-decoration">📖</span>
+        </div>
+        <p class="tagline">开源学习平台，助力临床技能提升与医考备考</p>
         
-        <a href="./app.html" class="main-button">开始刷题学习</a>
+        <div class="showcase-container">
+            <div class="showcase-img">
+                <img src="./asset/screenshot1.png" alt="Elyxira 医学题库截图">
+            </div>
+            <div class="showcase-img">
+                <img src="./asset/screenshot2.png" alt="Elyxira AI分析截图">
+            </div>
+        </div>
+        
+        <div class="buttons">
+            <a href="./app.html" class="main-button">开始学习</a>
+            <a href="https://github.com/yokuminto/elyxira" class="second-button">GitHub 开源</a>
+        </div>
         
         <div class="features">
             <div class="feature">
                 <div class="feature-icon">📚</div>
-                <h3 class="feature-title">海量题库</h3>
-                <p class="feature-desc">未完工，持续更新最新考点和知识点，确保学习内容与考试同步</p>
+                <h3 class="feature-title">医学题库</h3>
+                <p class="feature-desc">精选高质量试题，配合详尽解析，助力医学生备考</p>
             </div>
             
             <div class="feature">
-                <div class="feature-icon">📊</div>
-                <h3 class="feature-title">智能分析</h3>
-                <p class="feature-desc">基于AI的个性化学习报告，精准定位薄弱环节，制定最优学习路径</p>
+                <div class="feature-icon">🧠</div>
+                <h3 class="feature-title">数据统计</h3>
+                <p class="feature-desc">分析学习弱点，提高备考效率与知识掌握程度</p>
             </div>
             
             <div class="feature">
-                <div class="feature-icon">📝</div>
-                <h3 class="feature-title">笔记系统</h3>
-                <p class="feature-desc">支持Markdown格式笔记，结合AI助手，高效整理学习要点，形成个人知识库</p>
+                <div class="feature-icon">💉</div>
+                <h3 class="feature-title">临床笔记</h3>
+                <p class="feature-desc">支持Markdown格式笔记，整合临床案例与医学知识，构建个人医学知识体系</p>
+            </div>
+        </div>
+        
+        <div class="brand-section">
+            <div align="center" class="brand-content">
+                <p>感谢支持</p>
+
+                <a href="https://thfmu.com/" title="东方医学">
+                    <img src="./asset/thmed.png" width="180" alt="THMED" class="logo-invert">
+                </a>
+                <p style="font-size: 14px;">欢迎来到东方医学(THMED)！</p>
+                <p style="font-size: 10px;" >东方医学致力于医学病案交流、循证体系建构与文化传播<br>
+                提供东方世界观作品与医学专业课的交流平台<br>
+                我们希望您在这里度过一段美好的时光～</p>
             </div>
         </div>
         
         <footer>
-            <p>© 2025 Elyxira - 开源医学学习平台 | <a href="https://github.com/yokuminto/yokuminto.github.io" class="footer-link">GitHub</a></p>
+            <p>© 2025 Elyxira - 专业医学学习平台</p>
         </footer>
     </div>
 
     <script>
-        // 暗色/亮色模式切换
+        // 暗色/亮色模式切换 - 平滑过渡
         const themeToggle = document.getElementById('themeToggle');
         
-        // 检查本地存储的主题偏好
+        // 检查本地存储的主题偏好并添加过渡效果
         function initTheme() {
-            const savedTheme = localStorage.getItem('theme');
-            if (savedTheme === 'dark') {
-                document.documentElement.setAttribute('data-theme', 'dark');
-                themeToggle.textContent = '☀️';
-            } else {
-                document.documentElement.setAttribute('data-theme', 'light');
-                themeToggle.textContent = '🌙';
-            }
+            const prefersDarkScheme = window.matchMedia("(prefers-color-scheme: dark)");
+            const savedTheme = localStorage.getItem('theme') || 
+                              (prefersDarkScheme.matches ? 'dark' : 'light');
+            
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            themeToggle.textContent = savedTheme === 'dark' ? '☀️' : '🌙';
+            
+            // 添加首次加载时的淡入效果
+            setTimeout(() => {
+                document.body.style.opacity = 1;
+            }, 100);
         }
         
-        // 切换主题
+        // 平滑切换主题
         themeToggle.addEventListener('click', () => {
             const currentTheme = document.documentElement.getAttribute('data-theme');
-            if (currentTheme === 'dark') {
-                document.documentElement.setAttribute('data-theme', 'light');
-                localStorage.setItem('theme', 'light');
-                themeToggle.textContent = '🌙';
-            } else {
-                document.documentElement.setAttribute('data-theme', 'dark');
-                localStorage.setItem('theme', 'dark');
-                themeToggle.textContent = '☀️';
-            }
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
+            // 添加过渡动画类
+            document.body.classList.add('theme-transition');
+            
+            // 设置新主题
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            themeToggle.textContent = newTheme === 'dark' ? '☀️' : '🌙';
+            
+            // 移除过渡动画类
+            setTimeout(() => {
+                document.body.classList.remove('theme-transition');
+            }, 600);
+        });
+        
+        // 图片懒加载和平滑显示
+        document.addEventListener('DOMContentLoaded', function() {
+            const showcaseImages = document.querySelectorAll('.showcase-img img');
+            
+            // 为所有图片添加渐入效果
+            showcaseImages.forEach(img => {
+                img.style.opacity = 0;
+                img.style.transition = 'opacity 0.8s ease';
+                
+                // 图片加载完成后显示
+                img.onload = function() {
+                    setTimeout(() => {
+                        img.style.opacity = 1;
+                    }, 300);
+                };
+                
+                // 如果图片已经缓存，立即显示
+                if (img.complete) {
+                    setTimeout(() => {
+                        img.style.opacity = 1;
+                    }, 300);
+                }
+            });
+            
+            // 平滑滚动效果
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const targetId = this.getAttribute('href');
+                    if (targetId === '#') return;
+                    
+                    document.querySelector(targetId).scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                });
+            });
+        });
+        
+        // 添加悬停时的微动画效果
+        const features = document.querySelectorAll('.feature');
+        features.forEach(feature => {
+            feature.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-6px)';
+            });
+            
+            feature.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0)';
+            });
         });
         
         // 初始化主题
+        document.body.style.opacity = 0;
+        document.body.style.transition = 'opacity 0.8s ease';
         initTheme();
     </script>
 </body>

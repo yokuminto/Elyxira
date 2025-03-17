@@ -1,6 +1,10 @@
-# Elyxira 
+
+
+<img src="./asset/banner.png">
 
 <div align="center">
+
+# Elyxira 
 
 ![版本](https://img.shields.io/badge/版本-1.0.0-blue?style=flat-square)
 ![协议](https://img.shields.io/badge/协议-MIT-green?style=flat-square)
@@ -177,9 +181,9 @@ E. 选项E
 ---
 
 <div align="center">
-  <a href="https://thfmu.com/" title="东方医学">
-    <img src="./asset/thmed.png" width="180" alt="THMED">
-  </a>
+<a href="https://thfmu.com/" title="东方医学">
+  <img src="./asset/thmed-github.png" width="180"  alt="THMED">
+</a>
   <br><b>欢迎来到东方医学(THMED)！</b><br>
   东方医学致力于医学病案交流、循证体系建构与文化传播<br>
   提供东方世界观作品与医学专业课的交流平台<br>
