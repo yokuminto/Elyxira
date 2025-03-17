@@ -182,7 +182,7 @@ E. 选项E
 
 <div align="center">
 <a href="https://thfmu.com/" title="东方医学">
-  <img src="./asset/thmed-github.png" width="180"  alt="THMED">
+  <img src="./asset/thmed.png" width="180"  alt="THMED">
 </a>
   <br><b>欢迎来到东方医学(THMED)！</b><br>
   东方医学致力于医学病案交流、循证体系建构与文化传播<br>
