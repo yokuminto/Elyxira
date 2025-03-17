@@ -2792,7 +2792,7 @@
                                 onclick="insertMarkdown('```mermaid\ngraph TD;\nA-->B;\nA-->C;\nB-->D;\nC-->D;\n```')">Mermaid图表</button>
                         </div>
                         <textarea id="notesTextarea" class="notes-editor" placeholder="在这里添加笔记..."></textarea>
-                        <button onclick="saveNotes()">保存笔记</button>
+                        <button onclick="saveNotesBtn()">保存笔记</button>
                     </div>
                 </div>
             </div>
@@ -4950,6 +4950,11 @@
             }
         }
 
+        function saveNotesBtn() {
+            saveNotes();
+            toggleNotesEditor();
+        }
+
         // 保存笔记
         function saveNotes() {
             const notesTextarea = document.getElementById('notesTextarea');
@@ -4958,9 +4963,6 @@
 
             // 重新渲染笔记
             renderNotes();
-
-            // 切换回显示模式
-            toggleNotesEditor();
 
             // 如果启用了自动备份并且笔记有变化，则保存到本地存储
             if (autoBackup && oldNotes !== currentQuestion.notes) {
