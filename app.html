@@ -5529,9 +5529,10 @@
                 if (!response.ok) {
                     throw new Error(`API请求失败: ${response.status} ${response.statusText}`);
                 }
-
-                const notesTextarea = document.getElementById('notesTextarea');
-                notesTextarea.value = '';
+                if(value.id === currentQuestion.id){
+                    const notesTextarea = document.getElementById('notesTextarea');
+                    notesTextarea.value = '';
+                }
                 let generatedNote = '';
 
                 if (requestData.stream) {
