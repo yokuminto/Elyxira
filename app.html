@@ -896,15 +896,21 @@
 
         .notes-editor {
             width: 100%;
-            min-height: 150px;
+            min-height: 120px;
+            /* 改用最小高度而不是固定高度 */
+            height: auto;
+            /* 允许自动扩展 */
             padding: 15px;
             border: 1px solid var(--border-color);
             border-radius: var(--border-radius);
-            resize: vertical;
             background-color: var(--card-bg);
             color: var(--text-color);
             transition: var(--transition);
             line-height: 1.6;
+            resize: vertical;
+            /* 保留用户手动调整的能力 */
+            overflow: hidden;
+            /* 防止出现滚动条 */
         }
 
         /* Markdown工具栏 */
@@ -3591,8 +3597,8 @@
             loadJsonFileList();
             initAPIConfigModal();
             initPromptPresets();
-            initRepoFeatures();
-            initFontSettings(); // 添加字体设置初始化
+            initFontSettings();
+            setupAutoResizeTextarea();
         });
 
 
@@ -4506,38 +4512,6 @@
             return { chapters };
         }
 
-        // 更新数据摘要
-        function updateDashboard() {
-            if (!quizData) {
-                return;
-            }
-
-            const totalChapters = quizData.chapters.length;
-            let totalQuestions = 0;
-            let answeredQuestions = 0;
-            let correctAnswers = 0;
-
-            quizData.chapters.forEach(chapter => {
-                totalQuestions += chapter.questions.length;
-                chapter.questions.forEach(question => {
-                    if (question.userAnswer) {
-                        answeredQuestions++;
-                        if (question.userAnswer === question.answer) {
-                            correctAnswers++;
-                        }
-                    }
-                });
-            });
-
-            const correctRate = totalQuestions > 0 ? (correctAnswers / totalQuestions * 100).toFixed(2) : 0;
-
-            document.getElementById('totalChapters').textContent = totalChapters;
-            document.getElementById('totalQuestions').textContent = totalQuestions;
-            document.getElementById('answeredQuestions').textContent = answeredQuestions;
-            document.getElementById('correctAnswers').textContent = correctAnswers;
-            document.getElementById('correctRate').textContent = correctRate + '%';
-        }
-
         // 初始化章节选择
         function initChapters() {
             if (!quizData) return;
@@ -4930,7 +4904,9 @@
                     } catch (error) {
                         console.error('Mermaid初始化失败:', error);
                     }
-
+                    if (notesTextarea) {
+                        autoResizeTextarea(notesTextarea);
+                    }
                     // 自动滚动到底部
                     notesDisplay.scrollTop = notesDisplay.scrollHeight;
                     notesTextarea.scrollTop = notesTextarea.scrollHeight;
@@ -4947,7 +4923,6 @@
             const notesDisplay = document.getElementById('notesDisplay');
             const notesEditor = document.getElementById('notesEditor');
             const editButton = document.getElementById('editNotesBtn');
-
             if (notesEditor.classList.contains('hidden')) {
                 // 切换到编辑模式
                 notesDisplay.classList.add('hidden');
@@ -4959,6 +4934,7 @@
                     </svg>
                 `;
                 editButton.title = '取消编辑';
+                setTimeout(() => autoResizeTextarea(document.getElementById('notesTextarea')), 0);
             } else {
                 // 切换回显示模式
                 notesDisplay.classList.remove('hidden');
@@ -5027,7 +5003,7 @@
 
             // 插入文本
             textarea.value = textarea.value.substring(0, start) + insertText + textarea.value.substring(end);
-
+            autoResizeTextarea(textarea);
             // 设置光标位置
             textarea.focus();
             if (selectedText) {
@@ -5461,12 +5437,11 @@
             });
         }
 
-        async function generateAINotes(value = currentQuestion) {
+        async function generateAINotes(question = currentQuestion) {
             if (isGeneratingNote) {
                 showToast('笔记正在生成中，请稍候...', 'info');
                 return;
             }
-
             isGeneratingNote = true;
             const apiConfig = getAIAPIConfig();
 
@@ -5492,9 +5467,9 @@
 
             // 获取当前问题信息
             const questionData = {
-                question: value.question,
-                options: value.options,
-                answer: value.answer
+                question: question.question,
+                options: question.options,
+                answer: question.answer
             };
 
             try {
@@ -5529,7 +5504,7 @@
                 if (!response.ok) {
                     throw new Error(`API请求失败: ${response.status} ${response.statusText}`);
                 }
-                if(value.id === currentQuestion.id){
+                if (question.id === currentQuestion.id) {
                     const notesTextarea = document.getElementById('notesTextarea');
                     notesTextarea.value = '';
                 }
@@ -5555,7 +5530,7 @@
                                     if (data.choices && data.choices[0].delta && data.choices[0].delta.content) {
                                         const content = data.choices[0].delta.content;
                                         generatedNote += content;
-                                        if (value.id === currentQuestion.id) {
+                                        if (question.id === currentQuestion.id) {
                                             renderNotes(content, true);
                                         }
 
@@ -5570,20 +5545,20 @@
                     const data = await response.json();
                     if (data.choices && data.choices[0] && data.choices[0].message) {
                         generatedNote = data.choices[0].message.content;
-                        if (value.id === currentQuestion.id) {
+                        if (question.id === currentQuestion.id) {
                             notesTextarea.value = generatedNote;
                         }
                     }
                 }
 
                 // 更新问题的笔记
-                value.notes = generatedNote;
-                if (value.id === currentQuestion.id) {
+                question.notes = generatedNote;
+                if (question.id === currentQuestion.id) {
                     renderNotes();
                 }
 
                 // 保存到缓存
-                saveQuestionToCache(value);
+                saveQuestionToCache(question);
 
                 showToast('AI笔记生成完成！', 'success');
 
@@ -5603,62 +5578,6 @@
                 await autoSyncNotes();
 
             }
-        }
-        // 获取AI API配置
-        function getAIAPIConfig() {
-            return {
-                apiUrl: localStorage.getItem('ai_api_url') || '',
-                apiKey: localStorage.getItem('ai_api_key') || '',
-                model: localStorage.getItem('ai_model') || 'deepseek-r1-250120',
-                systemPrompt: localStorage.getItem('ai_system_prompt') || '你是一个医学专家助手，擅长解释医学概念和知识点。',
-                temperature: parseFloat(localStorage.getItem('ai_temperature')) || 0.7,
-                topP: parseFloat(localStorage.getItem('ai_top_p')) || 0.9
-            };
-        }
-
-        // 保存AI API配置
-        function saveAIAPIConfig() {
-            const apiUrl = document.getElementById('aiApiUrl').value;
-            const apiKey = document.getElementById('aiApiKey').value;
-            const model = document.getElementById('aiModel').value;
-            const systemPrompt = document.getElementById('aiSystemPrompt').value;
-            localStorage.setItem('ai_api_url', apiUrl);
-            localStorage.setItem('ai_api_key', apiKey);
-            localStorage.setItem('ai_model', model);
-            localStorage.setItem('ai_system_prompt', systemPrompt);
-
-
-            showToast('API配置已保存', 'success');
-            closeModal('apiConfigModal');
-        }
-
-        // 显示API配置模态框
-        function showAPIConfigModal() {
-            const config = getAIAPIConfig();
-
-            document.getElementById('aiApiUrl').value = config.apiUrl;
-            document.getElementById('aiApiKey').value = config.apiKey;
-            document.getElementById('aiModel').value = config.model;
-            document.getElementById('aiSystemPrompt').value = config.systemPrompt;
-            document.getElementById('streamOutputToggle').checked = localStorage.getItem('streamOutput') === 'true';
-            document.getElementById('autoGenerateNotesToggle').checked = localStorage.getItem('streamOutput') !== 'true';
-            document.getElementById('temperature').value = config.temperature;
-            document.getElementById('topP').value = config.topP;
-
-
-            // 加载提示词预设
-            loadPromptPresets();
-
-            // 恢复上次选择的预设
-            const lastSelectedPreset = localStorage.getItem('last_selected_preset');
-            if (lastSelectedPreset) {
-                document.getElementById('promptPresetSelect').value = lastSelectedPreset;
-                loadSelectedPreset(); // 加载预设内容
-            }
-
-            // 显示模态框
-            const modal = document.getElementById('apiConfigModal');
-            modal.classList.add('active');
         }
 
         // 保存问题到缓存
@@ -6053,10 +5972,14 @@
             localStorage.setItem('ai_api_key', apiKey);
             localStorage.setItem('ai_model', model);
             localStorage.setItem('ai_system_prompt', systemPrompt);
-            localStorage.setItem('streamOutput', streamOutput);
-            localStorage.setItem('autoGenerateNotes', autoGenerateNotes);
+            localStorage.setItem('streamOutput', document.getElementById('streamOutputToggle').checked);
+            localStorage.setItem('autoGenerateNotes', document.getElementById('autoGenerateNotesToggle').checked);
             localStorage.setItem('ai_temperature', temperature);
             localStorage.setItem('ai_top_p', topP);
+
+            // 更新全局变量
+            streamOutput = document.getElementById('streamOutputToggle').checked;
+            autoGenerateNotes = document.getElementById('autoGenerateNotesToggle').checked;
 
             showToast('API配置已保存', 'success');
             closeModal('apiConfigModal');
@@ -6082,8 +6005,8 @@
             document.getElementById('aiApiKey').value = config.apiKey;
             document.getElementById('aiModel').value = config.model;
             document.getElementById('aiSystemPrompt').value = config.systemPrompt;
-            document.getElementById('streamOutputToggle').checked = streamOutput;
-            document.getElementById('autoGenerateNotesToggle').checked = autoGenerateNotes;
+            document.getElementById('streamOutputToggle').checked = localStorage.getItem('streamOutput') === 'true';
+            document.getElementById('autoGenerateNotesToggle').checked = localStorage.getItem('autoGenerateNotes') === 'true';
             document.getElementById('temperature').value = config.temperature;
             document.getElementById('topP').value = config.topP;
 
@@ -6844,6 +6767,33 @@
                 showToast('请先选择题库', 'info');
             }
         });
+
+        // 自动调整文本区域高度
+        function autoResizeTextarea(textarea) {
+            // 重置高度，以便正确计算
+            textarea.style.height = 'auto';
+            // 设置高度为滚动高度
+            textarea.style.height = (textarea.scrollHeight) + 'px';
+        }
+
+        // 为笔记文本区域添加自动调整高度功能
+        function setupAutoResizeTextarea() {
+            const textarea = document.getElementById('notesTextarea');
+            if (textarea) {
+                // 初始调整
+                autoResizeTextarea(textarea);
+
+                // 输入时调整
+                textarea.addEventListener('input', function () {
+                    autoResizeTextarea(this);
+                });
+
+                // 窗口大小改变时调整
+                window.addEventListener('resize', function () {
+                    autoResizeTextarea(textarea);
+                });
+            }
+        }
     </script>
 </body>
 
