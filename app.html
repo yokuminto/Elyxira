@@ -4904,9 +4904,6 @@
                     if (notesTextarea) {
                         autoResizeTextarea(notesTextarea);
                     }
-                    // 自动滚动到底部
-                    notesDisplay.scrollTop = notesDisplay.scrollHeight;
-                    notesTextarea.scrollTop = notesTextarea.scrollHeight;
                 } catch (error) {
                     console.error('Markdown渲染失败:', error);
                     notesDisplay.innerHTML = '<p class="text-muted">笔记渲染失败</p>';
@@ -4920,6 +4917,7 @@
             const notesDisplay = document.getElementById('notesDisplay');
             const notesEditor = document.getElementById('notesEditor');
             const editButton = document.getElementById('editNotesBtn');
+            setupAutoResizeTextarea();
             if (notesEditor.classList.contains('hidden')) {
                 // 切换到编辑模式
                 notesDisplay.classList.add('hidden');
@@ -6782,16 +6780,6 @@
             if (textarea) {
                 // 初始调整
                 autoResizeTextarea(textarea);
-
-                // 输入时调整
-                textarea.addEventListener('input', function () {
-                    autoResizeTextarea(this);
-                });
-
-                // 窗口大小改变时调整
-                window.addEventListener('resize', function () {
-                    autoResizeTextarea(textarea);
-                });
             }
         }
     </script>
