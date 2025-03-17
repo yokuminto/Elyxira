@@ -3725,15 +3725,15 @@
             // 从本地存储加载设置
             autoSubmit = localStorage.getItem('autoSubmit') === 'true';
             autoNext = localStorage.getItem('autoNext') === 'true';
-            autoBackup = localStorage.getItem('autoBackup') !== 'false'; // 默认为true
-            animationEnabled = localStorage.getItem('animationEnabled') !== 'false'; // 默认为true
+            autoBackup = localStorage.getItem('autoBackup') === 'true';
+            animationEnabled = localStorage.getItem('animationEnabled') === 'true';
             allowSkip = localStorage.getItem('allowSkip') === 'true'; // 默认为false
             showNotesAfterAnswer = localStorage.getItem('showNotesAfterAnswer') === 'true'; // 默认为false
-            swipeGestureEnabled = localStorage.getItem('swipeGestureEnabled') !== 'false'; // 默认为true
+            swipeGestureEnabled = localStorage.getItem('swipeGestureEnabled') === 'true';
             viewWrongAfterAll = localStorage.getItem('viewWrongAfterAll') === 'true'; // 默认为false
             lockAnswerAfterWrong = localStorage.getItem('lockAnswerAfterWrong') === 'true'; // 默认为false
-            showProgress = localStorage.getItem('showProgress') !== 'false'; // 默认为true
-            streamOutput = localStorage.getItem('streamOutput') !== 'false'; // 默认为true
+            showProgress = localStorage.getItem('showProgress') === 'true';
+            streamOutput = localStorage.getItem('streamOutput') === 'true';
             autoGenerateNotes = localStorage.getItem('autoGenerateNotes') === 'true'; // 默认为false
 
             // 加载刷题模式设置
@@ -5611,8 +5611,7 @@
                 model: localStorage.getItem('ai_model') || 'deepseek-r1-250120',
                 systemPrompt: localStorage.getItem('ai_system_prompt') || '你是一个医学专家助手，擅长解释医学概念和知识点。',
                 temperature: parseFloat(localStorage.getItem('ai_temperature')) || 0.7,
-                topP: parseFloat(localStorage.getItem('ai_top_p')) || 0.9,
-                autoGenerate: localStorage.getItem('autoGenerateNotes') === 'true'
+                topP: parseFloat(localStorage.getItem('ai_top_p')) || 0.9
             };
         }
 
@@ -5640,8 +5639,8 @@
             document.getElementById('aiApiKey').value = config.apiKey;
             document.getElementById('aiModel').value = config.model;
             document.getElementById('aiSystemPrompt').value = config.systemPrompt;
-            document.getElementById('streamOutputToggle').checked = localStorage.getItem('streamOutput') !== 'false';
-            document.getElementById('autoGenerateNotesToggle').checked = config.autoGenerate;
+            document.getElementById('streamOutputToggle').checked = localStorage.getItem('streamOutput') === 'true';
+            document.getElementById('autoGenerateNotesToggle').checked = localStorage.getItem('streamOutput') !== 'true';
             document.getElementById('temperature').value = config.temperature;
             document.getElementById('topP').value = config.topP;
 
@@ -5708,12 +5707,11 @@
                 }
             });
             document.getElementById('autoGenerateNotesToggle').addEventListener('change', function () {
-                localStorage.setItem('autoGenerateNotes', this.checked);
+                autoGenerateNotes = this.checked;
             });
             document.getElementById('streamOutputToggle').addEventListener('change', function () {
-                localStorage.setItem('streamOutput', this.checked);
+                streamOutput = this.checked;
             });
-
         }
 
         // 提示词预设相关变量
@@ -6047,8 +6045,6 @@
             const apiKey = document.getElementById('aiApiKey').value;
             const model = document.getElementById('aiModel').value;
             const systemPrompt = document.getElementById('aiSystemPrompt').value;
-            const streamOutput = document.getElementById('streamOutputToggle').checked;
-            const autoGenerate = document.getElementById('autoGenerateNotesToggle').checked;
             const temperature = parseFloat(document.getElementById('temperature').value);
             const topP = parseFloat(document.getElementById('topP').value);
 
@@ -6057,7 +6053,7 @@
             localStorage.setItem('ai_model', model);
             localStorage.setItem('ai_system_prompt', systemPrompt);
             localStorage.setItem('streamOutput', streamOutput);
-            localStorage.setItem('autoGenerateNotes', autoGenerate);
+            localStorage.setItem('autoGenerateNotes', autoGenerateNotes);
             localStorage.setItem('ai_temperature', temperature);
             localStorage.setItem('ai_top_p', topP);
 
