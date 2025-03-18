@@ -1,1 +1,0 @@
-function renderNotes(content = null, isStreaming = false) {\n    console.log('renderNotes调用:', { content: content, isStreaming: isStreaming });
