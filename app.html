@@ -2682,7 +2682,8 @@
                         </svg>
                     </button>
 
-                    <button id="editQuestionBtn" class="question-overview-button btn-primary-light" onclick="toggleEditQuestionModal()">
+                    <button id="editQuestionBtn" class="question-overview-button btn-primary-light"
+                        onclick="toggleEditQuestionModal()">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2">
                             <path d="M20 14.66V20a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h5.34"></path>
@@ -3134,7 +3135,6 @@
                         <span class="slider"></span>
                     </label>
                 </div>
-
                 <div class="api-config-item">
                     <label class="api-config-label">API地址</label>
                     <div class="api-config-description">AI服务的API端点URL</div>
@@ -3404,6 +3404,12 @@
                             <span>仅生成空白解析题目</span>
                         </label>
                     </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="batchConcurrentLimit">批量处理并发数量</label>
+                    <input type="number" id="batchConcurrentLimit" min="1" max="10" value="10">
+                    <small>同时处理的问题数量</small>
                 </div>
                 <div class="progress-container" style="display: none;">
                     <div class="progress-status">
@@ -5624,12 +5630,12 @@
             });
         }
 
-        async function generateAINotes(question = currentQuestion) {
-            if (isGeneratingNote) {
+        async function generateAINotes(question = currentQuestion, skipLockCheck = false) {
+            if (!skipLockCheck && isGeneratingNote) {
                 showToast('笔记正在生成中，请稍候...', 'info');
                 return;
             }
-            isGeneratingNote = true;
+            isGeneratingNote = !skipLockCheck;
             const apiConfig = getAIAPIConfig();
 
             // 验证必要的API配置
@@ -5761,8 +5767,10 @@
                     generateBtn.disabled = false;
                     generateBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>';
                 }, 2000);
-                isGeneratingNote = false;
-                await autoSyncNotes();
+                if (!skipLockCheck) {
+                    isGeneratingNote = false;
+                    await autoSyncNotes();
+                }
 
             }
         }
@@ -6154,7 +6162,9 @@
             const systemPrompt = document.getElementById('aiSystemPrompt').value;
             const temperature = parseFloat(document.getElementById('temperature').value);
             const topP = parseFloat(document.getElementById('topP').value);
+            const concurrentLimit = document.getElementById('batchConcurrentLimit').value;
 
+            localStorage.setItem('batch_concurrent_limit', concurrentLimit);
             localStorage.setItem('ai_api_url', apiUrl);
             localStorage.setItem('ai_api_key', apiKey);
             localStorage.setItem('ai_model', model);
@@ -6174,6 +6184,10 @@
 
         // 修改获取API配置的函数
         function getAIAPIConfig() {
+            const concurrentLimit = localStorage.getItem('batch_concurrent_limit') || '3';
+            document.getElementById('batchConcurrentLimit').value = concurrentLimit;
+
+
             return {
                 apiUrl: localStorage.getItem('ai_api_url') || 'https://ark.cn-beijing.volces.com/api/v3/chat/completions',
                 apiKey: localStorage.getItem('ai_api_key') || '',
@@ -7176,50 +7190,35 @@
             // 聚焦新选项
             contentInput.focus();
         }
-        // 批量生成解析
+
+        // 批量生成AI笔记
         async function batchGenerateNotes() {
-            // 获取生成范围
-            const scope = document.querySelector('input[name="generateScope"]:checked').value;
-
-            // 确定需要生成解析的问题列表
-            let questionsToProcess = [];
-
-            switch (scope) {
-                case 'current':
-                    // 当前章节
-                    const currentChapter = quizData.chapters.find(c =>
-                        c.questions.some(q => q.id === currentQuestion.id)
-                    );
-                    if (currentChapter) {
-                        questionsToProcess = [...currentChapter.questions];
-                    }
-                    break;
-                case 'all':
-                    // 所有章节
-                    quizData.chapters.forEach(chapter => {
-                        questionsToProcess = [...questionsToProcess, ...chapter.questions];
-                    });
-                    break;
-                case 'empty':
-                    // 仅没有解析的题目
-                    quizData.chapters.forEach(chapter => {
-                        const emptyNotes = chapter.questions.filter(q => !q.notes || q.notes.trim() === '');
-                        questionsToProcess = [...questionsToProcess, ...emptyNotes];
-                    });
-                    break;
-            }
-
-            // 显示进度条
-            const progressContainer = document.querySelector('.progress-container');
-            const progressBar = document.querySelector('.progress-bar');
-            const progressText = document.querySelector('.progress-text');
-            const progressCount = document.querySelector('.progress-count');
+            const modal = document.getElementById('batchGenerateModal');
             const startButton = document.getElementById('startBatchGenerateBtn');
             const cancelButton = document.getElementById('cancelBatchGenerateBtn');
+            const progressBar = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
+            const progressCount = document.getElementById('accuracyText');
 
-            progressContainer.style.display = 'block';
+            // 禁用开始按钮
             startButton.disabled = true;
-            cancelButton.textContent = '停止生成';
+            cancelButton.textContent = '取消';
+
+            // 获取选中的问题
+            const questionsToProcess = [];
+            for (const chapter of quizData.chapters) {
+                for (const question of chapter.questions) {
+                    if (!question.notes || question.notes.length === 0) {
+                        questionsToProcess.push(question);
+                    }
+                }
+            }
+
+            if (questionsToProcess.length === 0) {
+                showToast('请至少选择一个问题', 'warning');
+                startButton.disabled = false;
+                return;
+            }
 
             // 设置停止标志
             window.stopBatchGeneration = false;
@@ -7239,32 +7238,76 @@
             // 记录成功和失败的数量
             let successCount = 0;
             let failCount = 0;
+            let processedCount = 0;
 
-            // 开始批量生成
-            for (let i = 0; i < questionsToProcess.length; i++) {
-                // 检查是否停止生成
-                if (window.stopBatchGeneration) {
-                    break;
+            // 定义一个更新进度的函数
+            const updateProgress = () => {
+                processedCount++;
+                progressCount.textContent = `${processedCount}/${totalCount}`;
+                progressBar.style.width = `${(processedCount / totalCount) * 100}%`;
+            };
+
+            // 获取API配置中设置的并发数量，默认为10
+            const concurrentLimit = parseInt(localStorage.getItem('batch_concurrent_limit') || '10');
+
+            // 添加批次计数
+            let batchNumber = 1;
+            const totalBatches = Math.ceil(questionsToProcess.length / concurrentLimit);
+
+            // 将问题分批处理
+            while (questionsToProcess.length > 0 && !window.stopBatchGeneration) {
+                // 取出当前批次要处理的问题（最多concurrentLimit个）
+                const currentBatch = questionsToProcess.splice(0, concurrentLimit);
+
+                progressText.textContent = `正在处理第${batchNumber}/${totalBatches}批 (${currentBatch.length}个问题)...`;
+
+                // 记录当前批次完成数量
+                let currentBatchCompleted = 0;
+
+                // 创建当前批次的处理任务
+                const batchPromises = currentBatch.map(async (question) => {
+                    try {
+                        await generateAINotes(question, true);
+                        successCount++;
+                        return { success: true, question };
+                    } catch (error) {
+                        console.error(`处理问题失败: ${question.question.substring(0, 20)}...`, error);
+                        failCount++;
+                        return { success: false, question, error };
+                    } finally {
+                        updateProgress();
+                        // 更新当前批次进度
+                        currentBatchCompleted++;
+                        progressText.textContent = `正在处理第${batchNumber}/${totalBatches}批 (${currentBatchCompleted}/${currentBatch.length})...`;
+                    }
+                });
+
+
+                // 并行执行当前批次的所有任务
+                await Promise.all(batchPromises);
+
+                // 当前批次处理完毕后执行一次同步
+                progressText.textContent = `第${batchNumber}/${totalBatches}批处理完成！正在同步...`;
+                await autoSyncNotes();
+
+                // 显示当前批次完成信息
+                progressText.textContent = `第${batchNumber}/${totalBatches}批处理完成！`;
+
+                // 批次间短暂暂停，避免API限制
+                if (questionsToProcess.length > 0 && !window.stopBatchGeneration) {
+                    // 在批次之间显示暂停信息
+                    progressText.textContent = `第${batchNumber}/${totalBatches}批完成，短暂暂停后继续...`;
+                    await new Promise(resolve => setTimeout(resolve, 1000));
                 }
 
-                const question = questionsToProcess[i];
-                progressText.textContent = `正在处理: ${question.question.substring(0, 20)}...`;
-                progressCount.textContent = `${i + 1}/${totalCount}`;
-                progressBar.style.width = `${((i + 1) / totalCount) * 100}%`;
-
-                try {
-                    // 调用生成解析函数
-                    await generateAINotes(question);
-                    successCount++;
-                } catch (error) {
-                    console.error('生成解析失败:', error);
-                    failCount++;
-                    // 继续处理下一个问题
-                }
-
-                // 给API一些喘息时间
-                await new Promise(resolve => setTimeout(resolve, 1000));
+                // 更新批次计数
+                batchNumber++;
             }
+
+
+            // 在所有批次处理完后，再做一次最终同步确保数据完整
+            progressText.textContent = '所有批次处理完成，正在进行最终同步...';
+            await autoSyncNotes();
 
             // 生成完成
             progressText.textContent = '生成完成';
@@ -7284,6 +7327,7 @@
                 showToast(`批量生成完成: 成功${successCount}个，失败${failCount}个`, 'success');
             }
         }
+
         // 初始化问题编辑模态框
         function initQuestionEditModal() {
             // 绑定关闭按钮
