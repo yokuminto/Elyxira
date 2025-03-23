@@ -2357,6 +2357,131 @@
                 background-color: rgba(255, 255, 255, 0.15);
             }
         }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--primary-color);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            background-color: var(--card-bg);
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px var(--primary-light);
+        }
+
+        .form-control:disabled {
+            background-color: var(--bg-light);
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        textarea.form-control {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .option-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px dashed var(--border-color);
+        }
+
+        .option-row:last-child {
+            border-bottom: none;
+        }
+
+        .option-label {
+            width: 50px;
+            flex-shrink: 0;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .option-content {
+            flex-grow: 1;
+        }
+
+        .delete-option {
+            background-color: var(--danger-light) !important;
+            color: var(--danger-color) !important;
+            padding: 8px !important;
+            border-radius: 50% !important;
+            width: 36px !important;
+            height: 36px !important;
+            min-width: 36px !important;
+        }
+
+        .delete-option:hover {
+            background-color: var(--danger-color) !important;
+            color: white !important;
+        }
+
+        #addOptionBtn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background-color: var(--primary-light);
+            color: var(--primary-color);
+            padding: 10px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+            width: 100%;
+            justify-content: center;
+        }
+
+        #addOptionBtn:hover {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .modal-body {
+            padding: 5px 0 20px;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        #saveQuestionBtn,
+        #cancelQuestionEditBtn {
+            min-width: 120px;
+            padding: 12px 20px;
+            font-weight: 500;
+        }
+
+        #cancelQuestionEditBtn {
+            background-color: var(--bg-light);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+        }
+
+        #cancelQuestionEditBtn:hover {
+            background-color: var(--border-color);
+        }
     </style>
 
 
@@ -2683,7 +2808,7 @@
                     </button>
 
                     <button id="editQuestionBtn" class="question-overview-button btn-primary-light"
-                        onclick="toggleEditQuestionModal()">
+                        onclick="toggleQuestionEditor()">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2">
                             <path d="M20 14.66V20a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h5.34"></path>
@@ -3750,13 +3875,6 @@
         window.addEventListener('offline', () => updateSyncStatus('offline'));
 
         function initUI() {
-            document.getElementById('editQuestionBtn').addEventListener('click', function () {
-                if (currentQuestion) {
-                    openQuestionEditor(currentQuestion);
-                } else {
-                    showToast('请先选择一个题目', 'warning');
-                }
-            });
             // 添加批量生成解析按钮到导航栏
             const toolsDropdown = document.querySelector('.dropdown-content[data-dropdown="tools"]');
             if (toolsDropdown) {
@@ -4378,8 +4496,11 @@
         }
 
         function toggleQuestionEditor() {
-            const modal = document.getElementById('questionEditorModal');
-            modal.classList.toggle('active');
+            if (currentQuestion) {
+                openQuestionEditor(currentQuestion);
+            } else {
+                showToast('请先选择一个题目', 'warning');
+            }
         }
 
 
