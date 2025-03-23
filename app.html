@@ -2638,6 +2638,16 @@
                         </svg>
                         题目总览
                     </button>
+
+                    <button id="editQuestionBtn" class="dropdown-item" onclick="toggleQuestionEditor()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M20 14.66V20a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h5.34"></path>
+                            <polygon points="18 2 22 6 12 16 8 16 8 12 18 2"></polygon>
+                        </svg>
+                        <span>编辑题目</span>
+                    </button>
+
                 </div>
             </div>
 
@@ -2671,6 +2681,16 @@
                             <line x1="3" y1="15" x2="21" y2="15"></line>
                         </svg>
                     </button>
+
+                    <button id="editQuestionBtn" class="question-overview-button btn-primary-light" onclick="toggleEditQuestionModal()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M20 14.66V20a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h5.34"></path>
+                            <polygon points="18 2 22 6 12 16 8 16 8 12 18 2"></polygon>
+                        </svg>
+
+                    </button>
+
                 </div>
             </div>
 
@@ -2763,6 +2783,11 @@
                                     <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                                 </svg>
                             </button>
+
+                            <button id="batchGenerateBtn" class="secondary" onclick="toggleBatchGenerateModal()">
+                                <span>批</span>
+                            </button>
+
                             <button id="aiGenerateNotesBtn" class="secondary" title="AI自动生成笔记"
                                 onclick="generateAINotes()">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -3346,6 +3371,116 @@
         </div>
     </div>
 
+
+    <!-- 批量生成解析模态框 -->
+    <div id="batchGenerateModal" class="modal-overlay">
+        <div class="settings-modal">
+            <div class="modal-header">
+                <h3>批量生成解析</h3>
+                <button id="closeBatchGenerateModal" class="btn-icon close-modal">
+                    <svg width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="alert">
+                    <p>此功能将为所有没有解析的题目批量生成AI解析。根据题目数量，这可能需要较长时间。</p>
+                </div>
+                <div class="form-group">
+                    <label>生成范围</label>
+                    <div class="radio-group">
+                        <label class="radio">
+                            <input type="radio" name="generateScope" value="current" checked>
+                            <span>当前章节</span>
+                        </label>
+                        <label class="radio">
+                            <input type="radio" name="generateScope" value="all">
+                            <span>全部章节</span>
+                        </label>
+                        <label class="radio">
+                            <input type="radio" name="generateScope" value="empty">
+                            <span>仅生成空白解析题目</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="progress-container" style="display: none;">
+                    <div class="progress-status">
+                        <span class="progress-text">准备中...</span>
+                        <span class="progress-count">0/0</span>
+                    </div>
+                    <div class="progress">
+                        <div class="progress-bar" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="startBatchGenerateBtn" class="btn btn-primary">开始生成</button>
+                <button id="cancelBatchGenerateBtn" class="btn btn-outline">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 管理问题模态框 -->
+    <div id="questionEditModal" class="modal-overlay">
+        <div class="settings-modal">
+            <div class="modal-header">
+                <h3>编辑问题</h3>
+                <button id="closeQuestionEditModal" class="btn-icon close-modal">
+                    <svg width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="questionEditForm">
+                    <div class="form-group">
+                        <label for="editQuestionId">题目ID</label>
+                        <input type="number" id="editQuestionId" class="form-control" disabled>
+                    </div>
+                    <div class="form-group">
+                        <label for="editQuestionNumber">题目序号</label>
+                        <input type="number" id="editQuestionNumber" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editQuestionText">题目内容</label>
+                        <textarea id="editQuestionText" class="form-control" rows="3" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>选项</label>
+                        <div id="editOptionsContainer">
+                            <!-- 选项会通过JS动态添加 -->
+                        </div>
+                        <button type="button" id="addOptionBtn" class="btn btn-outline btn-sm">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                            </svg>
+                            添加选项
+                        </button>
+                    </div>
+                    <div class="form-group">
+                        <label for="editQuestionAnswer">正确答案</label>
+                        <select id="editQuestionAnswer" class="form-control" required>
+                            <!-- 选项通过JS动态添加 -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="editQuestionNotes">解析</label>
+                        <textarea id="editQuestionNotes" class="form-control" rows="5"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button id="saveQuestionBtn" class="btn btn-primary">保存更改</button>
+                <button id="cancelQuestionEditBtn" class="btn btn-outline">取消</button>
+            </div>
+        </div>
+    </div>
+
     <script>
 
         // 全局变量
@@ -3595,6 +3730,7 @@
             initTheme();
             initMermaid();
             initSettings();
+            initUI();
             initMobileUI();
             loadJsonFileList();
             initAPIConfigModal();
@@ -3607,6 +3743,26 @@
         // 监听网络状态
         window.addEventListener('offline', () => updateSyncStatus('offline'));
 
+        function initUI() {
+            document.getElementById('editQuestionBtn').addEventListener('click', function () {
+                if (currentQuestion) {
+                    openQuestionEditor(currentQuestion);
+                } else {
+                    showToast('请先选择一个题目', 'warning');
+                }
+            });
+            // 添加批量生成解析按钮到导航栏
+            const toolsDropdown = document.querySelector('.dropdown-content[data-dropdown="tools"]');
+            if (toolsDropdown) {
+                const batchGenerateBtn = document.createElement('button');
+                batchGenerateBtn.className = 'dropdown-item';
+                batchGenerateBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/></svg><span>批量生成解析</span>';
+                batchGenerateBtn.onclick = openBatchGenerateModal;
+                toolsDropdown.appendChild(batchGenerateBtn);
+            }
+            initQuestionEditModal();
+            initBatchGenerateModal();
+        }
         // 初始化移动端UI功能
         function initMobileUI() {
             // 移动端设置同步到主设置
@@ -4198,6 +4354,11 @@
             modal.classList.toggle('active');
         }
 
+        function toggleBatchGenerateModal() {
+            const modal = document.getElementById('batchGenerateModal');
+            modal.classList.toggle('active');
+        }
+
         // 切换题目总览弹窗
         function toggleQuestionOverview() {
             const modal = document.getElementById('questionOverviewModal');
@@ -4209,6 +4370,12 @@
 
             modal.classList.toggle('active');
         }
+
+        function toggleQuestionEditor() {
+            const modal = document.getElementById('questionEditorModal');
+            modal.classList.toggle('active');
+        }
+
 
         // 更新题目总览内容
         function updateQuestionOverview() {
@@ -4826,6 +4993,23 @@
                 option.addEventListener('click', handleOptionClick);
                 optionsList.appendChild(option);
             });
+            // 在问题显示区域添加编辑按钮
+            const questionContainer = document.getElementById('question-container');
+            if (questionContainer) {
+                const editBtn = document.createElement('button');
+                editBtn.className = 'btn btn-icon edit-question-btn';
+                editBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 14.66V20a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h5.34"></path><polygon points="18 2 22 6 12 16 8 16 8 12 18 2"></polygon></svg>';
+                editBtn.title = '编辑问题';
+                editBtn.style.position = 'absolute';
+                editBtn.style.top = '10px';
+                editBtn.style.right = '10px';
+                editBtn.style.zIndex = '1';
+                editBtn.onclick = function () {
+                    openQuestionEditor(currentQuestion);
+                };
+                questionContainer.style.position = 'relative';
+                questionContainer.appendChild(editBtn);
+            }
         }
 
         // 统一的选项点击处理函数
@@ -6786,6 +6970,366 @@
                 // 初始调整
                 autoResizeTextarea(textarea);
             }
+        }
+
+        function openQuestionEditor(question) {
+            const editModal = document.getElementById('questionEditModal');
+            const editForm = document.getElementById('questionEditForm');
+            const optionsContainer = document.getElementById('editOptionsContainer');
+            const answerSelect = document.getElementById('editQuestionAnswer');
+
+            // 清空选项容器
+            optionsContainer.innerHTML = '';
+            answerSelect.innerHTML = '';
+
+            // 填充表单数据
+            document.getElementById('editQuestionId').value = question.id;
+            document.getElementById('editQuestionNumber').value = question.number;
+            document.getElementById('editQuestionText').value = question.question;
+            document.getElementById('editQuestionNotes').value = question.notes || '';
+
+            // 添加选项
+            question.options.forEach((option, index) => {
+                const optionId = `option-${index}`;
+                const optionLabel = option.charAt(0); // 选项标签（A, B, C, D...）
+
+                // 创建选项行容器
+                const optionRow = document.createElement('div');
+                optionRow.className = 'option-row';
+
+                // 创建选项标签
+                const labelInput = document.createElement('input');
+                labelInput.type = 'text';
+                labelInput.className = 'option-label';
+                labelInput.value = optionLabel;
+                labelInput.readOnly = true;
+
+                // 创建选项内容输入框
+                const contentInput = document.createElement('input');
+                contentInput.type = 'text';
+                contentInput.className = 'form-control option-content';
+                contentInput.id = optionId;
+                contentInput.value = option.substring(2).trim(); // 去掉选项标签和点
+
+                // 创建删除按钮
+                const deleteBtn = document.createElement('button');
+                deleteBtn.type = 'button';
+                deleteBtn.className = 'btn-icon delete-option';
+                deleteBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
+                deleteBtn.onclick = function () {
+                    optionRow.remove();
+                    updateAnswerOptions();
+                };
+
+                // 组装选项行
+                optionRow.appendChild(labelInput);
+                optionRow.appendChild(contentInput);
+                optionRow.appendChild(deleteBtn);
+
+                // 添加到选项容器
+                optionsContainer.appendChild(optionRow);
+
+                // 添加到答案选择器
+                const answerOption = document.createElement('option');
+                answerOption.value = optionLabel;
+                answerOption.textContent = optionLabel;
+                answerSelect.appendChild(answerOption);
+            });
+
+            // 设置正确答案
+            answerSelect.value = question.answer;
+
+            // 显示模态框
+            editModal.classList.add('active');
+        }
+
+        // 更新答案选项
+        function updateAnswerOptions() {
+            const optionRows = document.querySelectorAll('.option-row');
+            const answerSelect = document.getElementById('editQuestionAnswer');
+
+            // 清空当前选项
+            answerSelect.innerHTML = '';
+
+            // 添加新选项
+            optionRows.forEach((row, index) => {
+                const label = String.fromCharCode(65 + index); // A, B, C, D...
+                const option = document.createElement('option');
+                option.value = label;
+                option.textContent = label;
+                answerSelect.appendChild(option);
+
+                // 更新选项标签
+                row.querySelector('.option-label').value = label;
+            });
+        }
+
+        // 保存编辑后的问题
+        function saveQuestionChanges() {
+            const editModal = document.getElementById('questionEditModal');
+            const questionId = parseInt(document.getElementById('editQuestionId').value);
+            const questionNumber = parseInt(document.getElementById('editQuestionNumber').value);
+            const questionText = document.getElementById('editQuestionText').value;
+            const questionNotes = document.getElementById('editQuestionNotes').value;
+            const questionAnswer = document.getElementById('editQuestionAnswer').value;
+
+            // 收集选项
+            const optionRows = document.querySelectorAll('.option-row');
+            const options = Array.from(optionRows).map(row => {
+                const label = row.querySelector('.option-label').value;
+                const content = row.querySelector('.option-content').value;
+                return `${label}、${content}`;
+            });
+
+            // 验证表单
+            if (!questionText || options.length < 2 || !questionAnswer) {
+                showToast('请完成所有必填字段', 'error');
+                return;
+            }
+
+            // 找到并更新问题
+            let updatedQuestion = null;
+
+            // 遍历所有章节寻找要更新的问题
+            for (const chapter of quizData.chapters) {
+                const questionIndex = chapter.questions.findIndex(q => q.id === questionId);
+                if (questionIndex !== -1) {
+                    // 更新问题数据
+                    chapter.questions[questionIndex] = {
+                        ...chapter.questions[questionIndex],
+                        question: questionText,
+                        number: questionNumber,
+                        options: options,
+                        answer: questionAnswer,
+                        notes: questionNotes
+                    };
+
+                    updatedQuestion = chapter.questions[questionIndex];
+                    break;
+                }
+            }
+
+            if (updatedQuestion) {
+                // 如果更新的是当前问题，刷新显示
+                if (currentQuestion && currentQuestion.id === questionId) {
+                    currentQuestion = updatedQuestion;
+                    displayQuestion();
+                }
+
+                // 保存到localStorage
+                localStorage.setItem('quizData', JSON.stringify(quizData));
+                showToast('问题更新成功！', 'success');
+
+                // 关闭模态框
+                editModal.classList.remove('active');
+            } else {
+                showToast('未找到要更新的问题', 'error');
+            }
+        }
+
+        // 添加选项
+        function addOption() {
+            const optionsContainer = document.getElementById('editOptionsContainer');
+            const optionRows = optionsContainer.querySelectorAll('.option-row');
+            const index = optionRows.length;
+            const label = String.fromCharCode(65 + index); // A, B, C, D...
+
+            // 创建选项行容器
+            const optionRow = document.createElement('div');
+            optionRow.className = 'option-row';
+
+            // 创建选项标签
+            const labelInput = document.createElement('input');
+            labelInput.type = 'text';
+            labelInput.className = 'option-label';
+            labelInput.value = label;
+            labelInput.readOnly = true;
+
+            // 创建选项内容输入框
+            const contentInput = document.createElement('input');
+            contentInput.type = 'text';
+            contentInput.className = 'form-control option-content';
+            contentInput.id = `option-${index}`;
+            contentInput.placeholder = '输入选项内容';
+
+            // 创建删除按钮
+            const deleteBtn = document.createElement('button');
+            deleteBtn.type = 'button';
+            deleteBtn.className = 'btn-icon delete-option';
+            deleteBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
+            deleteBtn.onclick = function () {
+                optionRow.remove();
+                updateAnswerOptions();
+            };
+
+            // 组装选项行
+            optionRow.appendChild(labelInput);
+            optionRow.appendChild(contentInput);
+            optionRow.appendChild(deleteBtn);
+
+            // 添加到选项容器
+            optionsContainer.appendChild(optionRow);
+
+            // 更新答案选项
+            updateAnswerOptions();
+
+            // 聚焦新选项
+            contentInput.focus();
+        }
+        // 批量生成解析
+        async function batchGenerateNotes() {
+            // 获取生成范围
+            const scope = document.querySelector('input[name="generateScope"]:checked').value;
+
+            // 确定需要生成解析的问题列表
+            let questionsToProcess = [];
+
+            switch (scope) {
+                case 'current':
+                    // 当前章节
+                    const currentChapter = quizData.chapters.find(c =>
+                        c.questions.some(q => q.id === currentQuestion.id)
+                    );
+                    if (currentChapter) {
+                        questionsToProcess = [...currentChapter.questions];
+                    }
+                    break;
+                case 'all':
+                    // 所有章节
+                    quizData.chapters.forEach(chapter => {
+                        questionsToProcess = [...questionsToProcess, ...chapter.questions];
+                    });
+                    break;
+                case 'empty':
+                    // 仅没有解析的题目
+                    quizData.chapters.forEach(chapter => {
+                        const emptyNotes = chapter.questions.filter(q => !q.notes || q.notes.trim() === '');
+                        questionsToProcess = [...questionsToProcess, ...emptyNotes];
+                    });
+                    break;
+            }
+
+            // 显示进度条
+            const progressContainer = document.querySelector('.progress-container');
+            const progressBar = document.querySelector('.progress-bar');
+            const progressText = document.querySelector('.progress-text');
+            const progressCount = document.querySelector('.progress-count');
+            const startButton = document.getElementById('startBatchGenerateBtn');
+            const cancelButton = document.getElementById('cancelBatchGenerateBtn');
+
+            progressContainer.style.display = 'block';
+            startButton.disabled = true;
+            cancelButton.textContent = '停止生成';
+
+            // 设置停止标志
+            window.stopBatchGeneration = false;
+            cancelButton.onclick = function () {
+                window.stopBatchGeneration = true;
+                cancelButton.textContent = '取消';
+                startButton.disabled = false;
+                showToast('批量生成已停止', 'info');
+            };
+
+            // 更新进度信息
+            const totalCount = questionsToProcess.length;
+            progressCount.textContent = `0/${totalCount}`;
+            progressBar.style.width = '0%';
+            progressText.textContent = '准备中...';
+
+            // 记录成功和失败的数量
+            let successCount = 0;
+            let failCount = 0;
+
+            // 开始批量生成
+            for (let i = 0; i < questionsToProcess.length; i++) {
+                // 检查是否停止生成
+                if (window.stopBatchGeneration) {
+                    break;
+                }
+
+                const question = questionsToProcess[i];
+                progressText.textContent = `正在处理: ${question.question.substring(0, 20)}...`;
+                progressCount.textContent = `${i + 1}/${totalCount}`;
+                progressBar.style.width = `${((i + 1) / totalCount) * 100}%`;
+
+                try {
+                    // 调用生成解析函数
+                    await generateAINotes(question);
+                    successCount++;
+                } catch (error) {
+                    console.error('生成解析失败:', error);
+                    failCount++;
+                    // 继续处理下一个问题
+                }
+
+                // 给API一些喘息时间
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+
+            // 生成完成
+            progressText.textContent = '生成完成';
+            progressBar.style.width = '100%';
+            cancelButton.textContent = '关闭';
+            startButton.disabled = false;
+
+            // 重置停止函数
+            cancelButton.onclick = function () {
+                document.getElementById('batchGenerateModal').classList.remove('active');
+            };
+
+            // 显示结果
+            if (window.stopBatchGeneration) {
+                showToast(`已停止生成: 成功${successCount}个，失败${failCount}个`, 'info');
+            } else {
+                showToast(`批量生成完成: 成功${successCount}个，失败${failCount}个`, 'success');
+            }
+        }
+        // 初始化问题编辑模态框
+        function initQuestionEditModal() {
+            // 绑定关闭按钮
+            document.getElementById('closeQuestionEditModal').addEventListener('click', function () {
+                document.getElementById('questionEditModal').classList.remove('active');
+            });
+
+            // 绑定取消按钮
+            document.getElementById('cancelQuestionEditBtn').addEventListener('click', function () {
+                document.getElementById('questionEditModal').classList.remove('active');
+            });
+
+            // 绑定保存按钮
+            document.getElementById('saveQuestionBtn').addEventListener('click', saveQuestionChanges);
+
+            // 绑定添加选项按钮
+            document.getElementById('addOptionBtn').addEventListener('click', addOption);
+        }
+
+        // 初始化批量生成模态框
+        function initBatchGenerateModal() {
+            // 绑定关闭按钮
+            document.getElementById('closeBatchGenerateModal').addEventListener('click', function () {
+                document.getElementById('batchGenerateModal').classList.remove('active');
+            });
+
+            // 绑定取消按钮
+            document.getElementById('cancelBatchGenerateBtn').addEventListener('click', function () {
+                document.getElementById('batchGenerateModal').classList.remove('active');
+            });
+
+            // 绑定开始生成按钮
+            document.getElementById('startBatchGenerateBtn').addEventListener('click', batchGenerateNotes);
+        }
+
+        // 打开批量生成解析模态框
+        function openBatchGenerateModal() {
+            document.getElementById('batchGenerateModal').classList.add('active');
+
+            // 重置进度条
+            const progressContainer = document.querySelector('.progress-container');
+            progressContainer.style.display = 'none';
+
+            // 重置按钮状态
+            document.getElementById('startBatchGenerateBtn').disabled = false;
+            document.getElementById('cancelBatchGenerateBtn').textContent = '取消';
         }
     </script>
 </body>
