@@ -1,0 +1,210 @@
+/* ==========================================================================
+   全局CSS变量定义 (Global CSS Variables)
+   ========================================================================== */
+
+:root {
+  /* ==================== 颜色系统 (Color System) ==================== */
+  /* 基础颜色 */
+  /* Cyan */
+  --color-cyan-very-light: #b2ebf2;
+  --color-cyan-light: #4dd0e1;
+  --color-cyan: #00acc1;
+  --color-cyan-dark: #00838f;
+  --color-cyan-very-dark: #005662;
+
+  /* Blue */
+  --color-blue-very-light: #f4f6ff;
+  --color-blue-light: #e8edfd;
+  --color-blue: #5a6bf2;
+  --color-blue-dark: #4a5df2;
+  --color-blue-very-dark: #3542b2;
+
+  /* Purple */
+  --color-purple-very-light: #e8d6ef;
+  --color-purple-light: #c39bd3;
+  --color-purple: #8e44ad;
+  --color-purple-dark: #5b2c6f;
+  --color-purple-very-dark: #3b1a45;
+
+  /* Gray */
+  --color-gray-very-light: #f3f4f6;
+  --color-gray-light: #d1d5db;
+  --color-gray: #9ca3af;
+  --color-gray-dark: #4b5563;
+  --color-gray-very-dark: #1f2937;
+
+  /* White & Black */
+  --color-white: #ffffff;
+  --color-white-transparent: rgba(255, 255, 255, 0);
+  --color-black: #000000;
+  --color-black-transparent: rgba(0, 0, 0, 0);
+
+  /* Transparent */
+  --color-transparent: transparent;
+
+  /* 功能色 */
+  --color-primary-light: rgba(68, 104, 238, 0.12);
+  --color-primary: #5164f4;
+  --color-secondary: #5a6bf2;
+  --color-success: #36b991;
+  --color-warning: #f5a623;
+  --color-tertiary: rgba(155, 175, 245, 0.12);
+  --color-danger: #ef4444;
+
+  /* 主色调 */
+  --c-blue: #4468ee; /* 品蓝 */
+  --c-indigo: #3a42d5; /* 深蓝 */
+  --c-green: #36b991; /* 绿松石 */
+  --c-red: #e54960; /* 绯红 */
+  --c-yellow: #f5a623; /* 金黄 */
+  --c-sky: #3dacf7; /* 天蓝 */
+  --c-pink: #e94db3; /* 玫红 */
+  --c-purple: #9c27b0; /* 紫罗兰 */
+  --c-orange: #ff9800; /* 橙色 */
+  --c-brown: #7d6e63; /* 棕色 */
+  --c-gray: #607d8b; /* 石墨灰 */
+  --c-cyan: #00acc1; /* 青色 */
+
+  /* 文本颜色 */
+  --t-dark: #2a2a30; /* 深灰 */
+  --t-medium: #5a5a68; /* 中灰 */
+  --t-light: #9ca3af; /* 浅灰 */
+  --t-accent: #4468ee; /* 强调色(品蓝) */
+
+  /* 背景颜色 */
+  --bg-blue: rgba(68, 104, 238, 0.1); /* 品蓝(浅) */
+  --bg-indigo: rgba(58, 66, 213, 0.08); /* 深蓝(浅) */
+  --bg-green: rgba(54, 185, 145, 0.08); /* 绿松石(浅) */
+  --bg-red: rgba(229, 73, 96, 0.08); /* 绯红(浅) */
+  --bg-yellow: rgba(245, 166, 35, 0.08); /* 金黄(浅) */
+  --bg-sky: rgba(61, 172, 247, 0.08); /* 天蓝(浅) */
+  --bg-pink: rgba(233, 77, 179, 0.08); /* 玫红(浅) */
+  --bg-purple: rgba(156, 39, 176, 0.08); /* 紫罗兰(浅) */
+  --bg-orange: rgba(255, 152, 0, 0.08); /* 橙色(浅) */
+  --bg-brown: rgba(125, 110, 99, 0.08); /* 棕色(浅) */
+  --bg-gray: rgba(96, 125, 139, 0.08); /* 石墨灰(浅) */
+  --bg-cyan: rgba(0, 172, 193, 0.08); /* 青色(浅) */
+
+  /* 基础背景色 */
+  --bg-white: #f9faff;
+  --bg-white-light: #f3f4f6;
+  --bg-white-transparent: rgba(255, 255, 255, 0.01);
+  --bg-black-transparent: rgba(0, 0, 0, 0.01);
+
+  /* 透明背景色 */
+  --bg-gray-transparent: rgba(255, 255, 255, 0.1);
+
+  /* 功能背景色 */
+  --bg-knowledge: rgba(0, 172, 193, 0.08);
+  --bg-quiz: rgba(142, 68, 173, 0.08);
+  --bg-anime: rgba(114, 9, 183, 0.08);
+  --bg-medical: rgba(71, 106, 238, 0.08);
+  --bg-danger: rgba(239, 68, 68, 0.1);
+  --bg-success: rgba(54, 185, 145, 0.12);
+
+  /* 边框颜色 */
+  --border: #9ca3af;
+  --border-gray-transparent: rgba(0, 0, 0, 0.1);
+
+  /* 文字颜色 */
+  --text: #1f2937;
+  --text-light: #6b7280;
+  --text-main: #2a2a30;
+  --text-secondary: #5a5a68;
+  --text-heading: #7684ef;
+
+  /* 交互状态 */
+  --hover-primary: #6366f1;
+  --hover-tertiary: #e2e8f0;
+  --hover-danger: #ef4444;
+
+  /* ==================== 渐变效果 (Gradients) ==================== */
+  --gradient-primary: linear-gradient(135deg, var(--color-cyan), var(--color-purple));
+  --gradient-card: linear-gradient(to right, rgba(0, 172, 193, 0.05), rgba(142, 68, 173, 0.05));
+  --gradient-logo: linear-gradient(135deg, var(--color-cyan) 25%, var(--color-purple) 75%);
+
+  /* ==================== 布局相关 (Layout Related) ==================== */
+  /* 圆角 */
+  --radius-sm: 8px;
+  --radius: 12px;
+  --radius-lg: 16px;
+  --radius-full: 50%;
+
+  /* 阴影 */
+  --shadow-light: 0 0px 4px rgba(0, 0, 0, 0.02);
+  --shadow: 0 0px 6px rgba(0, 0, 0, 0.15);
+  --shadow-dark: 0 0px 12px rgba(0, 0, 0, 0.15);
+  --shadow-very-dark: 0 0px 16px rgba(0, 0, 0, 0.15);
+
+  /* 卡片颜色 */
+  --card: white;
+  --card-dark: #f5f5f5;
+
+  /* ==================== Markdown渲染相关 (Markdown Related) ==================== */
+  /* 基础背景与文本 */
+  --note-bg: #fcfefe; /* 替换原有的 --note__bg */
+  --note-text: #2a2a30;
+
+  /* 表格样式 */
+  --note-table-border: #80ddff;
+  --note-table-header-bg: #d6eef9;
+  --note-table-header-text: var(--color-black);
+  --note-table-row-odd: #ffffff;
+  --note-table-row-even: #eef7fb;
+
+  /* 代码块样式 */
+  --note-code-bg: #f7f9fc;
+  --note-code-text: #2d2d35;
+  --note-code-border: #edf0f7;
+
+  /* mermaid图表样式 */
+  --note-mermaid-bg: transparent;
+  --note-mermaid-border: rgba(0, 172, 193, 0.2);
+  --note-mermaid-node-bg: #f9faff;
+  --note-mermaid-node-border: #3daed7;
+  --note-mermaid-cluster-bg: rgba(0, 172, 193, 0.08);
+  --note-mermaid-edge-color: #607d8b;
+  --note-mermaid-label-bg: #eef7fb;
+  --note-mermaid-font: var(--family-font);
+
+  /* 引用块样式 */
+  --note-quote-border: #3a56d4;
+  --note-quote-bg: rgba(58, 86, 212, 0.12);
+
+  /* 链接样式 */
+  --note-link: #2a4dd1;
+
+  /* 标记高亮 */
+  --note-mark-yellow: rgba(245, 166, 35, 0.3);
+  --note-mark-green: rgba(54, 185, 145, 0.3);
+  --note-mark-blue: rgba(61, 172, 247, 0.3);
+  --note-mark-red: rgba(229, 73, 96, 0.3);
+  --note-mark-purple: rgba(58, 66, 213, 0.3);
+
+  /* 水平线样式 */
+  --note-hr: rgba(0, 0, 0, 0.2);
+
+  /* 标题样式 */
+  --note-h3: #04aeef;
+
+  /* ==================== 动画相关 (Animation Related) ==================== */
+  --transition-duration: 0.2s;
+  --transition-timing: ease;
+  --transition-all: all 0.25s ease;
+
+  /* ==================== 主题切换 (Theme Toggle) ==================== */
+  --theme-toggle__bg-white: #e9ecef;
+  --theme-toggle__border: rgba(0, 0, 0, 0.08);
+  --theme-toggle__icon-sun: #fad7a0;
+  --theme-toggle__icon-moon: #d2b4de;
+  --theme-toggle__bg-black: #3a3f50;
+
+  /* ==================== 导航栏 (Navbar) ==================== */
+  --navbar__bg: rgba(255, 255, 255, 0.1);
+  --navbar__bg-search: rgba(255, 255, 255, 0.1);
+  --navbar__border: rgba(230, 235, 245, 0.2);
+  --navbar__height: 64px;
+
+  /* ==================== 字体 (Font) ==================== */
+  --family-font: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+}

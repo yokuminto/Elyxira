@@ -1,85 +1,85 @@
 <script setup lang="ts">
-import { RouterLink, RouterView } from 'vue-router'
-import HelloWorld from './components/HelloWorld.vue'
+import { RouterView } from 'vue-router';
+import { ref, onErrorCaptured, onMounted } from 'vue';
+import { injectToastStyles } from './utils/toast';
+
+const hasError = ref(false);
+const errorMessage = ref('');
+
+// 初始化Toast样式
+onMounted(() => {
+  injectToastStyles();
+});
+
+onErrorCaptured((err) => {
+  console.error('App error:', err);
+
+  // 路由相关错误继续传播
+  if (/Failed to load|Loading chunk|module/.test(err.toString())) {
+    return true;
+  }
+
+  hasError.value = true;
+  errorMessage.value = err.toString();
+  return false;
+});
 </script>
 
 <template>
-  <header>
-    <img alt="Vue logo" class="logo" src="@/assets/logo.svg" width="125" height="125" />
-
-    <div class="wrapper">
-      <HelloWorld msg="You did it!" />
-
-      <nav>
-        <RouterLink to="/">Home</RouterLink>
-        <RouterLink to="/about">About</RouterLink>
-      </nav>
-    </div>
-  </header>
-
-  <RouterView />
+  <RouterView v-slot="{ Component }">
+    <transition name="page" mode="out-in">
+      <suspense>
+        <div class="app-container">
+          <component :is="Component" />
+        </div>
+        <template #fallback>
+          <div class="loading">加载中...</div>
+        </template>
+      </suspense>
+    </transition>
+  </RouterView>
 </template>
 
-<style scoped>
-header {
-  line-height: 1.5;
-  max-height: 100vh;
+<style>
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
-.logo {
-  display: block;
-  margin: 0 auto 2rem;
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  display: none;
 }
 
-nav {
-  width: 100%;
-  font-size: 12px;
-  text-align: center;
-  margin-top: 2rem;
+/* 页面过渡动画 */
+.page-enter-active,
+.page-leave-active {
+  transition:
+    opacity 0.3s,
+    transform 0.3s;
 }
 
-nav a.router-link-exact-active {
-  color: var(--color-text);
+.page-enter-from,
+.page-leave-to {
+  opacity: 0;
+  transform: translateY(10px);
 }
 
-nav a.router-link-exact-active:hover {
-  background-color: transparent;
+/* 加载状态样式 */
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  font-size: 1.2rem;
+  color: var(--color-primary);
 }
 
-nav a {
-  display: inline-block;
-  padding: 0 1rem;
-  border-left: 1px solid var(--color-border);
-}
-
-nav a:first-of-type {
-  border: 0;
-}
-
-@media (min-width: 1024px) {
-  header {
-    display: flex;
-    place-items: center;
-    padding-right: calc(var(--section-gap) / 2);
-  }
-
-  .logo {
-    margin: 0 2rem 0 0;
-  }
-
-  header .wrapper {
-    display: flex;
-    place-items: flex-start;
-    flex-wrap: wrap;
-  }
-
-  nav {
-    text-align: left;
-    margin-left: -1rem;
-    font-size: 1rem;
-
-    padding: 1rem 0;
-    margin-top: 1rem;
-  }
+.app-container {
+  min-height: 100vh;
 }
 </style>

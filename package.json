@@ -17,14 +17,19 @@
     "format": "prettier --write src/"
   },
   "dependencies": {
+    "marked": "^15.0.7",
+    "mermaid": "^11.5.0",
     "pinia": "^3.0.1",
     "vue": "^3.5.13",
-    "vue-router": "^4.5.0"
+    "vue-router": "^4.5.0",
+    "vue-toastification": "^2.0.0-rc.5"
   },
   "devDependencies": {
     "@playwright/test": "^1.51.0",
     "@tsconfig/node22": "^22.0.0",
     "@types/jsdom": "^21.1.7",
+    "@types/marked": "^5.0.2",
+    "@types/mermaid": "^9.1.0",
     "@types/node": "^22.13.9",
     "@vitejs/plugin-vue": "^5.2.1",
     "@vitejs/plugin-vue-jsx": "^4.1.1",

@@ -1,0 +1,1069 @@
+/*
+ * Modal组件通用样式
+ * 使用BEM命名规范: modal, modal__element, modal--modifier
+ */
+
+/* 基础模态框 */
+.modal {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.25s ease;
+}
+
+.modal--active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.modal__content {
+  background-color: var(--card, #fff);
+  border-radius: var(--radius, 8px);
+  width: 90%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+  transform: scale(0.95);
+  transition: transform 0.25s ease;
+  border: 1px solid var(--border, #9ca3af);
+}
+
+/* 特殊内容类 */
+.modal__content--settings {
+  max-width: 650px;
+}
+
+.modal--active .modal__content {
+  transform: scale(1);
+}
+
+.modal__header {
+  padding: 16px;
+  border-bottom: 1px solid var(--border, #9ca3af);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  background-color: var(--card, white);
+  z-index: 5;
+}
+
+.modal__title {
+  margin: 0;
+  font-size: 1.2rem;
+  color: var(--text-heading, #7684ef);
+  font-weight: 600;
+}
+
+.modal__close {
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: var(--text-secondary, #5a5a68);
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.modal__close:hover {
+  color: var(--color-danger, #ef4444);
+  background-color: var(--bg-danger, rgba(239, 68, 68, 0.1));
+}
+
+.modal__body {
+  padding: 16px;
+}
+
+.modal__footer {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  padding: 16px;
+  position: sticky;
+  bottom: 0;
+  background-color: var(--card, white);
+  border-top: 1px solid var(--border, #9ca3af);
+  z-index: 5;
+}
+
+/* 表单元素样式 */
+.modal__form-group {
+  margin-bottom: 1.5rem;
+}
+
+.modal__form-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.modal__form-description {
+  font-size: 0.875rem;
+  color: var(--text-secondary, #5a5a68);
+  margin-bottom: 0.5rem;
+}
+
+.modal__form-input {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid var(--border, #9ca3af);
+  border-radius: 4px;
+  background: var(--bg-white, #f9faff);
+  color: var(--text, #1f2937);
+  height: 36px;
+}
+
+.modal__form-control {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background-color: var(--color-background-soft);
+  color: var(--color-text-primary);
+}
+
+.modal__form-input-group {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.modal__form-input-group input[type='range'] {
+  flex: 1;
+}
+
+.modal__form-options {
+  margin-top: 0.5rem;
+}
+
+.modal__form-actions {
+  margin-top: 1.5rem;
+}
+
+/* 设置面板样式 */
+.modal__settings-group {
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+}
+
+.modal__settings-group:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.modal__settings-group-title {
+  margin-bottom: 15px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.modal__setting-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.modal__setting-item-name {
+  font-size: 0.9rem;
+  color: var(--color-text-primary);
+}
+
+/* 设置标签页样式 */
+.modal__settings-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 1rem;
+}
+
+.modal__settings-tab {
+  padding: 0.75rem 1.5rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-weight: 500;
+  color: var(--text-secondary);
+  position: relative;
+}
+
+.modal__settings-tab--active {
+  color: var(--text-main);
+}
+
+.modal__settings-tab--active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background-color: var(--color-primary);
+}
+
+.modal__tab-container {
+  max-height: 60vh;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+}
+
+/* 开关样式 */
+.modal__toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 42px;
+  height: 24px;
+}
+
+.modal__toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.modal__toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--color-gray-light);
+  transition: 0.4s;
+  border-radius: 15px;
+}
+
+.modal__toggle-slider:before {
+  position: absolute;
+  content: '';
+  height: 16px;
+  width: 16px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: 0.4s;
+  border-radius: 8px;
+}
+
+.modal__toggle-switch input:checked + .modal__toggle-slider {
+  background-color: var(--color-blue);
+}
+
+.modal__toggle-switch input:checked + .modal__toggle-slider:before {
+  transform: translateX(18px);
+}
+
+/* 下拉选择框样式 */
+.modal__select-styled {
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background-color: var(--color-background-soft);
+  color: var(--color-text-primary);
+  min-width: 180px;
+  font-size: 0.9rem;
+}
+
+.modal__select-styled:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px var(--color-primary-light);
+}
+
+/* 选项和编辑行样式 */
+.modal__option-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.modal__option-label {
+  width: 30px;
+  font-weight: bold;
+}
+
+.modal__option-content {
+  flex: 1;
+}
+
+.modal__option-delete {
+  margin-left: 10px;
+  background: none;
+  border: none;
+  color: var(--color-danger);
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+.modal__add-option-btn {
+  background: none;
+  border: 1px dashed var(--border);
+  border-radius: 4px;
+  color: var(--color-text-secondary);
+  padding: 8px;
+  width: 100%;
+  margin-top: 10px;
+  cursor: pointer;
+}
+
+/* 标签页样式 */
+.modal__tabs {
+  display: flex;
+  flex-direction: column;
+}
+
+.modal__tab-headers {
+  display: flex;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.modal__tab-header {
+  padding: 0.5rem 1rem;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-weight: 500;
+  color: var(--text-color-secondary);
+  transition: all 0.3s ease;
+}
+
+.modal__tab-header--active {
+  color: var(--primary-color);
+  border-bottom: 2px solid var(--primary-color);
+}
+
+.modal__tab-content {
+  flex: 1;
+}
+
+.modal__tab-panel {
+  display: none;
+}
+
+.modal__tab-panel--active {
+  display: block;
+}
+
+/* 导入/导出选项样式 */
+.modal__import-options,
+.modal__export-options {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.modal__import-option,
+.modal__export-option {
+  background: var(--card-bg);
+  border-radius: 8px;
+  padding: 1rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.modal__file-input-wrapper {
+  margin-top: 1rem;
+}
+
+.modal__file-input-wrapper input[type='file'] {
+  display: none;
+}
+
+.modal__file-input-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: var(--primary-color);
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.modal__file-input-label:hover {
+  background: var(--primary-color-dark);
+}
+
+.modal__url-import {
+  margin-top: 1rem;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.modal__url-import input {
+  flex: 1;
+  padding: 0.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background: var(--input-bg);
+  color: var(--text-color);
+}
+
+.modal__url-import button,
+.modal__export-button {
+  padding: 0.5rem 1rem;
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.modal__url-import button:hover,
+.modal__export-button:hover {
+  background: var(--primary-color-dark);
+}
+
+.modal__export-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+/* 统计结果样式 */
+.modal__statistics-results {
+  padding: 1rem;
+}
+
+.modal__statistics-results-section {
+  margin-bottom: 1.5rem;
+}
+
+.modal__statistics-results-title {
+  margin-bottom: 0.5rem;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.modal__statistics-results-card {
+  background: var(--card-bg-light);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.modal__statistics-results-score-display {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--primary-color);
+  margin-bottom: 0.5rem;
+}
+
+.modal__statistics-results-score-detail {
+  color: var(--text-color-secondary);
+}
+
+/* 题目总览样式 */
+.modal__question-overview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+  gap: 10px;
+  padding: 1rem;
+}
+
+.modal__question-overview-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+  background-color: var(--color-background-soft);
+  border-radius: var(--radius-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.modal__question-overview-item--current {
+  background-color: var(--color-primary);
+  color: white;
+}
+
+.modal__question-overview-item--answered {
+  border: 1px solid var(--color-border);
+}
+
+.modal__question-overview-item--correct {
+  background-color: var(--color-success-bg);
+  color: var(--color-success);
+}
+
+.modal__question-overview-item--incorrect {
+  background-color: var(--color-danger-bg);
+  color: var(--color-danger);
+}
+
+/* 调试信息样式 */
+.modal__debug-info {
+  padding: 1rem;
+}
+
+.modal__debug-info h3 {
+  margin: 1.5rem 0 0.5rem;
+  font-size: 1rem;
+  color: var(--text-color-secondary);
+  font-weight: 600;
+  border-bottom: 1px solid var(--border-color-light);
+  padding-bottom: 0.5rem;
+}
+
+.modal__debug-info h3:first-child {
+  margin-top: 0;
+}
+
+.modal__debug-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  border-bottom: 1px dashed var(--border-color-light);
+}
+
+.modal__debug-item:last-child {
+  border-bottom: none;
+}
+
+/* 按钮样式 */
+.modal__button {
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  margin: 0 4px;
+  min-width: 80px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal__button--primary {
+  background-color: var(--color-primary, #5164f4);
+  color: white;
+}
+
+.modal__button--primary:hover {
+  background-color: var(--hover-primary, #6366f1);
+}
+
+.modal__button--secondary {
+  background-color: var(--color-gray-very-light, #f3f4f6);
+  color: var(--text, #1f2937);
+  border: 1px solid var(--border, #9ca3af);
+}
+
+.modal__button--secondary:hover {
+  background-color: var(--hover-tertiary, #e2e8f0);
+}
+
+.modal__button--danger {
+  background-color: var(--color-danger);
+  color: white;
+}
+
+.modal__button--danger:hover {
+  background-color: var(--color-danger-dark);
+}
+
+.modal__button--success {
+  background-color: var(--color-success);
+  color: white;
+}
+
+.modal__button--success:hover {
+  background-color: var(--color-success-dark);
+}
+
+/* 仓库配置模态框样式 */
+.modal__separator {
+  height: 1px;
+  background-color: var(--border, #9ca3af);
+  margin: 20px 0;
+}
+
+.modal__section-title {
+  font-size: 1.1rem;
+  margin-bottom: 15px;
+  color: var(--text-main, #2a2a30);
+  font-weight: 500;
+}
+
+.modal__info-panel {
+  margin-bottom: 20px;
+  padding: 15px;
+  border-radius: var(--radius, 12px);
+  background-color: var(--bg-white-light, #f3f4f6);
+  border: 1px solid var(--border, #9ca3af);
+}
+
+.modal__info-title {
+  font-size: 1rem;
+  margin-top: 0;
+  margin-bottom: 10px;
+  color: var(--text-heading, #7684ef);
+  font-weight: 600;
+}
+
+.modal__info-message {
+  color: var(--text-light, #6b7280);
+  font-style: italic;
+}
+
+.modal__info-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.modal__info-item {
+  display: flex;
+  align-items: center;
+}
+
+.modal__info-label {
+  font-weight: 500;
+  min-width: 100px;
+  color: var(--text-light, #6b7280);
+}
+
+.modal__info-value {
+  color: var(--text-main, #2a2a30);
+  font-weight: 500;
+}
+
+/* AI设置模态框样式 */
+.modal-api-config .modal__prompt-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.modal-api-config .modal__prompt-buttons {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.modal-api-config .modal__form-textarea {
+  width: 100%;
+  min-height: 120px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  resize: vertical;
+  margin-top: 5px;
+  font-family: var(--family-font);
+}
+
+.modal-api-config .modal__footer-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.modal-api-config .modal__setting-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+}
+
+.modal-api-config .modal__setting-description {
+  flex: 1;
+}
+
+.modal-api-config .modal__setting-name {
+  font-weight: 600;
+  margin-bottom: 3px;
+}
+
+.modal-api-config .modal__setting-detail {
+  font-size: 0.9em;
+  color: var(--text-light);
+  margin-bottom: 5px;
+}
+
+.modal-api-config .modal__toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 48px;
+  height: 24px;
+}
+
+.modal-api-config .modal__toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.modal-api-config .slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--border);
+  transition: 0.4s;
+  border-radius: 24px;
+}
+
+.modal-api-config .slider:before {
+  position: absolute;
+  content: '';
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.4s;
+  border-radius: 50%;
+}
+
+.modal-api-config input:checked + .slider {
+  background-color: var(--color-primary);
+}
+
+.modal-api-config input:checked + .slider:before {
+  transform: translateX(24px);
+}
+
+.modal-api-config .modal__settings-group {
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+}
+
+.modal-api-config .modal__settings-group h3 {
+  margin: 15px 0 10px;
+  padding-bottom: 5px;
+  font-size: 1.1em;
+}
+
+.modal-api-config .modal__form-group {
+  margin-bottom: 15px;
+}
+
+.modal-api-config .modal__form-label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 3px;
+}
+
+.modal-api-config .modal__form-input {
+  width: 100%;
+  padding: 0.1rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-family: var(--family-font);
+}
+
+/* 按钮样式 */
+.modal-api-config .modal__button {
+  padding: 8px 12px;
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: background-color 0.3s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-api-config .modal__button svg {
+  width: 16px;
+  height: 16px;
+}
+
+.modal-api-config .modal__button--primary {
+  background-color: var(--color-primary);
+  color: white;
+}
+
+.modal-api-config .modal__button--secondary {
+  background-color: var(--text-light);
+  color: white;
+}
+
+.modal-api-config .modal__button--success {
+  background-color: var(--color-success);
+  color: white;
+}
+
+.modal-api-config .modal__button--danger {
+  background-color: var(--color-danger);
+  color: white;
+}
+
+/* ---------- 测验模块模态框扩展样式 ---------- */
+
+/* 内容变体类 */
+.modal__content--overview,
+.modal__content--statistics {
+  max-width: 550px;
+}
+
+.modal__content--edit-question {
+  max-width: 700px;
+}
+
+/* 题目总览模态框 */
+.modal__question-overview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(45px, 1fr));
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.modal__question-overview-item {
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--bg-light);
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid var(--border-light);
+  transition: all 0.2s ease;
+}
+
+.modal__question-overview-item:hover {
+  background-color: var(--bg-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.modal__question-overview-item--current {
+  background-color: var(--color-primary);
+  color: white;
+  border-color: var(--color-primary);
+}
+
+.modal__question-overview-item--answered {
+  background-color: var(--bg-gray);
+}
+
+.modal__question-overview-item--correct {
+  background-color: var(--bg-success);
+  color: var(--color-success);
+  border-color: var(--color-success);
+}
+
+.modal__question-overview-item--incorrect {
+  background-color: var(--bg-danger);
+  color: var(--color-danger);
+  border-color: var(--color-danger);
+}
+
+/* 测验结果模态框 */
+.modal__statistics-results-section {
+  padding: 0 0 15px;
+}
+
+.modal__statistics-results-title {
+  font-size: 1.1rem;
+  color: var(--color-primary);
+  margin-bottom: 15px;
+  font-weight: 600;
+}
+
+.modal__statistics-results-card {
+  background-color: var(--bg-light);
+  border-radius: var(--radius);
+  padding: 20px;
+  text-align: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.modal__statistics-results-score-display {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 10px;
+  color: var(--color-primary);
+}
+
+.modal__statistics-results-score-detail {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
+/* 编辑题目模态框 */
+.modal__form-group {
+  margin-bottom: 16px;
+}
+
+.modal__form-label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.modal__form-control {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background-color: var(--bg-white);
+  color: var(--text-main);
+  transition: all 0.2s ease;
+  font-family: inherit;
+  font-size: 0.95rem;
+}
+
+.modal__form-control:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px var(--color-primary-light);
+}
+
+.modal__form-textarea {
+  min-height: 100px;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.modal__option-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+  gap: 8px;
+}
+
+.modal__option-row:last-of-type {
+  margin-bottom: 16px;
+}
+
+.modal__option-label {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--bg-light);
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.modal__option-content {
+  flex-grow: 1;
+}
+
+.modal__option-delete {
+  background-color: transparent;
+  color: var(--color-danger);
+  border: none;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.modal__option-delete:hover {
+  background-color: var(--bg-danger);
+  transform: rotate(90deg);
+}
+
+.modal__add-option-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--bg-light);
+  color: var(--text-secondary);
+  border: 1px dashed var(--border);
+  padding: 10px;
+  width: 100%;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 500;
+  margin-top: 5px;
+}
+
+.modal__add-option-btn:hover {
+  background-color: var(--bg-hover);
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+/* ---------- 测验同步模态框扩展样式 ---------- */
+
+.modal__separator {
+  height: 1px;
+  background-color: var(--border);
+  margin: 20px 0;
+}
+
+.modal__section-title {
+  font-size: 1.1rem;
+  margin-bottom: 15px;
+  color: var(--text-main);
+}
+
+.modal__info-panel {
+  margin-bottom: 20px;
+  padding: 15px;
+  border-radius: var(--radius);
+  background-color: var(--bg-white-light);
+  border: 1px solid var(--border);
+}
+
+.modal__info-title {
+  font-size: 1rem;
+  margin-top: 0;
+  margin-bottom: 10px;
+  color: var(--text-heading);
+}
+
+.modal__info-message {
+  color: var(--text-light);
+  font-style: italic;
+}
+
+.modal__info-content {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.modal__info-item {
+  display: flex;
+  align-items: center;
+}
+
+.modal__info-label {
+  font-weight: 500;
+  min-width: 100px;
+  color: var(--text-light);
+}
+
+.modal__info-value {
+  color: var(--text-main);
+}
