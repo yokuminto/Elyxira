@@ -875,13 +875,14 @@
 
 /* ---------- Markdown 内容样式 (Markdown Content Styles) ---------- */
 .markdown-body {
+  display: inline-flex;
+  flex-direction: column;
   margin: 1rem 0.5rem 2rem 0.5rem;
   background-color: var(--note-bg);
   color: var(--note-text);
-  line-height: 1.25;
+  line-height: 1.6;
   font-size: 0.95rem;
   box-shadow: var(--shadow);
-  font-weight: 300;
 }
 
 .markdown-body h1,
@@ -890,40 +891,45 @@
 .markdown-body h4,
 .markdown-body h5,
 .markdown-body h6 {
-  margin-top: 1em;
-  margin-bottom: 0.5em;
-  font-weight: 500;
-  line-height: 1.25;
+  margin-top: 1.5em;
+  margin-bottom: 0.6em;
+  font-weight: 600;
+  line-height: 1.3;
 }
 
 .markdown-body h1 {
-  font-size: 1.5em;
+  font-size: 1.8em;
+  border-bottom: 1px solid var(--note-border, var(--border-light));
+  padding-bottom: 0.3em;
 }
 .markdown-body h2 {
   font-size: 1.5em;
+  border-bottom: 1px solid var(--note-border, var(--border-light));
+  padding-bottom: 0.3em;
 }
 .markdown-body h3 {
-  font-size: 1.25em;
+  font-size: 1.3em;
   color: var(--note-h3);
 }
 .markdown-body h4 {
-  font-size: 1.25em;
+  font-size: 1.15em;
 }
 .markdown-body h5 {
-  font-size: 1.25em;
+  font-size: 1.05em;
 }
 .markdown-body h6 {
   font-size: 1em;
   color: var(--text-secondary);
+  font-weight: 500;
 }
 
 .markdown-body hr {
   display: block !important;
-  height: 0.5px;
+  height: 1px;
   border: none;
-  width: 75%;
-  margin: 0.5em;
-  background-image: linear-gradient(to right, var(--color-gray), var(--color-transparent));
+  width: 100%;
+  margin: 0.5rem 0;
+  background-image: linear-gradient(to right, var(--color-gray-light), var(--color-transparent));
 }
 
 .markdown-body a {
@@ -939,99 +945,119 @@
 .markdown-body p,
 .markdown-body ul,
 .markdown-body ol,
-.markdown-body pre {
-  margin-bottom: 1em;
+.markdown-body blockquote,
+.markdown-body pre,
+.markdown-body table {
+  margin-bottom: 0.5rem;
 }
 
 .markdown-body code {
   background-color: var(--note-code-bg);
   color: var(--note-code-text);
   padding: 0.2em 0.4em;
+  margin: 0 0.1em;
   border-radius: 4px;
   font-size: 0.9em;
   font-family: 'JetBrains Mono', monospace;
   border: 1px solid var(--note-code-border);
+  vertical-align: baseline;
 }
 
 .markdown-body pre {
-  background-color: var(--note-code-bg); /* Use consistent code bg */
+  background-color: var(--note-code-bg);
   color: var(--note-code-text);
-  margin: 0 0 1em 0;
-  padding: 0;
+  margin: 0 0 1.2em 0;
   border: 1px solid var(--note-code-border);
   border-radius: var(--radius);
   overflow: auto;
+  position: relative;
 }
 
 .markdown-body pre code {
   background-color: transparent;
   color: inherit;
   padding: 1em;
+  margin: 0;
   white-space: pre;
   display: block;
   border: none;
+  border-radius: 0;
   font-size: 0.9em;
   line-height: 1.5;
   overflow-x: auto;
-  font-family: 'JetBrains Mono', monospace; /* Ensure monospace in pre */
+  font-family: 'JetBrains Mono', monospace;
+  vertical-align: initial;
+}
+
+/* Optional: Language indicator for code blocks */
+.markdown-body pre[class*='language-']::before {
+  content: attr(class);
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: var(--note-code-border);
+  color: var(--note-code-bg);
+  font-size: 0.75em;
+  padding: 0.1em 0.5em;
+  border-radius: 0 0 0 var(--radius);
+  font-family: sans-serif;
+  text-transform: uppercase;
+}
+/* Adjust selector if class name includes more than just language */
+.markdown-body pre code[class*='language-']::before {
+  display: none;
 }
 
 .markdown-body blockquote {
   border-left: 4px solid var(--note-quote-border);
   background-color: var(--note-quote-bg);
-  padding: 0.5em;
+  padding: 0.8em 1.2em;
   color: var(--note-text);
-  margin: 0 0 0.5rem 0;
+  margin: 0 0 1.2em 0;
 }
 
 .markdown-body blockquote p:last-child {
-  margin: 0;
+  margin-bottom: 0;
 }
 
 .markdown-body ul,
 .markdown-body ol {
-  padding-left: 0;
+  padding-left: 1.8em;
+  margin-left: 0;
 }
 
-.markdown-body strong,
 .markdown-body li,
 .markdown-body ol,
-.markdown-body ul,
-.markdown-body span {
+.markdown-body ul {
   margin-bottom: 0.5rem;
+}
+
+.markdown-body li {
+  margin-bottom: 0.4em;
+}
+
+.markdown-body li > p {
+  margin-bottom: 0.4em;
+}
+
+.markdown-body strong {
+  font-weight: 600;
+}
+
+.markdown-body em {
+  font-style: italic;
+}
+
+.markdown-body img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 1em auto;
+  border-radius: var(--radius-sm);
 }
 
 .markdown-body mark {
   padding: 0.1em 0.3em;
-  border-radius: 3px;
-  color: inherit;
-}
-
-.markdown-body .mark-yellow {
-  background-color: var(--note-mark-yellow);
-}
-.markdown-body .mark-green {
-  background-color: var(--note-mark-green);
-}
-.markdown-body .mark-blue {
-  background-color: var(--note-mark-blue);
-}
-.markdown-body .mark-red {
-  background-color: var(--note-mark-red);
-}
-.markdown-body .mark-purple {
-  background-color: var(--note-mark-purple);
-}
-
-.markdown-body .note-tip,
-.markdown-body .note-warning,
-.markdown-body .note-danger,
-.markdown-body .note-info,
-.markdown-body .note-success {
-  padding: 1em;
-  margin-bottom: 1em;
-  border-radius: var(--radius);
-  border-left: 4px solid;
 }
 
 .markdown-body .note-tip {
@@ -1055,47 +1081,60 @@
   border-color: var(--c-green);
 }
 
+/* Fixed Mermaid Styles - Standard CSS */
 .markdown-body .mermaid {
-  .node rect {
-    fill: var(--note-mermaid-bg) !important;
-    stroke: var(--note-mermaid-border) !important;
-    rx: 4px;
-    ry: 4px;
-    margin: 2px;
-  }
+  background-color: var(--note-mermaid-container-bg, transparent);
+  padding: 1em;
+  border-radius: var(--radius);
+  margin-bottom: 1.2em;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow-x: auto;
+}
 
-  .edgeLabel {
-    background-color: transparent !important;
-    padding: 1px 3px;
-  }
+.markdown-body .mermaid .node rect {
+  fill: var(--note-mermaid-label-bg, var(--note-mermaid-bg, #f0f0f0)) !important;
+  stroke: var(--note-mermaid-node-border, var(--note-mermaid-border, #ccc)) !important;
+  rx: 4px;
+  ry: 4px;
+  margin: 2px;
+}
 
-  .edgeLabel div {
-    background-color: transparent !important;
-  }
+.markdown-body .mermaid .edgeLabel {
+  background-color: transparent !important;
+  padding: 1px 3px;
+}
 
-  .edgeLabel p {
-    padding: 1px 3px;
-  }
+.markdown-body .mermaid .edgeLabel div {
+  background-color: transparent !important;
+}
 
-  .label {
-    font-size: 14px;
-    padding: 2px 4px;
-  }
+.markdown-body .mermaid .edgeLabel p {
+  padding: 1px 3px;
+}
 
-  .node rect {
-    fill: var(--note-mermaid-label-bg) !important;
-    stroke: var(--note-mermaid-node-border) !important;
-  }
+.markdown-body .mermaid .label {
+  font-size: 14px;
+  padding: 2px 4px;
+  color: var(--note-mermaid-label-text, var(--note-text));
+}
 
-  .edgePath .path {
-    stroke-width: 1.5px;
-    stroke-dasharray: 2, 2;
-  }
+.markdown-body .mermaid .edgePath .path {
+  stroke: var(--note-mermaid-edge-color, var(--note-text));
+  stroke-width: 1.5px;
+  stroke-dasharray: 2, 2;
+}
 
-  .cluster rect {
-    rx: 6px;
-    ry: 6px;
-  }
+.markdown-body .mermaid .cluster rect {
+  fill: var(--note-mermaid-cluster-bg, none) !important;
+  stroke: var(--note-mermaid-cluster-border, #aaa) !important;
+  rx: 6px;
+  ry: 6px;
+}
+
+.markdown-body .mermaid svg {
+  max-width: 100%;
 }
 
 /* ---------- 模态框 (Modal) ---------- */

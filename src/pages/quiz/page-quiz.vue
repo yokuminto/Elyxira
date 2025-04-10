@@ -900,7 +900,7 @@ async function renderNotesForCurrentQuestion() {
       .replace(/^([\\s]*?)(\\d+\\.\\s+)(.*?)$/gm, '<ol>$2$3</ol>')
 
       // 正确处理 Markdown 粗体
-      .replace(/\\*\\*([^*]+)\\*\\*/g, '<strong>$1</strong>'); // Use correct regex for bold
+      .replace(/\*\*([^\*]+)\*\*/g, '<strong>$1</strong>'); // Use correct regex for bold
 
     // 解析 Markdown
     const htmlContent = marked.parse(processedContent) as string;
