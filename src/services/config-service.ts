@@ -978,11 +978,11 @@ class ConfigService {
           // 如果导入的活动名称无效，则使用第一个导入的预设名称
           newSettings.activeApiPresetName = newSettings.apiPresets[0].name
         }
-      } else if ((typedConfig as any).apiSettings) {
-        // 使用 any 处理旧格式
+      } else if ('apiSettings' in typedConfig && typedConfig.apiSettings) {
         // 兼容旧格式：如果只有 apiSettings，将其转换为单个预设
         console.warn("导入旧版配置格式，将 apiSettings 转换为 'Imported Default' 预设。")
-        const importedApiConfig = (typedConfig as any).apiSettings as ApiConfig // 使用 any 处理旧格式
+        // Assuming the structure is compatible with Partial<ApiConfig>
+        const importedApiConfig = typedConfig.apiSettings as Partial<ApiConfig> // Use Partial<ApiConfig> or a more specific type if known
         newSettings.apiPresets = [
           createDefaultPreset({ ...DEFAULT_API_CONFIG, ...importedApiConfig }, 'Imported Default'),
         ]

@@ -894,13 +894,13 @@ async function renderNotesForCurrentQuestion() {
     // 预处理笔记内容，处理一些特殊格式
     const processedContent = noteContent
       // 将 • 开头的行转为 HTML 无序列表
-      .replace(/^([\s]*?)[•\\-\\*]\\s+(.*?)$/gm, '<li>$2</li>')
+      .replace(/^([\\s]*?)[•\\-\\*]\\s+(.*?)$/gm, '<li>$2</li>')
 
       // 将 数字+. 开头的行转为 HTML 有序列表
-      .replace(/^([\s]*?)(\\d+\\.\\s+)(.*?)$/gm, '<ol>$2$3</ol>')
+      .replace(/^([\\s]*?)(\\d+\\.\\s+)(.*?)$/gm, '<ol>$2$3</ol>')
 
-      // 修复加粗文本问题
-      .replace(/\\*\\*([^\\*]+)\\*\\*/g, '<strong>$1</strong>');
+      // 正确处理 Markdown 粗体
+      .replace(/\\*\\*([^*]+)\\*\\*/g, '<strong>$1</strong>'); // Use correct regex for bold
 
     // 解析 Markdown
     const htmlContent = marked.parse(processedContent) as string;
@@ -1389,16 +1389,16 @@ function triggerSync() {
       apiPath = apiPath ? `${apiPath}/${syncQuizName}.json` : `${syncQuizName}.json`;
     }
 
-    // 准备要同步的数据（当前题库的笔记）
-    const notesData: Record<string, string> = {};
-    localQuestions.value.forEach(q => {
-      if (q.id && q.notes) {
-        notesData[String(q.id)] = q.notes;
-      }
-    });
+    // 获取要同步的完整题库数据
+    const currentQuizData = QuizStore.getQuizData();
+    if (!currentQuizData) {
+      syncStatus.value = 'error';
+      showToast('无法获取当前题库数据进行同步', 'error');
+      return;
+    }
 
-    // 准备要同步的内容
-    const contentJson = JSON.stringify(notesData);
+    // 准备要同步的内容 (整个题库)
+    const contentJson = JSON.stringify(currentQuizData, null, 2); // Pretty print JSON
     const encodedContent = btoa(unescape(encodeURIComponent(contentJson)));
 
     // 执行同步
