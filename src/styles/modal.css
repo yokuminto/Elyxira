@@ -29,11 +29,13 @@
   width: 90%;
   max-width: 600px;
   max-height: 90vh;
-  overflow-y: auto;
+  overflow: hidden;
   box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
   transform: scale(0.95);
   transition: transform 0.25s ease;
   border: 1px solid var(--border, #9ca3af);
+  display: flex;
+  flex-direction: column;
 }
 
 /* 特殊内容类 */
@@ -55,6 +57,7 @@
   top: 0;
   background-color: var(--card, white);
   z-index: 5;
+  flex-shrink: 0;
 }
 
 .modal__title {
@@ -86,6 +89,9 @@
 
 .modal__body {
   padding: 16px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  flex: 1;
 }
 
 .modal__footer {
@@ -99,42 +105,64 @@
   background-color: var(--card, white);
   border-top: 1px solid var(--border, #9ca3af);
   z-index: 5;
+  flex-shrink: 0;
 }
 
 /* 表单元素样式 */
 .modal__form-group {
   margin-bottom: 1.5rem;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .modal__form-label {
   display: block;
   margin-bottom: 0.5rem;
   font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .modal__form-description {
   font-size: 0.875rem;
   color: var(--text-secondary, #5a5a68);
   margin-bottom: 0.5rem;
-}
-
-.modal__form-input {
-  width: 100%;
-  padding: 0.5rem;
-  border: 1px solid var(--border, #9ca3af);
-  border-radius: 4px;
-  background: var(--bg-white, #f9faff);
-  color: var(--text, #1f2937);
-  height: 36px;
+  white-space: normal;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .modal__form-control {
   width: 100%;
-  padding: 8px;
+  min-width: 128px;
+  padding: 10px 12px;
   border: 1px solid var(--border);
-  border-radius: 4px;
-  background-color: var(--color-background-soft);
-  color: var(--color-text-primary);
+  border-radius: var(--radius);
+  background-color: var(--bg-white);
+  color: var(--text-main);
+  transition: all 0.2s ease;
+  font-family: inherit;
+  font-size: 0.95rem;
+  box-sizing: border-box;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.modal__form-control:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px var(--color-primary-light);
+}
+
+/* 确保textarea不会无限扩展 */
+textarea.modal__form-control {
+  resize: vertical;
+  max-height: 300px;
+  min-height: 38px;
+  overflow-y: auto;
 }
 
 .modal__form-input-group {
@@ -146,6 +174,11 @@
 
 .modal__form-input-group input[type='range'] {
   flex: 1;
+}
+
+.modal__form-input-group span {
+  min-width: 30px;
+  text-align: right;
 }
 
 .modal__form-options {
@@ -172,7 +205,7 @@
   margin-bottom: 15px;
   font-size: 1rem;
   font-weight: 600;
-  color: var(--color-text-secondary);
+  color: var(--text-secondary);
 }
 
 .modal__setting-item {
@@ -180,11 +213,13 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 12px;
+  padding: 8px 0;
 }
 
 .modal__setting-item-name {
   font-size: 0.9rem;
-  color: var(--color-text-primary);
+  color: var(--text-main);
+  margin-right: 10px;
 }
 
 /* 设置标签页样式 */
@@ -222,6 +257,38 @@
   max-height: 60vh;
   overflow-y: auto;
   padding-right: 0.5rem;
+  overflow-x: hidden;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* 针对开关类型表单组的特殊样式 */
+.modal__form-group--switch {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+}
+
+.modal__form-group--switch .modal__form-label {
+  margin-bottom: 0;
+}
+
+/* 修改原有的表单组样式 */
+.modal__form-group {
+  margin-bottom: 1.5rem;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.modal__form-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* 开关样式 */
@@ -230,6 +297,7 @@
   display: inline-block;
   width: 42px;
   height: 24px;
+  flex-shrink: 0;
 }
 
 .modal__toggle-switch input {
@@ -268,6 +336,46 @@
 
 .modal__toggle-switch input:checked + .modal__toggle-slider:before {
   transform: translateX(18px);
+}
+
+/* 预设相关样式 */
+.modal__form-group--preset {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.modal__form-group--preset .modal__form-label {
+  margin-right: 10px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.modal__preset-controls {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-grow: 1;
+}
+
+.modal__form-control--select {
+  flex-grow: 1;
+  min-width: 150px;
+}
+
+/* 图标按钮样式 */
+.modal__button--icon {
+  padding: 5px 8px;
+  font-size: 0.9em;
+  line-height: 1;
+  flex-shrink: 0;
+  min-width: 30px;
+  text-align: center;
+}
+
+.modal__button--icon:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* 下拉选择框样式 */
@@ -332,7 +440,7 @@
 .modal__tab-headers {
   display: flex;
   margin-bottom: 1rem;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border);
 }
 
 .modal__tab-header {
@@ -352,10 +460,14 @@
 
 .modal__tab-content {
   flex: 1;
+  overflow: hidden;
+  width: 100%;
 }
 
 .modal__tab-panel {
   display: none;
+  width: 100%;
+  overflow: hidden;
 }
 
 .modal__tab-panel--active {
@@ -391,10 +503,11 @@
   gap: 0.5rem;
   padding: 0.5rem 1rem;
   background: var(--primary-color);
-  color: white;
+  color: var(--text-color);
   border-radius: 4px;
   cursor: pointer;
   transition: background 0.3s ease;
+  border: 1px solid var(--border);
 }
 
 .modal__file-input-label:hover {
@@ -410,7 +523,7 @@
 .modal__url-import input {
   flex: 1;
   padding: 0.5rem;
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--border);
   border-radius: 4px;
   background: var(--input-bg);
   color: var(--text-color);
@@ -420,8 +533,8 @@
 .modal__export-button {
   padding: 0.5rem 1rem;
   background: var(--primary-color);
-  color: white;
-  border: none;
+  color: var(--text-color);
+  border: 1px solid var(--border);
   border-radius: 4px;
   cursor: pointer;
   transition: background 0.3s ease;
@@ -522,7 +635,7 @@
   font-size: 1rem;
   color: var(--text-color-secondary);
   font-weight: 600;
-  border-bottom: 1px solid var(--border-color-light);
+  border-bottom: 1px solid var(--border-light);
   padding-bottom: 0.5rem;
 }
 
@@ -534,7 +647,7 @@
   display: flex;
   justify-content: space-between;
   padding: 0.5rem 0;
-  border-bottom: 1px dashed var(--border-color-light);
+  border-bottom: 1px dashed var(--border-light);
 }
 
 .modal__debug-item:last-child {
@@ -647,172 +760,65 @@
 }
 
 .modal__info-value {
-  color: var(--text-main, #2a2a30);
-  font-weight: 500;
+  color: var(--text-main);
 }
 
-/* AI设置模态框样式 */
-.modal-api-config .modal__prompt-controls {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 10px;
+/* API配置模态框样式 */
+.modal-api-config {
+  padding: 20px;
 }
 
-.modal-api-config .modal__prompt-buttons {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.modal-api-config .modal__form-textarea {
-  width: 100%;
-  min-height: 120px;
-  padding: 10px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  resize: vertical;
-  margin-top: 5px;
-  font-family: var(--family-font);
-}
-
-.modal-api-config .modal__footer-buttons {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-}
-
-.modal-api-config .modal__setting-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 0;
-}
-
-.modal-api-config .modal__setting-description {
-  flex: 1;
-}
-
-.modal-api-config .modal__setting-name {
-  font-weight: 600;
-  margin-bottom: 3px;
-}
-
-.modal-api-config .modal__setting-detail {
-  font-size: 0.9em;
-  color: var(--text-light);
-  margin-bottom: 5px;
-}
-
-.modal-api-config .modal__toggle-switch {
-  position: relative;
-  display: inline-block;
-  width: 48px;
-  height: 24px;
-}
-
-.modal-api-config .modal__toggle-switch input {
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-
-.modal-api-config .slider {
-  position: absolute;
-  cursor: pointer;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: var(--border);
-  transition: 0.4s;
-  border-radius: 24px;
-}
-
-.modal-api-config .slider:before {
-  position: absolute;
-  content: '';
-  height: 18px;
-  width: 18px;
-  left: 3px;
-  bottom: 3px;
-  background-color: white;
-  transition: 0.4s;
-  border-radius: 50%;
-}
-
-.modal-api-config input:checked + .slider {
-  background-color: var(--color-primary);
-}
-
-.modal-api-config input:checked + .slider:before {
-  transform: translateX(24px);
-}
-
-.modal-api-config .modal__settings-group {
-  margin-bottom: 20px;
-  padding-bottom: 10px;
-}
-
-.modal-api-config .modal__settings-group h3 {
-  margin: 15px 0 10px;
-  padding-bottom: 5px;
-  font-size: 1.1em;
-}
-
-.modal-api-config .modal__form-group {
+.modal-api-config .form-group {
   margin-bottom: 15px;
 }
 
-.modal-api-config .modal__form-label {
+.modal-api-config .form-group label {
   display: block;
-  font-weight: 600;
-  margin-bottom: 3px;
+  margin-bottom: 5px;
+  font-weight: bold;
 }
 
-.modal-api-config .modal__form-input {
+.modal-api-config .form-group input[type='text'],
+.modal-api-config .form-group input[type='password'],
+.modal-api-config .form-group input[type='number'],
+.modal-api-config .form-group textarea {
   width: 100%;
-  padding: 0.1rem 0.5rem;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  font-family: var(--family-font);
+  padding: 8px;
+  border: 1px solid var(--border, #ccc);
+  border-radius: 4px;
 }
 
-/* 按钮样式 */
-.modal-api-config .modal__button {
-  padding: 8px 12px;
+.modal-api-config .form-group textarea {
+  height: 100px;
+  resize: vertical;
+}
+
+.modal-api-config .buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.modal-api-config .button {
+  padding: 8px 16px;
   border: none;
-  border-radius: var(--radius);
+  border-radius: 4px;
   cursor: pointer;
-  transition: background-color 0.3s;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  background-color: var(--bg-neutral, #f0f0f0);
 }
 
-.modal-api-config .modal__button svg {
-  width: 16px;
-  height: 16px;
-}
-
-.modal-api-config .modal__button--primary {
-  background-color: var(--color-primary);
+.modal-api-config .button.primary {
+  background-color: var(--color-primary, #4caf50);
   color: white;
 }
 
-.modal-api-config .modal__button--secondary {
-  background-color: var(--text-light);
-  color: white;
-}
-
-.modal-api-config .modal__button--success {
-  background-color: var(--color-success);
-  color: white;
-}
-
-.modal-api-config .modal__button--danger {
-  background-color: var(--color-danger);
-  color: white;
+/* 添加一个modal__footer-buttons类 */
+.modal__footer-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
 }
 
 /* ---------- 测验模块模态框扩展样式 ---------- */

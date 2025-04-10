@@ -107,6 +107,22 @@
       </div>
 
       <div class="modal__settings-group">
+        <h3 class="modal__settings-group-title">数据管理</h3>
+        <div class="modal__setting-item">
+          <span class="modal__setting-item-name">导出配置</span>
+          <button class="modal__button modal__button--secondary" @click="exportConfig">
+            导出为JSON
+          </button>
+        </div>
+        <div class="modal__setting-item">
+          <span class="modal__setting-item-name">导入配置</span>
+          <button class="modal__button modal__button--secondary" @click="showImportModal">
+            选择文件导入
+          </button>
+        </div>
+      </div>
+
+      <div class="modal__settings-group">
         <h3 class="modal__settings-group-title">调试</h3>
         <div class="modal__setting-item">
           <span class="modal__setting-item-name">调试模式</span>
@@ -123,66 +139,37 @@
       <button @click="saveSettings" class="modal__button modal__button--primary">保存设置</button>
     </template>
   </BaseModal>
+
+  <!-- 导入配置模态框 -->
+  <BaseModal :show="isImportModalVisible" title="导入配置" @close="isImportModalVisible = false">
+    <div class="modal__body">
+      <p>选择要导入的配置文件：</p>
+      <input type="file" id="importFileInput" accept=".json" @change="handleImportFileSelect" />
+    </div>
+    <template #footer>
+      <button @click="isImportModalVisible = false" class="modal__button modal__button--secondary">取消</button>
+      <button @click="importConfig" class="modal__button modal__button--primary">导入</button>
+    </template>
+  </BaseModal>
+
+  <!-- 导出成功提示 -->
+  <BaseModal :show="isExportSuccessModalVisible" title="导出成功" @close="isExportSuccessModalVisible = false">
+    <div class="modal__body">
+      <p>配置文件已成功导出为JSON文件。</p>
+      <p>导出时间：{{ exportTimestamp }}</p>
+    </div>
+    <template #footer>
+      <button @click="isExportSuccessModalVisible = false" class="modal__button modal__button--primary">关闭</button>
+    </template>
+  </BaseModal>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, watch } from 'vue';
+import { ref, reactive, watch, onBeforeUnmount, onMounted } from 'vue';
 import BaseModal from './modal-base.vue';
-
-// UI设置接口
-interface UiSettings {
-  darkMode: boolean;
-  themeColor: string;
-  customColor: string;
-  fontSize: number;
-  fontFamily: string;
-  animationEnabled: boolean;
-}
-
-// 测验设置接口
-export interface QuizSettings {
-  autoSubmit: boolean;
-  autoNext: boolean;
-  allowSkip: boolean;
-  showNotesAfterAnswer: boolean;
-  lockAnswerAfterSubmit: boolean;
-  showCorrectAnswerImmediately: boolean;
-  showProgress: boolean;
-  swipeGestureEnabled: boolean;
-  randomMode: boolean;
-  reviewMode: boolean;
-  canEditQuestion?: boolean;
-  canSyncNotes?: boolean;
-  viewWrongAfterAll?: boolean;
-}
-
-// API配置接口
-interface ApiConfig {
-  enabled: boolean;
-  autoGenerate?: boolean;
-  streamOutput?: boolean;
-}
-
-// 通用设置接口
-export interface GeneralSettings {
-  uiSettings: UiSettings;
-  quizSettings: QuizSettings;
-  debugEnabled: boolean;
-  apiConfig?: ApiConfig;
-}
-
-const props = defineProps<{
-  show: boolean;
-  currentSettings?: GeneralSettings;
-}>();
-
-const emit = defineEmits<{
-  (e: 'close'): void;
-  (e: 'save', settings: GeneralSettings): void;
-}>();
-
-// 活动标签
-const activeTab = ref('quiz');
+import { showToast } from '../utils/toast';
+import configService from '../services/config-service';
+import type { AppSettings } from '@/services/config-service';
 
 // 字体列表
 const availableFonts = [
@@ -200,93 +187,111 @@ const availableFonts = [
   { name: '更纱黑体 (Sarasa Gothic)', value: '\'Sarasa Gothic SC\', sans-serif' },
 ];
 
-// 默认设置
-const defaultSettings: GeneralSettings = {
-  uiSettings: {
-    darkMode: document.documentElement.getAttribute('theme') === 'dark',
-    themeColor: 'default',
-    customColor: '#4caf50',
-    fontSize: 14,
-    fontFamily: 'sans-serif',
-    animationEnabled: true
-  },
-  quizSettings: {
-    autoSubmit: false,
-    autoNext: true,
-    allowSkip: true,
-    showNotesAfterAnswer: true,
-    lockAnswerAfterSubmit: false,
-    showCorrectAnswerImmediately: true,
-    showProgress: true,
-    swipeGestureEnabled: true,
-    randomMode: false,
-    reviewMode: false,
-    viewWrongAfterAll: true
-  },
-  debugEnabled: localStorage.getItem('debugEnabled') === 'true'
-};
+const props = defineProps<{
+  show: boolean;
+}>();
+
+const emit = defineEmits<{
+  (e: 'close'): void;
+  (e: 'save', settings: AppSettings): void;
+}>();
+
+// 活动标签
+const activeTab = ref('quiz');
+
+// 导入导出相关变量
+const isImportModalVisible = ref(false);
+const isExportSuccessModalVisible = ref(false);
+const exportTimestamp = ref('');
 
 // 本地设置
-const localSettings = reactive<GeneralSettings>(JSON.parse(JSON.stringify(defaultSettings)));
+const localSettings = reactive<AppSettings>(
+  JSON.parse(JSON.stringify(configService.getSettings()))
+);
+
+// 设置变更监听器
+const settingsChangeListener = () => {
+  Object.assign(localSettings, JSON.parse(JSON.stringify(configService.getSettings())));
+};
+
+onMounted(() => {
+  // 添加设置变更监听器
+  configService.addListener('settings', settingsChangeListener);
+});
+
+onBeforeUnmount(() => {
+  // 移除设置变更监听器
+  configService.removeListener('settings', settingsChangeListener);
+});
 
 // 监听属性变化更新本地状态
 watch(() => props.show, (newVal) => {
-  if (newVal && props.currentSettings) {
-    // 使用深拷贝，避免直接修改props
-    const mergedSettings = { ...defaultSettings };
-
-    // 合并UI设置
-    if (props.currentSettings.uiSettings) {
-      mergedSettings.uiSettings = { ...mergedSettings.uiSettings, ...props.currentSettings.uiSettings };
-    }
-
-    // 合并测验设置
-    if (props.currentSettings.quizSettings) {
-      mergedSettings.quizSettings = { ...mergedSettings.quizSettings, ...props.currentSettings.quizSettings };
-    }
-
-    // 合并其他设置
-    mergedSettings.debugEnabled = props.currentSettings.debugEnabled ?? defaultSettings.debugEnabled;
-
-    if (props.currentSettings.apiConfig) {
-      mergedSettings.apiConfig = { ...props.currentSettings.apiConfig };
-    }
-
-    // 应用合并后的设置
-    Object.assign(localSettings, mergedSettings);
+  if (newVal) {
+    // 从配置服务获取最新设置
+    Object.assign(localSettings, JSON.parse(JSON.stringify(configService.getSettings())));
   }
 }, { immediate: true });
 
-// 监听当前设置变化
-watch(() => props.currentSettings, (newSettings) => {
-  if (props.show && newSettings) {
-    const mergedSettings = { ...defaultSettings };
-
-    // 合并UI设置
-    if (newSettings.uiSettings) {
-      mergedSettings.uiSettings = { ...mergedSettings.uiSettings, ...newSettings.uiSettings };
-    }
-
-    // 合并测验设置
-    if (newSettings.quizSettings) {
-      mergedSettings.quizSettings = { ...mergedSettings.quizSettings, ...newSettings.quizSettings };
-    }
-
-    // 合并其他设置
-    mergedSettings.debugEnabled = newSettings.debugEnabled ?? defaultSettings.debugEnabled;
-
-    if (newSettings.apiConfig) {
-      mergedSettings.apiConfig = { ...newSettings.apiConfig };
-    }
-
-    // 应用合并后的设置
-    Object.assign(localSettings, mergedSettings);
-  }
-}, { deep: true });
-
 // 保存设置
 function saveSettings() {
+  // 使用配置服务更新所有设置
+  configService.updateSettings(JSON.parse(JSON.stringify(localSettings)));
+
+  // 触发父组件的保存事件
   emit('save', JSON.parse(JSON.stringify(localSettings)));
   emit('close');
+}
+
+// 显示导入配置模态框
+function showImportModal() {
+  isImportModalVisible.value = true;
+}
+
+// 处理导入文件选择
+function handleImportFileSelect(event: Event) {
+  const input = event.target as HTMLInputElement;
+  if (!input.files || input.files.length === 0) {
+    return;
+  }
+  // 文件已选择，可在导入按钮点击时处理
+}
+
+// 导入配置函数
+function importConfig() {
+  const fileInput = document.getElementById('importFileInput') as HTMLInputElement;
+  if (!fileInput.files || fileInput.files.length === 0) {
+    showToast('请选择要导入的配置文件', 'warning');
+    return;
+  }
+
+  const file = fileInput.files[0];
+
+  configService.importConfigFromFile(file)
+    .then(success => {
+      if (success) {
+        isImportModalVisible.value = false;
+        // 重新加载应用或刷新设置
+        setTimeout(() => {
+          window.location.reload();
+        }, 1500);
+      }
+    })
+    .catch(error => {
+      showToast('导入配置失败：' + error.message, 'error');
+    });
+}
+
+// 导出配置函数
+function exportConfig() {
+  try {
+    // 使用配置服务导出配置
+    configService.exportConfig();
+
+    // 显示成功提示
+    isExportSuccessModalVisible.value = true;
+    exportTimestamp.value = new Date().toISOString();
+  } catch (error) {
+    console.error('导出配置失败:', error);
+  }
 }
 </script>

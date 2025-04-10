@@ -6,10 +6,10 @@
         <button class="modal__close" @click="$emit('close')" title="关闭">×</button>
       </div>
       <div class="modal__body">
-        <slot></slot> <!-- Content goes here -->
+        <slot></slot>
       </div>
       <div v-if="$slots.footer" class="modal__footer">
-        <slot name="footer"></slot> <!-- Optional footer actions -->
+        <slot name="footer"></slot>
       </div>
     </div>
   </div>
@@ -17,19 +17,10 @@
 
 <script setup lang="ts">
 defineProps({
-  show: { // 控制显示/隐藏
-    type: Boolean,
-    required: true
-  },
-  title: { // 模态框标题
-    type: String,
-    default: '提示'
-  },
-  contentClass: { // 自定义内容区域样式类
-    type: String,
-    default: ''
-  }
+  show: Boolean,
+  title: { type: String, default: '提示' },
+  contentClass: { type: String, default: '' }
 });
 
-defineEmits(['close']); // 发出关闭事件
+defineEmits(['close']);
 </script>

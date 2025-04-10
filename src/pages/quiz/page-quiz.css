@@ -881,6 +881,7 @@
   line-height: 1.25;
   font-size: 0.95rem;
   box-shadow: var(--shadow);
+  font-weight: 300;
 }
 
 .markdown-body h1,
@@ -1032,11 +1033,15 @@
 
 .markdown-body ul,
 .markdown-body ol {
-  padding-left: 2em;
+  padding-left: 0;
 }
 
-.markdown-body li {
-  margin-bottom: 0.3em;
+.markdown-body strong,
+.markdown-body li,
+.markdown-body ol,
+.markdown-body ul,
+.markdown-body span {
+  margin-bottom: 0.5rem;
 }
 
 .markdown-body mark {
@@ -1388,6 +1393,17 @@ input:checked + .slider:before {
     box-sizing: border-box;
     max-width: 100%;
     overflow-x: hidden;
+    gap: 0.25rem;
+  }
+
+  .page-quiz__options-bar {
+    padding: 0.5rem 0.75rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .page-quiz__question-text {
+    padding: 0.5rem 0.75rem;
+    margin-bottom: 0.75rem;
   }
 
   /* 隐藏章节选择器前的文字 */
@@ -1461,5 +1477,15 @@ input:checked + .slider:before {
 
   .markdown-body {
     padding: 0.5rem;
+  }
+
+  /* 表格样式 */
+  .markdown-body table {
+    overflow-x: hidden;
+  }
+
+  .markdown-body th,
+  .markdown-body td {
+    padding: 0.25em 0.375rem;
   }
 }

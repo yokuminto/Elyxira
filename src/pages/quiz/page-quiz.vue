@@ -1,5 +1,5 @@
 <template>
-  <div class="page-quiz" :style="{ '--font-family': config.fontFamily || 'sans-serif' }">
+  <div class="page-quiz" :style="{ '--font-family': uiSettings.fontFamily || 'sans-serif' }">
     <!-- 轻量级提示信息 -->
     <div :class="['toast', toast.type ? `toast--${toast.type}` : '', toast.show ? 'toast--show' : '']">
       {{ toast.message }}
@@ -81,7 +81,7 @@
               <rect x="14" y="14" width="7" height="7"></rect>
               <rect x="3" y="14" width="7" height="7"></rect>
             </svg><span>题目总览</span></button>
-          <button class="page-quiz__mode-button edit-button" v-if="config.canEditQuestion"
+          <button class="page-quiz__mode-button edit-button" v-if="quizSettings.canEditQuestion"
             @click="openCurrentQuestionEditor"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
               viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
               stroke-linejoin="round">
@@ -94,13 +94,14 @@
       <div class="page-quiz__question-area" ref="questionAreaRef" @touchstart="handleTouchStart"
         @touchend="handleTouchEnd">
         <template v-if="currentQuestion">
-          <div class="page-quiz__question-text" ref="questionTextRef" :class="{ 'slide-up': config.animationEnabled }">
-            <span class="page-quiz__question-id">第{{ currentQuestion.id || (currentIndex + 1) }}题</span>
-            <span v-html="currentQuestion.question"></span>
+          <div class="page-quiz__question-text" ref="questionTextRef"
+            :class="{ 'slide-up': uiSettings.animationEnabled }">
+            <span class="page-quiz__question-id">第{{ currentQuestion.number || (currentIndex + 1) }}题</span>
+            <span v-html="formatQuestionText(currentQuestion.question)"></span>
           </div>
 
           <ul class="page-quiz__options-list"
-            :class="[{ 'page-quiz--submitted': isQuizSubmitted }, { 'fade-in': config.animationEnabled }]">
+            :class="[{ 'page-quiz--submitted': isQuizSubmitted }, { 'fade-in': uiSettings.animationEnabled }]">
             <li v-for="(option, index) in currentQuestion.options" :key="index" class="page-quiz__option"
               :class="getOptionClass(getOptionKey(option, index))" :data-key="getOptionKey(option, index)"
               @click="handleOptionClick(getOptionKey(option, index))">
@@ -118,8 +119,7 @@
           <div class="page-quiz__action-buttons-container">
 
             <div class="page-quiz__action-left">
-              <button class="page-quiz__button page-quiz__submit-button" @click="submitAnswer"
-                :disabled="!canSubmitAnswer">
+              <button class="page-quiz__button page-quiz__submit-button" @click="submitAnswer" :disabled="!canSubmit">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                   stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                   class="feather feather-check-circle">
@@ -190,9 +190,8 @@
             <div class="page-quiz__notes-header">
               <h3 class="page-quiz__notes-title">笔记</h3>
               <div class="page-quiz__notes-actions">
-                <button v-if="config.canSyncNotes" class="page-quiz__button page-quiz__button--icon sync-status"
-                  :class="syncStatusClass" :title="syncStatusTitle" @click="triggerSync"
-                  :disabled="syncStatus === 'pending'">
+                <button class="page-quiz__button page-quiz__button--icon sync-status" :class="syncStatusClass"
+                  :title="syncStatusTitle" @click="triggerSync" :disabled="syncStatus === 'pending'">
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                     class="feather feather-refresh-cw">
@@ -272,17 +271,17 @@
     </div>
 
     <!-- 模态框 -->
-    <ModalQuestionOverview :show="showOverviewModal" :questions="localQuestions" :current-index="currentIndex"
+    <ModalQuestionOverview :show="showOverviewModal" :questions="localQuestions as any" :current-index="currentIndex"
       @close="showOverviewModal = false" @jump-to="jumpToQuestion" />
     <ModalStatistics :show="showModalStatistics" :stats="quizStats" @close="showModalStatistics = false"
       @view-wrong="viewWrongQuestions" @continue="showModalStatistics = false" @back-home="navigateBack" />
     <ModalSettings :show="showModalSettings" :current-settings="configAsGeneralSettings"
       @close="showModalSettings = false" @save="applySettings" />
-    <ModalQuestionEdit :show="showEditModal" :question="questionToEdit"
+    <ModalQuestionEdit :show="showEditModal" :question="questionToEdit as any"
       @close="showEditModal = false; questionToEdit = null" @save="handleSaveQuestion" />
     <ModalQuizSync :show="showSyncConfigModal" @close="showSyncConfigModal = false" @save="handleSyncConfigSave"
       :current-quiz="currentQuizInfo" />
-    <ModalApiConfig :show="showApiConfigModal" @close="showApiConfigModal = false" @save="handleApiConfigSave"
+    <ModalApiConfig :show="showApiConfigModal" @close="showApiConfigModal = false"
       :current-config="getCompleteApiConfig()" />
 
   </div>
@@ -290,35 +289,43 @@
 
 // --- SCRIPT SETUP ---
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
-import { useRouter } from 'vue-router';
-import { marked } from 'marked';
-import mermaid from 'mermaid';
-import { QuizStore } from '@/stores/store-quiz';
-import { QuizMode } from '@/pages/library/types'; // 移除未使用的 QuizSourceType
-import type { QuizData as StoreQuizData, Chapter as StoreChapter } from '@/pages/library/types'; // 导入 Store 的类型
-import './page-quiz.css';
-import '../../styles/variables.css';
+import { ref, computed, reactive, onMounted, onUnmounted, nextTick, watch } from 'vue'
+import { useRouter } from 'vue-router'
+import { marked } from 'marked'
+import mermaid from 'mermaid'
+import { QuizStore } from '@/stores/store-quiz'
+import { QuizMode, type Question } from '@/services/config-service' // 直接导入Question
+import type { QuizData as StoreQuizData, Chapter as StoreChapter, AppSettings } from '@/services/config-service'
+import './page-quiz.css'
+import '../../styles/variables.css'
+import * as storage from '@/utils/storage'
+import configService from '@/services/config-service'
+import { showToast } from '@/utils/toast'
 
 // 引入子组件
-import ModalQuestionEdit from '@/modals/modal-question-edit.vue';
-import ModalQuestionOverview from '@/modals/modal-question-overview.vue';
-import ModalStatistics from '@/modals/modal-statistics.vue';
-import ModalSettings from '@/modals/modal-settings.vue';
-import ModalQuizSync from '@/modals/modal-quiz-sync.vue';
-import ModalApiConfig from '@/modals/modal-api-config.vue';
-import type { GeneralSettings } from '@/modals/modal-settings.vue'; // 移除未使用的 QuizSettings
+import ModalQuestionOverview from '@/modals/modal-question-overview.vue'
+import ModalStatistics from '@/modals/modal-statistics.vue'
+import ModalSettings from '@/modals/modal-settings.vue'
+import ModalQuestionEdit from '@/modals/modal-question-edit.vue'
+import ModalQuizSync from '@/modals/modal-quiz-sync.vue'
+import ModalApiConfig from '@/modals/modal-api-config.vue'
+
+// 路由
+const router = useRouter();
 
 // 类型定义
-interface Question {
-  id: number | string;
-  question: string;
-  options: string[];
+// 删除本地的Question接口定义
+
+// 添加用户答案记录接口
+interface UserAnswerRecord {
   answer: string;
-  notes?: string;
-  userAnswer?: string | null;
-  chapterTitle?: string;
-  explanation?: string;
+  timestamp?: number;
+  isCorrect?: boolean;
+}
+
+// 用户答案映射类型定义
+interface UserAnswersMap {
+  [questionId: string]: UserAnswerRecord;
 }
 
 // 添加实际JSON数据格式的接口定义
@@ -327,7 +334,7 @@ interface RawQuestionData {
   question?: string;
   title?: string;
   options?: string[];
-  answer?: string | number;
+  answer?: string | number | number[];
   notes?: string;
   explanation?: string;
   userAnswer?: string | null;
@@ -335,32 +342,7 @@ interface RawQuestionData {
   number?: number;
 }
 
-interface ApiConfig {
-  enabled: boolean;
-  autoGenerate?: boolean;
-  streamOutput?: boolean;
-}
-
-interface QuizConfig {
-  autoSubmit?: boolean;
-  autoNext?: boolean;
-  allowSkip?: boolean;
-  showNotesAfterAnswer?: boolean;
-  lockAnswerAfterWrong?: boolean; // 已废弃，保留向后兼容
-  lockAnswerAfterSubmit?: boolean;
-  showCorrectAnswerImmediately?: boolean;
-  showProgress?: boolean;
-  swipeGestureEnabled?: boolean;
-  randomMode?: boolean;
-  reviewMode?: boolean;
-  canEditQuestion?: boolean;
-  canSyncNotes?: boolean;
-  viewWrongAfterAll?: boolean; // 答题完成后查看错题
-  apiConfig?: ApiConfig;
-  fontFamily?: string;
-  animationEnabled?: boolean;
-}
-
+// 测验统计数据
 interface QuizStats {
   totalQuestions: number;
   answeredCount: number;
@@ -368,40 +350,28 @@ interface QuizStats {
   wrongQuestionIds: string[];
 }
 
+// API回调类型定义
 type StreamCallback = (chunk: string) => void;
 type CompletionCallback = (finalNote: string, error?: string) => void;
 
-// 路由
-const router = useRouter();
+// ... existing code ...
+type MermaidRenderCallback = (svgCode: string) => void;
 
 // 响应式状态
 const loading = ref(true);
 const error = ref<string | null>(null);
-const localQuestions = ref<Question[]>([]);
+const localQuestions = ref<Question[]>([]); // 使用导入的 Question 类型
 const currentIndex = ref(0);
 const selectedAnswer = ref<string | null>(null);
 const isQuizSubmitted = ref(false);
 const wrongQuestionIds = ref<string[]>([]);
 const isReviewingWrong = ref(false);
 
-// 组件配置状态
-const config = reactive<QuizConfig>({
-  autoSubmit: false,
-  autoNext: true,
-  allowSkip: true,
-  showNotesAfterAnswer: true,
-  lockAnswerAfterSubmit: false,
-  showCorrectAnswerImmediately: false,
-  showProgress: true,
-  swipeGestureEnabled: true,
-  randomMode: false,
-  reviewMode: false,
-  canEditQuestion: true,
-  canSyncNotes: true,
-  apiConfig: { enabled: false, autoGenerate: false, streamOutput: true },
-  fontFamily: 'sans-serif',
-  animationEnabled: true,
-});
+// --- 使用 configService 获取设置 ---
+const quizSettings = computed(() => configService.getQuizSettings());
+const uiSettings = computed(() => configService.getUiSettings());
+const apiConfig = computed(() => configService.getApiConfig());
+// ---------------------------------
 
 // 笔记状态
 const isEditingNotes = ref(false);
@@ -417,7 +387,7 @@ const showModalSettings = ref(false);
 const showEditModal = ref(false);
 const showSyncConfigModal = ref(false);
 const showApiConfigModal = ref(false);
-const questionToEdit = ref<Question | null>(null);
+const questionToEdit = ref<Question | null>(null); // 使用导入的 Question 类型
 
 // 提示信息状态
 const toast = reactive<{ show: boolean; message: string; type: 'info' | 'success' | 'warning' | 'error' }>({
@@ -433,23 +403,14 @@ const notesTextareaRef = ref<HTMLTextAreaElement | null>(null);
 const questionTextRef = ref<HTMLElement | null>(null);
 
 // 主题状态
-const isDarkMode = ref(document.body.classList.contains('dark-theme'));
+const isDarkMode = computed(() => uiSettings.value.darkMode);
 
 // 章节选择相关变量
 const selectedChapter = ref('all');
 const chapters = ref<string[]>([]);
 
 // 题库数据
-interface Chapter {
-  title?: string;
-  questions?: Question[];
-}
-
-interface QuizData {
-  chapters?: Chapter[];
-}
-
-const quizData = ref<QuizData | null>(null);
+// 删除本地的 Chapter 和 QuizData 接口定义
 
 // --- 计算属性 ---
 const quizTitle = computed(() => {
@@ -472,25 +433,24 @@ const isCurrentAnswered = computed(() => {
 });
 
 // 是否可以提交答案
-const canSubmitAnswer = computed(() => {
+const canSubmit = computed(() => {
   // 需要选择了答案，且如果已经回答过则需要没有锁定答案
   return selectedAnswer.value !== null &&
     !isQuizSubmitted.value &&
-    !config.reviewMode &&
-    (!isCurrentAnswered.value || !config.lockAnswerAfterSubmit);
+    !quizSettings.value.reviewMode &&
+    (!isCurrentAnswered.value || !quizSettings.value.lockAnswerAfterSubmit);
 });
 
 // 如果选错且配置了锁定，则锁定
 const isAnswerLocked = computed(() => {
-  return isCurrentAnswered.value &&
-    (config.lockAnswerAfterSubmit ||
-      (config.lockAnswerAfterWrong && currentQuestion.value?.userAnswer !== currentQuestion.value?.answer));
+  // 注意: lockAnswerAfterWrong 已废弃，仅使用 lockAnswerAfterSubmit
+  return isCurrentAnswered.value && quizSettings.value.lockAnswerAfterSubmit;
 });
 
 // 是否可以进入下一题
 const canGoNext = computed(() => {
   return !isQuizSubmitted.value &&
-    (currentIndex.value < totalQuestions.value - 1 || (isCurrentAnswered.value || config.reviewMode || config.allowSkip));
+    (currentIndex.value < totalQuestions.value - 1 || (isCurrentAnswered.value || quizSettings.value.reviewMode || quizSettings.value.allowSkip));
 });
 
 // 是否可以返回上一题
@@ -533,55 +493,38 @@ const quizStats = computed<QuizStats>(() => ({
 // 笔记是否应该可见
 const notesVisible = computed(() => {
   if (!currentQuestion.value) return false;
-  return forceShowNotes.value || !config.showNotesAfterAnswer || config.reviewMode || isCurrentAnswered.value;
+  // 使用 quizSettings 替代本地 config
+  return forceShowNotes.value || !quizSettings.value.showNotesAfterAnswer || quizSettings.value.reviewMode || isCurrentAnswered.value;
 });
 
-// 同步按钮状态对应的Class
+// 配置转换为通用设置对象
+const configAsGeneralSettings = computed(() => {
+  return configService.getSettings();
+});
+
+// 同步状态相关计算属性
 const syncStatusClass = computed(() => {
-  if (syncStatus.value === 'idle') return '';
-  return `sync-status--${syncStatus.value}`;
+  switch (syncStatus.value) {
+    case 'pending': return 'sync-pending';
+    case 'success': return 'sync-success';
+    case 'error': return 'sync-error';
+    default: return 'sync-idle';
+  }
 });
 
-// 同步按钮状态对应的Title
 const syncStatusTitle = computed(() => {
-  const map: Record<string, string> = { idle: '同步笔记', pending: '同步中...', success: '笔记已同步', error: '同步失败 (点击重试)' };
-  return map[syncStatus.value] || '同步笔记';
-});
-
-// 将当前配置转换为通用设置格式
-const configAsGeneralSettings = computed<GeneralSettings>(() => {
-  return {
-    uiSettings: {
-      darkMode: isDarkMode.value,
-      themeColor: localStorage.getItem('themeColor') || 'default',
-      customColor: localStorage.getItem('customColor') || '#4caf50',
-      fontSize: parseInt(localStorage.getItem('fontSize') || '14'),
-      fontFamily: config.fontFamily || 'sans-serif',
-      animationEnabled: config.animationEnabled !== undefined ? config.animationEnabled : true
-    },
-    quizSettings: {
-      autoSubmit: config.autoSubmit ?? false,
-      autoNext: config.autoNext ?? true,
-      allowSkip: config.allowSkip ?? true,
-      showNotesAfterAnswer: config.showNotesAfterAnswer ?? true,
-      lockAnswerAfterSubmit: config.lockAnswerAfterSubmit ?? false,
-      showCorrectAnswerImmediately: config.showCorrectAnswerImmediately ?? true,
-      showProgress: config.showProgress ?? true,
-      swipeGestureEnabled: config.swipeGestureEnabled ?? true,
-      randomMode: config.randomMode ?? false,
-      reviewMode: config.reviewMode ?? false,
-      canEditQuestion: config.canEditQuestion,
-      canSyncNotes: config.canSyncNotes,
-      viewWrongAfterAll: config.viewWrongAfterAll ?? true
-    },
-    debugEnabled: localStorage.getItem('debugEnabled') === 'true',
-    apiConfig: config.apiConfig
-  };
+  switch (syncStatus.value) {
+    case 'pending': return '同步中...';
+    case 'success': return '同步成功';
+    case 'error': return '同步失败';
+    default: return '点击同步笔记';
+  }
 });
 
 // --- 方法 ---
 let toastTimer: number | null = null;
-function showToast(message: string, type: 'info' | 'success' | 'warning' | 'error' = 'info', duration = 3000) {
+
+function showCustomToast(message: string, type: 'info' | 'success' | 'warning' | 'error' = 'info', duration = 3000) {
   // 清除上一个定时器，防止Toast堆叠
   if (toastTimer) {
     clearTimeout(toastTimer);
@@ -615,24 +558,44 @@ function initializeQuiz() {
   wrongQuestionIds.value = [];
   error.value = null;
 
-  // 初始化 Mermaid 图表库
   initMermaid();
-  // 设置键盘监听
   setupKeyboardListeners();
 
-  // 加载题库数据
-  loadQuizData(); // 加载题库数据，内部会调用prepareQuestions
-
-  // 准备题目数据
-  prepareQuizData();
-
-  // 加载保存的笔记
-  loadNotesFromLocalStorage();
-
-  // 加载第一道题目
-  loadQuestion(0);
+  // 初始化时，加载题库数据并根据初始章节(默认all)过滤
+  loadQuizDataAndFilter();
 
   console.log("测验界面初始化完成");
+}
+
+// 新增：加载题库数据并根据章节过滤
+function loadQuizDataAndFilter() {
+  loading.value = true;
+  error.value = null;
+
+  const quizData = QuizStore.getQuizData();
+  if (!quizData || !quizData.chapters) {
+    error.value = '题库数据为空，请返回选择题库';
+    loading.value = false;
+    return;
+  }
+
+  // 提取章节列表
+  chapters.value = quizData.chapters.map(c => c.title);
+
+  // 根据当前选中的章节过滤题目 (初始为 'all')
+  filterQuestionsByChapter(selectedChapter.value);
+
+  // 如果有题目，加载第一题
+  if (localQuestions.value.length > 0) {
+    // 延迟加载，确保DOM渲染完成
+    nextTick(() => {
+      loadQuestion(currentIndex.value);
+    });
+  } else {
+    error.value = '当前章节没有题目';
+  }
+
+  loading.value = false;
 }
 
 // 加载指定索引的问题
@@ -650,22 +613,6 @@ function loadQuestion(index: number) {
   // 恢复当前问题的用户答案（如果存在）
   selectedAnswer.value = currentQuestion.value?.userAnswer ?? null;
 
-  // 确保加载当前问题的笔记
-  try {
-    // 如果当前问题没有笔记，尝试从localStorage加载
-    if (currentQuestion.value && (!currentQuestion.value.notes || currentQuestion.value.notes.trim() === '')) {
-      const notesDataStr = localStorage.getItem('quizNotes');
-      if (notesDataStr) {
-        const notesData = JSON.parse(notesDataStr);
-        if (currentQuestion.value.id && notesData[String(currentQuestion.value.id)]) {
-          currentQuestion.value.notes = notesData[String(currentQuestion.value.id)];
-        }
-      }
-    }
-  } catch (error) {
-    console.error('加载问题笔记失败:', error);
-  }
-
   renderNotesForCurrentQuestion(); // 渲染当前题目的笔记
 
   // 平滑滚动到问题区域顶部
@@ -676,21 +623,22 @@ function loadQuestion(index: number) {
   emitStateChange();
 
   // 检查是否需要预生成下一题笔记
-  if (config.apiConfig?.enabled && config.apiConfig?.autoGenerate) {
+  if (apiConfig.value.enabled && apiConfig.value.autoGenerate) {
     checkAndGenerateNextNote();
   }
 }
 
-// 处理选项点击
 function handleOptionClick(key: string) {
   // 如果已提交测验、回顾模式或答案已锁定，则不允许选择
-  if (isQuizSubmitted.value || config.reviewMode || isAnswerLocked.value) {
+  // 使用 quizSettings 替代本地 config
+  if (isQuizSubmitted.value || quizSettings.value.reviewMode || isAnswerLocked.value) {
     // 如果已提交/回顾模式/已锁定，则不允许选择
     return;
   }
 
   // 如果之前已回答且不允许修改答案，则不进行任何操作
-  if (isCurrentAnswered.value && config.lockAnswerAfterSubmit) {
+  // 使用 quizSettings 替代本地 config
+  if (isCurrentAnswered.value && quizSettings.value.lockAnswerAfterSubmit) {
     return;
   }
 
@@ -704,7 +652,8 @@ function handleOptionClick(key: string) {
   }
 
   // 如果配置了自动提交且尚未回答
-  if (config.autoSubmit && !isCurrentAnswered.value) {
+  // 使用 quizSettings 替代本地 config
+  if (quizSettings.value.autoSubmit && !isCurrentAnswered.value) {
     nextTick(() => {
       submitAnswer();
     });
@@ -712,9 +661,11 @@ function handleOptionClick(key: string) {
 }
 
 // 提交当前答案
+// 提交当前答案
 function submitAnswer() {
   // 检查是否可以提交答案：有选择的答案 且 (尚未回答或已回答但允许修改)
-  if (selectedAnswer.value === null || (isCurrentAnswered.value && config.lockAnswerAfterSubmit)) return;
+  // 使用 quizSettings 替代本地 config
+  if (selectedAnswer.value === null || (isCurrentAnswered.value && quizSettings.value.lockAnswerAfterSubmit)) return;
 
   const question = currentQuestion.value;
   if (!question) return;
@@ -743,7 +694,8 @@ function submitAnswer() {
   saveCurrentAnswerState(); // 保存当前答案到 localStorage
 
   // 如果配置了自动下一题
-  if (config.autoNext && currentIndex.value < totalQuestions.value - 1) {
+  // 使用 quizSettings 替代本地 config
+  if (quizSettings.value.autoNext && currentIndex.value < totalQuestions.value - 1) {
     setTimeout(nextQuestion, 1000); // 延迟以便用户看到反馈
   }
 }
@@ -847,7 +799,6 @@ function viewWrongQuestions() {
 
 // 切换笔记编辑状态
 function toggleNotesEditor() {
-  if (isQuizSubmitted.value) return;
 
   isEditingNotes.value = !isEditingNotes.value;
   if (isEditingNotes.value) {
@@ -869,9 +820,49 @@ function saveNotes() {
     currentQuestion.value.notes = newNotes; // 更新本地数据
     renderNotesForCurrentQuestion(); // 更新显示
     showToast('笔记已保存', 'success');
-    saveCurrentNotesState(); // 保存笔记到localStorage
+
+    // 保存笔记到题库数据
+    saveNotesToQuizData();
+
+    // 保存状态到configService
+    QuizStore.saveToStorage();
   }
   isEditingNotes.value = false; // 保存后退出编辑模式
+}
+
+// 新增：将笔记保存到题库数据
+function saveNotesToQuizData() {
+  if (!currentQuestion.value || !QuizStore.state.quizData) return;
+
+  const questionId = currentQuestion.value.id;
+  const newNotes = currentQuestion.value.notes;
+
+  // 获取当前可写的题库数据
+  const quizData = QuizStore.getQuizData();
+  if (!quizData || !quizData.chapters) return;
+
+  // 查找并更新题库中对应题目的笔记
+  let found = false;
+  for (const chapter of quizData.chapters) {
+    if (!chapter.questions) continue;
+
+    for (const question of chapter.questions) {
+      if (question.id === questionId) {
+        question.notes = newNotes;
+        found = true;
+        break;
+      }
+    }
+    if (found) break;
+  }
+
+  if (found) {
+    // 更新QuizStore的题库数据
+    QuizStore.setQuizData(quizData);
+
+    // 保存到存储，确保笔记与题库数据一起保存
+    QuizStore.saveToStorage();
+  }
 }
 
 // 渲染当前问题的笔记 (Markdown + Mermaid)
@@ -889,24 +880,41 @@ async function renderNotesForCurrentQuestion() {
   }
 
   try {
-    marked.setOptions({
+    // 配置 marked 选项
+    const markedOptions = {
       breaks: true,
-      gfm: true
-    });
+      gfm: true,
+      tables: true,
+      headerIds: false,
+      html: true,
+      xhtml: true
+    };
+    marked.setOptions(markedOptions);
 
     // 预处理笔记内容，处理一些特殊格式
     const processedContent = noteContent
+      // 将 • 开头的行转为 HTML 无序列表
+      .replace(/^([\s]*?)[•\\-\\*]\\s+(.*?)$/gm, '<li>$2</li>')
+
+      // 将 数字+. 开头的行转为 HTML 有序列表
+      .replace(/^([\s]*?)(\\d+\\.\\s+)(.*?)$/gm, '<ol>$2$3</ol>')
+
       // 修复加粗文本问题
-      .replace(/\*\*([^\*]+)\*\*/g, '<strong>$1</strong>')
-      // 去除CSS变量引用，避免Mermaid解析错误
-      .replace(/var\(--[^)]+\)/g, '');
+      .replace(/\\*\\*([^\\*]+)\\*\\*/g, '<strong>$1</strong>');
+    // 去除CSS变量引用，避免Mermaid解析错误 -- 移除此行
+    // .replace(/var\\(--[^)]+\\)/g, '');
 
     // 解析 Markdown
-    renderedNotesHtml.value = marked.parse(processedContent) as string;
+    const htmlContent = marked.parse(processedContent) as string;
+
+    // 包裹最终内容
+    renderedNotesHtml.value = `${htmlContent}`;
 
     // 在流式生成时添加光标动画
     if (isGeneratingNote.value) {
-      renderedNotesHtml.value += '<span class="typing-cursor"></span>';
+      // 需要找到 .markdown-body 内部的最后一个元素来追加光标
+      // 暂时简单追加到末尾，后续可优化
+      renderedNotesHtml.value = renderedNotesHtml.value.replace('</div>', '<span class="typing-cursor"></span></div>');
     }
 
     // 动态添加生成中的class
@@ -929,6 +937,7 @@ async function renderNotesForCurrentQuestion() {
         await initMermaid();
 
         // 替换 language-mermaid 类元素为 mermaid 类元素
+        // 修改选择器以查找 pre > code.language-mermaid
         const mermaidCodeBlocks = notesDisplayRef.value.querySelectorAll('pre code.language-mermaid');
         mermaidCodeBlocks.forEach(block => {
           try {
@@ -939,15 +948,17 @@ async function renderNotesForCurrentQuestion() {
             mermaidDiv.className = 'mermaid';
             mermaidDiv.textContent = code;
 
-            // 查找父元素，通常是 pre 标签
+            // 查找父元素 pre 标签
             const preElement = block.closest('pre');
             if (preElement && preElement.parentNode) {
+              // 使用新的mermaidDiv替换掉整个preElement
               preElement.parentNode.replaceChild(mermaidDiv, preElement);
             }
           } catch (e) {
             console.error('替换Mermaid代码块失败:', e);
           }
         });
+
 
         // 一次性初始化所有Mermaid图表
         mermaid.init(undefined, '.mermaid').catch(err => {
@@ -1082,10 +1093,11 @@ async function generateAINotes(question: Question | null, completionCallback: Co
     return;
   }
 
-  const apiConfig = getAIAPIConfig();
+  // 使用 configService 获取 API 配置
+  const currentApiConfig = configService.getApiConfig();
 
   // 验证必要的API配置
-  if (!apiConfig.apiUrl || !apiConfig.apiKey) {
+  if (!currentApiConfig.apiUrl || !currentApiConfig.apiKey) {
     showToast('请先配置AI API设置', 'info');
     showApiConfigModal.value = true;
     completionCallback('', '请先在API配置中设置API地址和密钥');
@@ -1103,22 +1115,22 @@ async function generateAINotes(question: Question | null, completionCallback: Co
     const prompt = `请根据以下题目生成详细的学习笔记，包括重点知识、相关概念解释和记忆技巧：\n\n问题：${questionData.question}\n\n选项：${JSON.stringify(questionData.options)}\n\n正确答案：${questionData.answer}`;
 
     const requestData = {
-      model: apiConfig.model,
+      // 使用 configService 中的配置
+      model: currentApiConfig.model,
       messages: [
-        { role: "system", content: apiConfig.systemPrompt },
+        { role: "system", content: currentApiConfig.systemPrompt },
         { role: "user", content: prompt }
       ],
-      stream: config.apiConfig?.streamOutput !== false,
-      temperature: apiConfig.temperature,
-      top_p: apiConfig.topP
+      stream: currentApiConfig.streamOutput !== false, // 使用 configService 中的配置
+      temperature: currentApiConfig.temperature,       // 使用 configService 中的配置
+      top_p: currentApiConfig.topP                     // 使用 configService 中的配置
     };
 
-    const response = await fetch(apiConfig.apiUrl, {
+    const response = await fetch(currentApiConfig.apiUrl, { // 使用 configService 中的配置
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiConfig.apiKey}`,
-        'Accept': 'application/json'
+        'Authorization': `Bearer ${currentApiConfig.apiKey}`
       },
       body: JSON.stringify(requestData)
     });
@@ -1203,7 +1215,10 @@ function triggerAINotesGeneration() {
   // 定义自动保存函数
   const autoSaveNotes = () => {
     if (currentQuestion.value && currentQuestion.value.notes) {
-      saveCurrentNotesState();
+      // 使用新的保存到题库数据的方法
+      saveNotesToQuizData();
+      // 不再单独保存笔记
+      // saveCurrentNotesState();
     }
 
     // 定期保存，确保数据不会丢失
@@ -1217,7 +1232,7 @@ function triggerAINotesGeneration() {
 
   // 定义流式和完成回调
   const handleStreamChunk: StreamCallback = (chunk) => {
-    if (config.apiConfig?.streamOutput && currentQuestion.value) {
+    if (apiConfig.value.streamOutput && currentQuestion.value) {
       // 添加到当前内容
       currentQuestion.value.notes = (currentQuestion.value.notes || '') + chunk;
       pendingChunks += chunk;
@@ -1291,7 +1306,11 @@ function triggerAINotesGeneration() {
           saveNotesToLocalStorage(); // 保存生成的笔记
           showToast('AI笔记生成完成', 'success');
 
-          if (config.canSyncNotes) triggerSync();
+          // 检查是否需要自动同步到远程仓库，只检查autoSync设置
+          if (apiConfig.value.autoSync) {
+            showToast('正在自动同步到远程仓库...', 'info');
+            triggerSync();
+          }
         }
       }, 300); // 300ms延迟，让过渡更加平滑
     } else {
@@ -1308,7 +1327,8 @@ function triggerAINotesGeneration() {
 
 // 检查并触发下一个问题的笔记生成
 function checkAndGenerateNextNote() {
-  if (!config.apiConfig?.enabled || !config.apiConfig?.autoGenerate || isGeneratingNote.value) return;
+  // 使用 apiConfig 计算属性替代本地 config
+  if (!apiConfig.value?.enabled || !apiConfig.value?.autoGenerate || isGeneratingNote.value) return;
 
   const nextIndex = currentIndex.value + 1;
   if (nextIndex < localQuestions.value.length) {
@@ -1324,84 +1344,43 @@ function checkAndGenerateNextNote() {
         } else {
           nextQ.notes = finalNote;
           console.log(`Background note generation completed for QID ${nextQ.id}`);
-          saveNotesToLocalStorage(); // 保存所有笔记
+
+          // 将笔记保存到题库数据，而非单独保存
+          saveNotesToQuizData();
+          // 不再使用单独保存笔记的方法
+          // saveNotesToLocalStorage();
         }
       });
     }
   }
 }
-
-// 保存设置配置
-function saveConfig() {
-  const configToSave = {
-    autoSubmit: config.autoSubmit,
-    autoNext: config.autoNext,
-    allowSkip: config.allowSkip,
-    showNotesAfterAnswer: config.showNotesAfterAnswer,
-    lockAnswerAfterSubmit: config.lockAnswerAfterSubmit,
-    showCorrectAnswerImmediately: config.showCorrectAnswerImmediately,
-    showProgress: config.showProgress,
-    swipeGestureEnabled: config.swipeGestureEnabled,
-    randomMode: config.randomMode,
-    reviewMode: config.reviewMode,
-    canEditQuestion: config.canEditQuestion,
-    canSyncNotes: config.canSyncNotes,
-    viewWrongAfterAll: config.viewWrongAfterAll,
-    apiConfig: config.apiConfig,
-    fontFamily: config.fontFamily,
-    animationEnabled: config.animationEnabled
-  };
-
-  localStorage.setItem('quizConfig', JSON.stringify(configToSave));
-}
-
-// 处理API配置保存
-function handleApiConfigSave(apiConfig: {
-  apiUrl: string;
-  apiKey: string;
-  model: string;
-  systemPrompt: string;
-  autoGenerateNotes: boolean;
-  streamOutput: boolean;
-  temperature: number;
-  topP: number;
-}) {
-  // 更新配置
-  config.apiConfig = {
-    enabled: true,
-    autoGenerate: apiConfig.autoGenerateNotes,
-    streamOutput: apiConfig.streamOutput
-  };
-
-  // 保存到本地存储
-  saveConfig();
-  showToast('API配置已保存', 'success');
-}
-
 // 触发笔记同步
 function triggerSync() {
-  if (!config.canSyncNotes || syncStatus.value === 'pending') return;
+  if (syncStatus.value === 'pending') return;
 
   syncStatus.value = 'pending';
   showToast('笔记同步中...', 'info');
 
   try {
-    // 保存到本地存储
-    saveNotesToLocalStorage();
+    // 保存到本地存储 (使用 QuizStore 保存)
+    saveNotesToQuizData(); // 确保最新笔记已在QuizStore中
 
-    // 获取GitHub配置
-    const owner = localStorage.getItem('github_owner');
-    const repo = localStorage.getItem('github_repo');
-    const branch = localStorage.getItem('github_branch') || 'main';
-    const path = localStorage.getItem('github_path') || '';
-    const token = localStorage.getItem('github_token');
-    const useForceSync = localStorage.getItem('force_sync') === 'true';
-    const syncQuizName = localStorage.getItem('sync_quiz_name') || currentQuizInfo.value.name;
+    // 获取GitHub配置 (从 configService 获取)
+    const githubConfig = configService.getGithubConfig();
+    const owner = githubConfig.owner;
+    const repo = githubConfig.repo;
+    const branch = githubConfig.branch;
+    const path = githubConfig.path;
+    const token = githubConfig.token;
+    const useForceSync = githubConfig.forceSync;
+    const syncQuizName = githubConfig.syncQuizName || currentQuizInfo.value.name;
 
     // 检查是否配置了GitHub
     if (!owner || !repo || !token) {
       syncStatus.value = 'error';
       showToast('请先配置GitHub仓库信息', 'error');
+      // 考虑打开设置模态框
+      showSyncConfigModal.value = true;
       return;
     }
 
@@ -1555,53 +1534,21 @@ const currentQuizInfo = computed(() => {
 
 // --- Modal Methods ---
 
-// 应用模式设置
-function applySettings(newSettings: GeneralSettings) {
-  // 从通用设置中提取测验设置
-  const newQuizSettings = newSettings.quizSettings;
+// 应用设置
+function applySettings(newSettings: AppSettings) {
+  // 更新configService中的设置
+  configService.updateSettings(newSettings);
 
-  // 更新测验配置 - 修复类型转换
-  const changedKeys = Object.keys(newQuizSettings).filter(
-    key => {
-      const configValue = (config as Record<string, unknown>)[key];
-      const newValue = (newQuizSettings as unknown as Record<string, unknown>)[key];
-      return configValue !== newValue;
-    }
-  ) as (keyof QuizConfig)[];
-
-  // 更新UI设置
-  if (newSettings.uiSettings) {
-    const { fontFamily, animationEnabled } = newSettings.uiSettings;
-    config.fontFamily = fontFamily;
-    config.animationEnabled = animationEnabled;
-
-    // 设置深色模式
-    if (isDarkMode.value !== newSettings.uiSettings.darkMode) {
-      isDarkMode.value = newSettings.uiSettings.darkMode;
-      toggleTheme(); // 使用正确的函数名
-    }
-  }
-
-  // 更新测验设置
-  Object.assign(config, newQuizSettings);
-
-  // 更新调试模式
-  localStorage.setItem('debugEnabled', newSettings.debugEnabled.toString());
-
-  showToast('设置已应用', 'success');
-
-  // 如果 reviewMode 改变，需要重新加载当前问题状态
-  if (changedKeys.includes('reviewMode')) {
-    loadQuestion(currentIndex.value);
-  }
-
-  // 保存配置到localStorage
-  saveConfigToLocalStorage();
+  // 同步本地配置状态
+  // Object.assign(config, configService.getQuizSettings()); // 'config' is no longer used
+  // config.fontFamily = configService.getUiSettings().fontFamily; // 'config' is no longer used
+  // config.animationEnabled = configService.getUiSettings().animationEnabled; // 'config' is no longer used
+  // config.apiConfig = configService.getApiConfig(); // 'config' is no longer used
 }
 
 // 打开当前问题的编辑器
 function openCurrentQuestionEditor() {
-  if (!config.canEditQuestion || isQuizSubmitted.value || !currentQuestion.value) {
+  if (!quizSettings.value.canEditQuestion || isQuizSubmitted.value || !currentQuestion.value) {
     showToast('当前状态无法编辑题目', 'warning');
     return;
   }
@@ -1611,48 +1558,120 @@ function openCurrentQuestionEditor() {
 
 // 处理问题保存事件
 function handleSaveQuestion(updatedQuestionData: Partial<Question>) {
-  // 确保ID存在，用于查找问题
-  if (!updatedQuestionData.id) {
-    showToast('错误：更新的问题缺少ID', 'error');
+  if (!questionToEdit.value || !questionToEdit.value.id) return;
+
+  // 获取需要更新的题目ID
+  const questionId = questionToEdit.value.id.toString();
+  const quizData = QuizStore.state.quizData;
+  if (!quizData || !quizData.chapters) {
+    showToast('无法保存，题库数据不完整', 'error');
     return;
   }
-  const originalIndex = localQuestions.value.findIndex(q => q.id === updatedQuestionData.id);
-  if (originalIndex === -1) {
-    showToast('错误：无法找到原始问题进行更新', 'error');
-    return;
+
+  let questionUpdatedInStore = false;
+  // 在章节中寻找并更新问题 (更新 Store)
+  for (let i = 0; i < quizData.chapters.length; i++) {
+    const chapter = quizData.chapters[i];
+    const questionIndex = chapter.questions.findIndex(q => String(q.id) === questionId);
+
+    if (questionIndex !== -1) {
+      // 找到题目，更新它
+      const originalQuestion = chapter.questions[questionIndex];
+      const updatedQuestionInStore = { ...originalQuestion };
+
+      // 更新题目属性
+      Object.keys(updatedQuestionData).forEach(key => {
+        const typedKey = key as keyof Question;
+        if (updatedQuestionData[typedKey] !== undefined) {
+          (updatedQuestionInStore as Record<string, unknown>)[typedKey] = updatedQuestionData[typedKey];
+        }
+      });
+
+      // 更新题库中的题目
+      chapter.questions[questionIndex] = updatedQuestionInStore;
+      questionUpdatedInStore = true;
+      break; // 假设ID是唯一的
+    }
   }
 
-  // 本地更新和持久化
-  try {
-    // 更新本地题目
-    localQuestions.value[originalIndex] = { ...localQuestions.value[originalIndex], ...updatedQuestionData };
+  // 更新 localQuestions.value 以立即反映 UI
+  const localQuestionIndex = localQuestions.value.findIndex(q => String(q.id) === questionId);
+  if (localQuestionIndex !== -1) {
+    const updatedLocalQuestion = { ...localQuestions.value[localQuestionIndex] };
+    Object.keys(updatedQuestionData).forEach(key => {
+      const typedKey = key as keyof Question;
+      if (updatedQuestionData[typedKey] !== undefined) {
+        (updatedLocalQuestion as Record<string, unknown>)[typedKey] = updatedQuestionData[typedKey];
+      }
+    });
+    localQuestions.value[localQuestionIndex] = updatedLocalQuestion;
 
-    // 这是一个占位函数，用于更新QuizStore中的源数据
-    updateQuizStoreSourceData(updatedQuestionData);
-
-    showToast('问题已更新', 'success');
-    showEditModal.value = false; // 关闭模态框
-    questionToEdit.value = null;
-
-    // 如果编辑的是当前问题，重新渲染
-    if (currentIndex.value === originalIndex) {
-      renderNotesForCurrentQuestion();
+    // 如果当前显示的是这个题目，确保 currentQuestion 也更新
+    if (currentQuestion.value && currentQuestion.value.id === questionId) {
+      // currentQuestion 是计算属性，它会从 localQuestions.value 自动更新
     }
-    if (config.canSyncNotes) {
-      saveNotesToLocalStorage();
-      triggerSync();
-    }
+  }
 
-  } catch (error) {
-    console.error('更新题目失败:', error);
-    showToast(`更新失败: ${error instanceof Error ? error.message : '未知错误'}`, 'error');
+
+  if (questionUpdatedInStore) {
+    showToast('题目已更新', 'success');
+    QuizStore.saveToStorage(); // 保存到本地存储
+  } else {
+    showToast('未找到要更新的题目', 'error');
   }
 }
 
 // 更新QuizStore源数据的函数
 function updateQuizStoreSourceData(updatedQuestionData: Partial<Question>) {
-  console.warn("尚未实现: 更新QuizStore源数据，问题ID:", updatedQuestionData.id);
-  // TODO: 实现更新QuizStore源数据的逻辑
+  if (!updatedQuestionData.id) {
+    console.error("无法更新题目：缺少ID");
+    return;
+  }
+
+  const questionId = String(updatedQuestionData.id); // 确保ID为字符串类型
+
+  // 获取QuizStore中的题库数据
+  const quizData = QuizStore.getQuizData();
+  if (!quizData || !quizData.chapters) {
+    console.error("无法更新题目：未找到题库数据");
+    return;
+  }
+
+  // 在所有章节中查找该题目
+  let found = false;
+  for (let i = 0; i < quizData.chapters.length; i++) {
+    const chapter = quizData.chapters[i];
+    const questionIndex = chapter.questions.findIndex(q => String(q.id) === questionId);
+
+    if (questionIndex !== -1) {
+      // 找到题目，更新它
+      const updatedQuestion = {
+        ...quizData.chapters[i].questions[questionIndex],
+      };
+
+      // 只更新非undefined的字段
+      Object.keys(updatedQuestionData).forEach(key => {
+        const typedKey = key as keyof Question;
+        if (updatedQuestionData[typedKey] !== undefined) {
+          (updatedQuestion as Record<string, unknown>)[typedKey] = updatedQuestionData[typedKey];
+        }
+      });
+
+      quizData.chapters[i].questions[questionIndex] = updatedQuestion;
+      found = true;
+      break;
+    }
+  }
+
+  if (found) {
+    // 更新QuizStore中的数据
+    QuizStore.setQuizData(quizData);
+    // 保存到存储
+    QuizStore.saveToStorage();
+    console.log("已更新QuizStore中的题目数据，ID:", updatedQuestionData.id);
+  } else {
+    console.warn("在QuizStore中未找到要更新的题目，ID:", updatedQuestionData.id);
+  }
 }
 
 // 存储相关方法
@@ -1665,10 +1684,10 @@ function saveCurrentAnswerState() {
 
   try {
     const userAnswers = localStorage.getItem('userAnswers') || '{}';
-    const answersData = JSON.parse(userAnswers);
+    const answersData: UserAnswersMap = JSON.parse(userAnswers);
 
     answersData[String(question.id)] = {
-      answer: selectedAnswer.value,
+      answer: selectedAnswer.value || '',
       isCorrect: isCorrect,
       timestamp: Date.now()
     };
@@ -1679,61 +1698,14 @@ function saveCurrentAnswerState() {
   }
 }
 
-// 保存当前笔记状态到localStorage
-function saveCurrentNotesState() {
-  if (!currentQuestion.value) return;
-  const question = currentQuestion.value;
-
-  try {
-    const notesDataStr = localStorage.getItem('quizNotes') || '{}';
-    const notes = JSON.parse(notesDataStr);
-
-    notes[String(question.id)] = question.notes;
-    localStorage.setItem('quizNotes', JSON.stringify(notes));
-  } catch (err) {
-    console.error('保存笔记失败:', err);
-  }
-}
-
 // 保存所有笔记到localStorage
 function saveNotesToLocalStorage() {
   try {
-    const notesData: Record<string, string> = {};
-    localQuestions.value.forEach(q => {
-      if (q.id && q.notes) {
-        notesData[String(q.id)] = q.notes;
-      }
-    });
-    localStorage.setItem('quizNotes', JSON.stringify(notesData));
+    // 使用QuizStore保存题库状态
+    QuizStore.saveToStorage();
     console.log('笔记已保存到本地存储');
   } catch (err) {
     console.error('批量保存笔记失败:', err);
-  }
-}
-
-// 保存配置到localStorage
-function saveConfigToLocalStorage() {
-  try {
-    // 保存完整配置对象
-    localStorage.setItem('quizConfig', JSON.stringify(config));
-
-    // 同时保存到QuizStore配置中 - 注意使用对应的键名映射
-    if (QuizStore && typeof QuizStore.setConfig === 'function') {
-      QuizStore.setConfig({
-        mode: config.reviewMode ? QuizMode.REVIEW : (config.randomMode ? QuizMode.RANDOM : QuizMode.NORMAL),
-        randomize: config.randomMode || false,
-        // 保留其他已有配置
-        chapterIndex: QuizStore.state.config.chapterIndex,
-        rangeStart: QuizStore.state.config.rangeStart,
-        rangeEnd: QuizStore.state.config.rangeEnd,
-        wrongOnly: QuizStore.state.config.wrongOnly
-      });
-
-      // 调用存储方法以便持久化
-      QuizStore.saveToStorage();
-    }
-  } catch (error) {
-    console.error('保存配置失败:', error);
   }
 }
 
@@ -1744,273 +1716,30 @@ function emitStateChange() {
 
 // --- 生命周期钩子 ---
 onMounted(() => {
-  console.log("页面加载，开始初始化...");
-
-  // 加载保存的配置
   try {
-    // 1. 先尝试从QuizStore获取配置
-    const storeConfig = QuizStore.getConfig();
+    mermaid.initialize({ startOnLoad: true });
 
-    // 2. 转换QuizStore配置到本地配置格式
-    if (storeConfig) {
-      config.randomMode = storeConfig.randomize || false;
-      config.reviewMode = storeConfig.mode === QuizMode.REVIEW;
-      // 其他相关配置...
-    }
+    // 初始化题库数据并根据章节过滤
+    loadQuizDataAndFilter(); // 调用新的函数
 
-    // 3. 再尝试从localStorage加载更详细的配置
-    const savedConfig = localStorage.getItem('quizConfig');
-    if (savedConfig) {
-      const parsedConfig = JSON.parse(savedConfig);
-      Object.assign(config, parsedConfig);
-    }
-  } catch (error) {
-    console.error('加载配置失败:', error);
-  }
+    // 设置键盘事件监听
+    document.addEventListener('keydown', handleKeyPress);
 
-  // 初始化主题
-  const savedTheme = localStorage.getItem('theme');
-  if (savedTheme === 'dark') {
-    isDarkMode.value = true;
-    document.body.classList.add('dark-theme');
-    document.documentElement.setAttribute('data-theme', 'dark');
-  } else {
-    isDarkMode.value = false;
-    document.body.classList.remove('dark-theme');
-    document.documentElement.setAttribute('data-theme', 'light');
-  }
-
-  // 检查是否有缓存的题库数据
-  const hasQuizData = QuizStore.state.quizData !== null;
-  console.log("QuizStore中是否有题库数据:", hasQuizData);
-
-  if (!hasQuizData) {
-    console.log("尝试从本地存储恢复题库数据...");
-    // 尝试从本地存储恢复题库数据
-    const restored = QuizStore.loadFromStorage();
-    if (!restored) {
-      console.warn('未能从本地存储恢复题库数据，需要重新选择题库');
-      showToast('请返回并选择题库', 'warning');
-
-      // 如果恢复失败，等待一会儿后跳转到题库页面
-      setTimeout(() => {
-        router.push('/library');
-      }, 1500);
-      return; // 不再执行后续初始化逻辑
-    } else {
-      console.log("成功从本地存储恢复题库数据");
-      showToast('已恢复上次练习的题库', 'success');
-    }
-  }
-
-  // 初始化Mermaid库（如果存在）
-  if (typeof mermaid !== 'undefined') {
-    mermaid.initialize({
-      startOnLoad: false,
-      theme: isDarkMode.value ? 'dark' : 'default'
-    });
-  }
-
-  // 更新章节选择器的值
-  const savedChapter = localStorage.getItem('selectedChapter');
-  if (savedChapter) {
-    console.log("恢复上次选择的章节:", savedChapter);
-    // 如果有章节选择器，则设置其值
-    if (typeof selectedChapter.value !== 'undefined') {
-      selectedChapter.value = savedChapter;
-    }
-  }
-
-  // 开始初始化题库数据
-  initializeQuiz();
-});
-
-// 准备题目数据
-function prepareQuizData() {
-  try {
-    // 获取题库数据
-    const quizData = QuizStore.getQuizData();
-    if (!quizData || !quizData.chapters) {
-      throw new Error('题库数据无效');
-    }
-
-    // 根据配置处理章节和问题
-    processChaptersAndQuestions(quizData);
-
-  } catch (caughtError) { // 使用不同的变量名
-    console.error('准备题目数据失败:', caughtError);
-    // 更新 ref 变量 error
-    error.value = '准备题目数据失败: ' + (caughtError instanceof Error ? caughtError.message : String(caughtError));
+    // 初始化定时器
+    initTimer();
+  } catch (err) {
+    console.error('处理题库数据失败:', err);
     loading.value = false;
-  }
-}
-
-// 处理章节和问题
-function processChaptersAndQuestions(quizData: StoreQuizData) { // 使用导入的 StoreQuizData 类型
-  // 提取所有问题或特定章节的问题
-  const chapterIndex = QuizStore.state.config.chapterIndex;
-  const mode = QuizStore.state.config.mode;
-  const allQuestions: Question[] = []; // 这里的 Question 是本地 L300 的类型
-
-  // 从题库中提取问题
-  if (quizData && quizData.chapters) { // 添加检查
-    if (chapterIndex === 'all') {
-      // 提取所有章节的问题
-      quizData.chapters.forEach((chapter: StoreChapter) => { // 移除未使用的 index 参数
-        if (chapter.questions && Array.isArray(chapter.questions)) {
-          // 显式转换类型以匹配 forEach 回调预期
-          (chapter.questions as unknown as RawQuestionData[]).forEach((q: RawQuestionData) => { // RawQuestionData 是本地类型，用于解析
-            allQuestions.push(formatQuestion(q, chapter.title)); // 移除未使用的 index
-          });
-        }
-      });
-    } else {
-      // 提取特定章节的问题
-      const chapter = quizData.chapters.find((c: StoreChapter) => c.title === chapterIndex); // 使用导入的 StoreChapter 类型
-      if (chapter && chapter.questions && Array.isArray(chapter.questions)) {
-        // 显式转换类型以匹配 forEach 回调预期
-        (chapter.questions as unknown as RawQuestionData[]).forEach((q: RawQuestionData) => {
-          allQuestions.push(formatQuestion(q, chapter.title));
-        });
-      }
-    }
-  } else {
-    console.warn("Quiz data or chapters are missing.");
-    error.value = '题库数据或章节信息缺失';
-  }
-
-  // 应用范围限制
-  let filteredQuestions = allQuestions;
-  if (mode === QuizMode.RANGE) {
-    const start = QuizStore.state.config.rangeStart - 1; // 转为0索引
-    const end = QuizStore.state.config.rangeEnd;
-    filteredQuestions = allQuestions.slice(start, end);
-  }
-
-  // 应用随机模式
-  if (QuizStore.state.config.randomize) {
-    filteredQuestions = shuffleArray([...filteredQuestions]);
-  }
-
-  // 更新本地问题列表
-  localQuestions.value = filteredQuestions;
-  loading.value = false;
-
-  if (filteredQuestions.length === 0) {
-    error.value = '没有找到符合条件的题目';
-  } else {
-    // 保存当前章节到localStorage
-    localStorage.setItem('selectedChapter', chapterIndex);
-
-    // 初始化错题ID列表
-    wrongQuestionIds.value = filteredQuestions
-      .filter(q => q.userAnswer !== null && q.userAnswer !== q.answer)
-      .map(q => String(q.id));
-
-    // 延迟加载第一题，确保DOM渲染完成
-    nextTick(() => {
-      loadQuestion(currentIndex.value);
-    });
-  }
-}
-
-// 格式化问题数据
-function formatQuestion(rawQuestion: RawQuestionData, chapterTitle?: string): Question { // 移除未使用的 chapterIndex
-  return {
-    id: rawQuestion.id || rawQuestion.number || 0,
-    question: rawQuestion.question || rawQuestion.title || '',
-    options: rawQuestion.options || [],
-    answer: String(rawQuestion.answer || ''),
-    notes: rawQuestion.notes || '',
-    explanation: rawQuestion.explanation || '',
-    userAnswer: rawQuestion.userAnswer || null,
-    chapterTitle: chapterTitle || ''
-  };
-}
-
-// 打乱数组（随机排序）
-function shuffleArray<T>(array: T[]): T[] {
-  for (let i = array.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [array[i], array[j]] = [array[j], array[i]];
-  }
-  return array;
-}
-
-// 切换主题方法
-function toggleTheme() {
-  isDarkMode.value = !isDarkMode.value;
-
-  if (isDarkMode.value) {
-    document.body.classList.add('dark-theme');
-    document.documentElement.setAttribute('data-theme', 'dark');
-    localStorage.setItem('theme', 'dark');
-  } else {
-    document.body.classList.remove('dark-theme');
-    document.documentElement.setAttribute('data-theme', 'light');
-    localStorage.setItem('theme', 'light');
-  }
-
-  // 重新初始化mermaid以应用主题变化
-  nextTick(() => {
-    if (typeof mermaid !== 'undefined') {
-      mermaid.initialize({
-        startOnLoad: false,
-        theme: isDarkMode.value ? 'dark' : 'default'
-      });
-    }
-    renderNotesForCurrentQuestion();
-  });
-}
-
-onUnmounted(() => {
-  removeKeyboardListeners();
-  if (toastTimer !== null) {
-    clearTimeout(toastTimer);
+    const errorMsg = err instanceof Error ? err.message : String(err);
+    error.value = '处理题库数据时出错: ' + errorMsg;
   }
 });
 
-// --- 监听器 ---
-
-// 监听当前问题变化时，重新渲染笔记
-watch(currentQuestion, (newQuestion, oldQuestion) => {
-  if (newQuestion && newQuestion !== oldQuestion) {
-    nextTick(() => {
-      renderNotesForCurrentQuestion();
-    });
-  }
-});
-
-// 监听笔记编辑状态，自动调整textarea大小
-watch(isEditingNotes, (editing) => {
-  if (editing) {
-    nextTick(() => autoResizeTextarea());
-  }
-});
-
-// 监听配置中的字体变化
-watch(() => config.fontFamily, (newFontFamily) => {
-  console.log(`Font family changed to: ${newFontFamily}`);
-  nextTick(() => {
-    initMermaid();
-    renderNotesForCurrentQuestion();
-  });
-});
-
-// 监听章节选择变化
-watch(selectedChapter, (newChapter) => {
-  console.log(`章节切换: ${newChapter}`);
-  // 如果章节变更，重新加载题目
-  if (quizData.value) {
-    prepareQuestions();
-    // 重置当前索引
-    currentIndex.value = 0;
-    // 加载第一题
-    nextTick(() => {
-      loadQuestion(0);
-    });
-  }
-});
+// 初始化定时器函数
+function initTimer() {
+  // 实现定时器初始化逻辑
+  console.log('定时器已初始化');
+}
 
 // --- 辅助方法 ---
 
@@ -2023,7 +1752,7 @@ function getOptionKey(optionText: string, index: number): string {
 // 获取选项的内容
 function getOptionContent(optionText: string): string {
   const keyMatch = typeof optionText === 'string' ? optionText.match(/^([A-Z])[:.)]?\s*/i) : null;
-  return keyMatch ? optionText.substring(keyMatch[0].length) : optionText;
+  return keyMatch ? formatQuestionText(optionText.substring(keyMatch[0].length)) : formatQuestionText(optionText);
 }
 
 // 获取选项的 CSS 类
@@ -2034,21 +1763,21 @@ function getOptionClass(optionKey: string): string {
   const classes = [];
   const isSelected = selectedAnswer.value === optionKey;
   const isUserAnswer = question.userAnswer === optionKey;
-  const isCorrectAnswer = question.answer === optionKey;
+  const isCorrectAnswer = isCorrectAnswerOption(question.answer, optionKey);
   const answered = isCurrentAnswered.value;
-  const canChange = !config.lockAnswerAfterSubmit;
+  const canChange = !quizSettings.value.lockAnswerAfterSubmit; // 使用 quizSettings
 
   // 如果允许修改答案，且当前选择了此选项但还未保存
   if (isSelected && ((!answered) || (answered && canChange))) {
     classes.push('page-quiz__option--selected');
   }
 
-  if (answered || config.reviewMode) { // 已回答或回顾模式
+  if (answered || quizSettings.value.reviewMode) { // 已回答或回顾模式 // 使用 quizSettings
     // 显示正确答案的条件：
     // 1. 处于回顾模式，或
     // 2. 启用了立即显示正确答案，或
     // 3. 用户的回答是这个选项（显示用户回答状态）
-    if ((config.reviewMode || config.showCorrectAnswerImmediately || isUserAnswer) && isCorrectAnswer) {
+    if ((quizSettings.value.reviewMode || quizSettings.value.showCorrectAnswerImmediately || isUserAnswer) && isCorrectAnswer) { // 使用 quizSettings
       classes.push('page-quiz__option--correct');
     }
 
@@ -2061,17 +1790,50 @@ function getOptionClass(optionKey: string): string {
   return classes.join(' ');
 }
 
+// 判断选项是否为正确答案
+function isCorrectAnswerOption(answer: string | number | number[], optionKey: string): boolean {
+  // 如果answer是字符串类型
+  if (typeof answer === 'string') {
+    // 单选答案(一个字母)
+    if (/^[A-Z]$/.test(answer)) {
+      return answer === optionKey;
+    }
+    // 多选答案(多个字母)
+    if (/^[A-Z]+$/.test(answer)) {
+      return answer.includes(optionKey);
+    }
+    // 数字字符串
+    if (/^\d+$/.test(answer)) {
+      // 尝试两种可能的索引转换 (0-based或1-based)
+      const indexZeroBased = parseInt(answer);
+      const indexOneBased = parseInt(answer) - 1;
+
+      // 选择合适的索引转换为字母
+      return String.fromCharCode(65 + indexZeroBased) === optionKey ||
+        String.fromCharCode(65 + indexOneBased) === optionKey;
+    }
+  }
+
+  // 如果answer是数字
+  if (typeof answer === 'number') {
+    return String.fromCharCode(65 + answer) === optionKey;
+  }
+
+
+  return false;
+}
+
 // 获取选项 Key 的 CSS 类 (主要用于对错标记)
 function getOptionKeyClass(optionKey: string): string {
   const question = currentQuestion.value;
-  if (!question || (!isCurrentAnswered.value && !config.reviewMode)) return '';
+  if (!question || (!isCurrentAnswered.value && !quizSettings.value.reviewMode)) return ''; // 使用 quizSettings
 
   const isCorrectAnswer = question.answer === optionKey;
   const isUserWrongAnswer = question.userAnswer === optionKey && question.userAnswer !== question.answer;
 
   // 显示正确答案和错误选择的标记
   // 正确答案只有在回顾模式或启用立即显示正确答案时才显示
-  if (isCorrectAnswer && (config.reviewMode || config.showCorrectAnswerImmediately)) {
+  if (isCorrectAnswer && (quizSettings.value.reviewMode || quizSettings.value.showCorrectAnswerImmediately)) { // 使用 quizSettings
     return 'page-quiz__option-number--correct';
   } else if (isUserWrongAnswer) {
     return 'page-quiz__option-number--incorrect';
@@ -2084,27 +1846,38 @@ let touchStartX = 0;
 let touchStartY = 0;
 
 function handleTouchStart(e: TouchEvent) {
-  if (!config.swipeGestureEnabled) return;
+  // 使用 configService 获取 swipeGestureEnabled
+  if (!quizSettings.value.swipeGestureEnabled) return;
   touchStartX = e.touches[0].clientX;
-  touchStartY = e.touches[0].clientY;
+  touchStartY = e.touches[0].clientY; // 记录Y轴起始位置
 }
 
 function handleTouchEnd(e: TouchEvent) {
-  if (!config.swipeGestureEnabled) return;
+  // 使用 configService 获取 swipeGestureEnabled
+  if (!quizSettings.value.swipeGestureEnabled) return;
   const touchEndX = e.changedTouches[0].clientX;
-  const touchEndY = e.changedTouches[0].clientY;
+  const touchEndY = e.changedTouches[0].clientY; // 记录Y轴结束位置
   const diffX = touchStartX - touchEndX;
-  const diffY = touchStartY - touchEndY;
+  const diffY = touchStartY - touchEndY; // 计算Y轴差值
 
-  // 阈值判断，水平滑动为主
-  const horizontalThreshold = window.innerWidth * 0.15;
-  const verticalThreshold = window.innerHeight * 0.10; // 允许少量垂直移动
+  // 获取屏幕尺寸，计算阈值
+  const screenWidth = window.innerWidth;
+  const screenHeight = window.innerHeight;
+  const horizontalThreshold = screenWidth * 0.15;
+  const verticalThreshold = screenHeight * 0.10;
 
+  // 检查滑动是否主要为水平方向，且超过阈值
   if (Math.abs(diffX) > horizontalThreshold && Math.abs(diffY) < verticalThreshold) {
-    if (diffX > 0 && canGoNext.value) { // 左滑 -> 下一题
-      nextQuestion();
-    } else if (diffX < 0 && canGoPrev.value) { // 右滑 -> 上一题
-      previousQuestion();
+    if (diffX > 0) { // 左滑 -> 下一题
+      // 使用 canGoNext 计算属性判断
+      if (canGoNext.value) {
+        nextQuestion();
+      }
+    } else { // 右滑 -> 上一题
+      // 使用 canGoPrev 计算属性判断
+      if (canGoPrev.value) {
+        previousQuestion();
+      }
     }
   }
 }
@@ -2142,7 +1915,7 @@ function handleKeyPress(e: KeyboardEvent) {
   // 空格键 提交/下一题
   else if (e.key === ' ') {
     e.preventDefault(); // 防页面滚动
-    if (canSubmitAnswer.value) {
+    if (canSubmit.value) { // 使用 canSubmit
       submitAnswer();
     } else if (canGoNext.value) {
       nextQuestion();
@@ -2177,275 +1950,192 @@ async function initMermaid() {
   try {
     mermaid.initialize({
       startOnLoad: false,
-      theme: document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default',
+      theme: document.body.classList.contains('dark-theme') ? 'dark' : 'default',
       securityLevel: 'loose',
-      fontFamily: config.fontFamily || 'sans-serif',
-      fontSize: 16,
-      flowchart: {
-        htmlLabels: true,
-        curve: 'basis',
-        useMaxWidth: true,
-        nodeSpacing: 10,
-        rankSpacing: 15,
-        padding: 5
-      },
-      sequence: {
-        useMaxWidth: true,
-        diagramMarginX: 10,
-        diagramMarginY: 10,
-        boxMargin: 5,
-        actorMargin: 30,
-        messageMargin: 5
-      },
-      gantt: {
-        useMaxWidth: true,
-        barHeight: 20
-      },
-      er: {
-        useMaxWidth: true,
-        entityPadding: 10
-      },
-      class: {
-        useMaxWidth: true
-      }
+      flowchart: { useMaxWidth: true },
     });
-    return true;
-  } catch (e) {
-    console.error("Mermaid initialization failed:", e);
-    showToast("图表库初始化失败", "warning");
-    return false;
+    renderMermaidDiagrams();
+  } catch (error) {
+    console.error('初始化Mermaid失败:', error);
   }
 }
 
-// 准备问题数据
-function prepareQuestions() {
-  const quizData = QuizStore.state.quizData;
-  if (!quizData || !quizData.chapters) {
-    error.value = '题库数据不存在或格式不正确';
-    loading.value = false;
-    return;
-  }
-
-  // 从 Store 获取用户选择的配置
-  const quizConfig = QuizStore.getConfig();
-  const initialChapter = quizConfig.chapterIndex;
-  const mode = quizConfig.mode;
-  const rangeStart = quizConfig.rangeStart;
-  const rangeEnd = quizConfig.rangeEnd;
-  const randomize = quizConfig.randomize;
-  const wrongOnly = quizConfig.wrongOnly;
-
-  // 使用当前选择的章节
-  const chapterIndex = selectedChapter.value || initialChapter;
-  console.log(`准备题目，当前选择章节: ${chapterIndex}`);
-
-  // 更新组件内部配置
-  config.randomMode = randomize;
-  config.reviewMode = (mode === QuizMode.REVIEW);
-
+// 处理Mermaid图表渲染的统一函数
+function renderMermaidDiagrams(container?: HTMLElement) {
   try {
-    let questionsList: Question[] = [];
+    // 如果提供了容器，只处理容器内的图表
+    const targets = container
+      ? container.querySelectorAll('pre code.language-mermaid')
+      : document.querySelectorAll('.mermaid');
 
-    // 根据章节选择提取题目
-    if (chapterIndex === 'all') {
-      // 获取所有章节的题目
-      console.log(`加载所有章节题目`);
-      questionsList = quizData.chapters.flatMap((chapter): Question[] =>
-        (chapter.questions || []).map((q): Question => {
-          // 使用自定义接口类型处理实际数据结构与类型定义不一致的问题
-          const rawQuestion = q as RawQuestionData;
-          return {
-            id: String(rawQuestion.id ?? `gen_${Math.random()}`),
-            question: rawQuestion.question || rawQuestion.title || '',
-            options: rawQuestion.options ? [...rawQuestion.options] : [],
-            answer: typeof rawQuestion.answer === 'number' ? String(rawQuestion.answer) : (rawQuestion.answer || ''),
-            notes: rawQuestion.notes || rawQuestion.explanation || '',
-            chapterTitle: chapter.title
-          };
-        })
-      );
-    } else {
-      // 获取指定章节的题目
-      console.log(`加载章节 "${chapterIndex}" 题目`);
-      const chapter = quizData.chapters.find(c => c.title === chapterIndex);
-      if (chapter && chapter.questions) {
-        questionsList = chapter.questions.map((q): Question => {
-          // 使用自定义接口类型处理实际数据结构与类型定义不一致的问题
-          const rawQuestion = q as RawQuestionData;
-          return {
-            id: String(rawQuestion.id ?? `gen_${Math.random()}`),
-            question: rawQuestion.question || rawQuestion.title || '',
-            options: rawQuestion.options ? [...rawQuestion.options] : [],
-            answer: typeof rawQuestion.answer === 'number' ? String(rawQuestion.answer) : (rawQuestion.answer || ''),
-            notes: rawQuestion.notes || rawQuestion.explanation || '',
-            chapterTitle: chapter.title
-          };
-        });
+    if (targets.length === 0) return;
+
+    targets.forEach((el, index) => {
+      if (el instanceof HTMLElement && !el.querySelector('svg')) {
+        try {
+          const id = `mermaid-diagram-${Date.now()}-${index}`;
+          el.id = id;
+
+          // 使用正确的类型处理mermaid.render回调 (移除第四个参数)
+          mermaid.render(
+            id,
+            el.textContent || ''
+          ).then((result) => {
+            if (el instanceof HTMLElement) {
+              el.innerHTML = result.svg;
+            }
+          });
+        } catch (diagramError) {
+          console.warn('渲染图表失败:', diagramError);
+          el.classList.add('mermaid-error');
+          el.innerHTML = `<div class="mermaid-error-message">图表渲染失败</div>`;
+        }
       }
-    }
-
-    console.log(`总共找到 ${questionsList.length} 题`);
-
-    // 处理范围模式
-    if (mode === QuizMode.RANGE && questionsList.length > 0) {
-      const start = Math.max(1, rangeStart);
-      const end = Math.min(rangeEnd, questionsList.length);
-      // 如果有数字ID则按ID过滤，否则按索引过滤
-      if (!isNaN(parseInt(String(questionsList[0].id)))) {
-        questionsList = questionsList.filter(q => {
-          const qIdNum = parseInt(String(q.id));
-          return qIdNum >= start && qIdNum <= end;
-        });
-      } else {
-        questionsList = questionsList.slice(start - 1, end);
-      }
-      console.log(`范围模式，筛选后还有 ${questionsList.length} 题`);
-    }
-
-    // 处理错题模式
-    if (mode === QuizMode.WRONG || wrongOnly) {
-      const userAnswers = localStorage.getItem('userAnswers');
-      if (userAnswers) {
-        const answersData = JSON.parse(userAnswers);
-        const wrongIds = new Set(
-          Object.keys(answersData).filter(id => answersData[id]?.isCorrect === false)
-        );
-        questionsList = questionsList.filter(q => wrongIds.has(q.id?.toString() || ''));
-        console.log(`错题模式，筛选后还有 ${questionsList.length} 题`);
-      } else {
-        error.value = '没有错题记录';
-        loading.value = false;
-        return;
-      }
-    }
-
-    // 随机排序
-    if (randomize || mode === QuizMode.RANDOM) {
-      for (let i = questionsList.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [questionsList[i], questionsList[j]] = [questionsList[j], questionsList[i]];
-      }
-      console.log('已随机排序题目');
-    }
-
-    // 加载用户答题状态和笔记
-    const userAnswers = localStorage.getItem('userAnswers');
-    const savedNotes = localStorage.getItem('quizNotes');
-    const answersData = userAnswers ? JSON.parse(userAnswers) : {};
-    const notesData = savedNotes ? JSON.parse(savedNotes) : {};
-
-    // 合并用户数据到题目对象
-    questionsList = questionsList.map((q): Question => {
-      const qIdStr = q.id?.toString() || '';
-      const answerInfo = answersData[qIdStr];
-      const noteInfo = notesData[qIdStr];
-      return {
-        ...q,
-        userAnswer: answerInfo ? answerInfo.answer : null,
-        notes: noteInfo || q.notes || undefined // 优先使用已保存的笔记
-      };
     });
-
-    // 设置最终的题目列表
-    localQuestions.value = questionsList;
-    loading.value = false;
-
-    if (questionsList.length === 0) {
-      error.value = '没有找到符合条件的题目';
-    } else {
-      // 保存当前章节到localStorage
-      localStorage.setItem('selectedChapter', chapterIndex);
-
-      // 初始化错题ID列表
-      wrongQuestionIds.value = questionsList
-        .filter(q => q.userAnswer !== null && q.userAnswer !== q.answer)
-        .map(q => String(q.id));
-
-      // 延迟加载第一题，确保DOM渲染完成
-      nextTick(() => {
-        loadQuestion(currentIndex.value);
-      });
-    }
-  } catch (err) {
-    console.error('准备题目失败:', err);
-    error.value = err instanceof Error ? err.message : '准备题目时发生未知错误';
-    loading.value = false;
+  } catch (error) {
+    console.error('处理Mermaid图表失败:', error);
   }
 }
 
-// 加载题库数据的方法
-function loadQuizData() {
-  // 从 QuizStore 获取题库数据
-  const storeQuizData = QuizStore.state.quizData;
-  if (!storeQuizData || !storeQuizData.chapters) {
-    error.value = '题库数据不存在或格式不正确';
-    loading.value = false;
-    return;
-  }
+// 渲染笔记中的特定容器内的Mermaid图表
+function renderMermaidInContainer(container: HTMLElement) {
+  if (!container) return;
 
-  // 使用更安全的转换方式
-  try {
-    // 深拷贝解决只读问题
-    const quizDataCopy = JSON.parse(JSON.stringify(storeQuizData));
-    quizData.value = quizDataCopy;
+  const mermaidCodeBlocks = container.querySelectorAll('pre code.language-mermaid');
+  mermaidCodeBlocks.forEach((el, index) => {
+    if (el instanceof HTMLElement) {
+      const id = `mermaid-diagram-${Date.now()}-${index}`;
+      el.id = id;
 
-    // 章节数据处理
-    if (quizData.value && quizData.value.chapters) {
-      const chapterSet = new Set<string>();
-      quizData.value.chapters.forEach((chapter: Chapter) => {
-        if (chapter.title) {
-          chapterSet.add(chapter.title);
+      // 修复类型问题 (移除第四个参数)
+      mermaid.render(
+        id,
+        el.textContent || ''
+      ).then((result) => {
+        if (el instanceof HTMLElement) {
+          el.innerHTML = result.svg;
         }
       });
-      chapters.value = Array.from(chapterSet);
     }
-
-    // 准备题目数据
-    prepareQuestions();
-  } catch (err) {
-    console.error('处理题库数据失败:', err);
-    error.value = '处理题库数据时出错';
-    loading.value = false;
-  }
-}
-
-// 获取完整的API配置
-function getCompleteApiConfig() {
-  const apiConfig = getAIAPIConfig();
-  return {
-    apiUrl: apiConfig.apiUrl,
-    apiKey: apiConfig.apiKey,
-    model: apiConfig.model,
-    systemPrompt: apiConfig.systemPrompt,
-    autoGenerateNotes: config.apiConfig?.autoGenerate || false,
-    streamOutput: config.apiConfig?.streamOutput !== false,
-    temperature: apiConfig.temperature,
-    topP: apiConfig.topP
-  };
+  });
 }
 
 // 新增UI状态变量
 const forceShowNotes = ref(false);
 
-// 从localStorage加载保存的笔记
-function loadNotesFromLocalStorage() {
-  try {
-    const notesDataStr = localStorage.getItem('quizNotes');
-    if (!notesDataStr) return;
+// 切换主题方法
+function toggleTheme() {
+  // 使用configService切换主题
+  configService.toggleDarkMode();
+  // isDarkMode 计算属性会自动更新，无需手动设置
 
-    const notesData = JSON.parse(notesDataStr);
-
-    // 将保存的笔记应用到题目上
-    localQuestions.value.forEach(question => {
-      if (question.id && notesData[String(question.id)]) {
-        question.notes = notesData[String(question.id)];
-      }
-    });
-
-    console.log('已从本地存储加载笔记');
-  } catch (error) {
-    console.error('加载笔记失败:', error);
-  }
+  // 重新初始化mermaid以应用主题变化
+  nextTick(() => {
+    if (typeof mermaid !== 'undefined') {
+      mermaid.initialize({
+        startOnLoad: false,
+        theme: isDarkMode.value ? 'dark' : 'default' // 使用计算属性
+      });
+    }
+    renderNotesForCurrentQuestion();
+  });
 }
 
+// 获取完整的API配置 (现在直接从configService获取)
+function getCompleteApiConfig() {
+  // 直接返回从 configService 获取的 API 配置
+  return configService.getApiConfig();
+}
+
+// 新增：根据章节过滤题目
+function filterQuestionsByChapter(chapterTitle: string) {
+  const fullQuizData = QuizStore.getQuizData();
+  if (!fullQuizData || !fullQuizData.chapters) {
+    localQuestions.value = [];
+    error.value = '无法加载题库数据';
+    loading.value = false;
+    return;
+  }
+
+  let filteredQuestions: Question[] = [];
+  const userAnswers: UserAnswersMap = JSON.parse(localStorage.getItem('userAnswers') || '{}');
+
+  if (chapterTitle === 'all') {
+    // 加载所有章节题目
+    fullQuizData.chapters.forEach((chapter, chapterIndex) => {
+      if (!chapter.questions) return;
+      chapter.questions.forEach((q, questionIndex) => {
+        const questionId = q.id || `q-${chapterIndex}-${questionIndex}`;
+        const userAnswerRecord = userAnswers[questionId];
+        filteredQuestions.push({
+          ...q,
+          id: questionId,
+          title: q.title || '',
+          options: q.options || [],
+          answer: typeof q.answer === 'string' ? q.answer : String(q.answer ?? ''),
+          question: q.question || q.title || '',
+          chapterTitle: chapter.title,
+          number: q.number || (questionIndex + 1),
+          userAnswer: userAnswerRecord ? userAnswerRecord.answer : null
+        });
+      });
+    });
+  } else {
+    // 加载指定章节题目
+    const targetChapter = fullQuizData.chapters.find(c => c.title === chapterTitle);
+    if (targetChapter && targetChapter.questions) {
+      filteredQuestions = targetChapter.questions.map((q, index) => {
+        const questionId = q.id || `q-${chapterTitle}-${index}`;
+        const userAnswerRecord = userAnswers[questionId];
+        return {
+          ...q,
+          id: questionId,
+          title: q.title || '',
+          options: q.options || [],
+          answer: typeof q.answer === 'string' ? q.answer : String(q.answer ?? ''),
+          question: q.question || q.title || '',
+          chapterTitle: chapterTitle,
+          number: q.number || (index + 1),
+          userAnswer: userAnswerRecord ? userAnswerRecord.answer : null
+        };
+      });
+    }
+  }
+
+  localQuestions.value = filteredQuestions;
+  error.value = filteredQuestions.length === 0 ? '该章节下没有题目' : null;
+
+  // 更新错题记录 (基于新的题目列表)
+  wrongQuestionIds.value = filteredQuestions
+    .filter(q => q.userAnswer !== null && q.userAnswer !== undefined && q.userAnswer !== q.answer)
+    .map(q => String(q.id));
+}
+
+// 监听章节选择变化
+watch(selectedChapter, (newChapter) => {
+  console.log(`章节切换到: ${newChapter}`);
+  loading.value = true; // 开始加载
+  filterQuestionsByChapter(newChapter);
+  // 重置状态
+  currentIndex.value = 0;
+  selectedAnswer.value = null;
+  isQuizSubmitted.value = false;
+  // wrongQuestionIds 已经在 filterQuestionsByChapter 中更新
+  isReviewingWrong.value = false;
+
+  if (localQuestions.value.length > 0) {
+    loadQuestion(0); // 加载新题目集的第一题
+  } else {
+    // 处理没有题目的情况，例如显示提示信息
+    console.warn('切换章节后没有题目可加载');
+  }
+  loading.value = false; // 加载完成
+});
+
+// 格式化题目文本，去除顿号
+function formatQuestionText(text: string | undefined): string {
+  if (!text) return '';
+  // 将所有顿号（、）替换为空字符
+  return text.replace(/、/g, '');
+}
 </script>

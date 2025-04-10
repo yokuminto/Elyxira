@@ -55,7 +55,3 @@ const scoreDetail = computed(() => {
 const hasWrongQuestions = computed(() => props.stats.wrongQuestionIds.length > 0);
 
 </script>
-
-<style>
-/* 样式已移动到 src/styles/modal.css */
-</style>

@@ -1,377 +1,288 @@
 <template>
-  <BaseModal :show="show" @close="$emit('close')" class="modal-api-config" title="API配置">
-    <div class="modal__body">
-      <div class="modal__settings-group">
-        <div class="modal__setting-item">
-          <div class="modal__setting-description">
-            <div class="modal__setting-name">自动生成笔记</div>
-            <div class="modal__setting-detail">加载题目时，若下题未生成AI笔记，则自动生成下一题的AI笔记</div>
-          </div>
-          <label class="modal__toggle-switch">
-            <input type="checkbox" v-model="configModel.autoGenerateNotes">
-            <span class="slider"></span>
-          </label>
-        </div>
-        <div class="modal__form-group">
-          <label class="modal__form-label">API地址</label>
-          <div class="modal__setting-detail">AI服务的API端点URL</div>
-          <div class="modal__prompt-controls">
-            <select v-model="selectedApiPreset" class="modal__form-input" @change="handleApiPresetChange">
-              <option value="">选择API预设...</option>
-              <option v-for="preset in apiUrlPresets" :key="preset.id" :value="preset.id">
-                {{ preset.name }}
-              </option>
-            </select>
-          </div>
-          <input type="text" v-model="configModel.apiUrl" class="modal__form-input"
-            placeholder="https://api.example.com/v1/chat/completions">
-        </div>
-
-        <div class="modal__form-group">
-          <label class="modal__form-label">API密钥</label>
-          <div class="modal__setting-detail">访问AI服务所需的密钥</div>
-          <input type="password" v-model="configModel.apiKey" class="modal__form-input" placeholder="sk-...">
-        </div>
-
-        <div class="modal__form-group">
-          <label class="modal__form-label">模型名称</label>
-          <div class="modal__setting-detail">要使用的AI模型</div>
-          <input type="text" v-model="configModel.model" class="modal__form-input"
-            placeholder="deepseek/deepseek-chat-v3-0324:free">
+  <ModalBase title="API配置" :show="show" @close="$emit('close')">
+    <div>
+      <!-- 预设管理 -->
+      <div class="modal__form-group modal__form-group--preset">
+        <label for="preset-select" class="modal__form-label">当前预设</label>
+        <div class="modal__preset-controls">
+          <select id="preset-select" v-model="activePresetName" @change="handlePresetChange"
+            class="modal__form-control modal__form-control--select">
+            <option v-for="preset in apiPresets" :key="preset.name" :value="preset.name">
+              {{ preset.name }}
+            </option>
+          </select>
+          <button class="modal__button modal__button--icon modal__button--add" @click="addPreset" title="添加预设">
+            <i class="fas fa-plus"></i>
+          </button>
+          <button class="modal__button modal__button--icon modal__button--rename" @click="renamePreset" title="重命名预设"
+            :disabled="apiPresets.length <= 0">
+            <i class="fas fa-edit"></i>
+          </button>
+          <button class="modal__button modal__button--icon modal__button--delete" @click="deletePreset"
+            :disabled="apiPresets.length <= 1" title="删除预设">
+            <i class="fas fa-trash-alt"></i>
+          </button>
         </div>
       </div>
 
-      <div class="modal__settings-group">
-        <h3 class="modal__section-title">提示词设置</h3>
-        <div class="modal__form-group">
-          <label class="modal__form-label">提示词预设</label>
-          <div class="modal__setting-detail">选择或自定义AI助手的行为模式</div>
-          <div class="modal__prompt-controls">
-            <select v-model="selectedPreset" class="modal__form-input" @change="handlePresetChange">
-              <option value="">选择提示词预设...</option>
-              <option v-for="preset in promptPresets" :key="preset.id" :value="preset.id">
-                {{ preset.name }}
-              </option>
-            </select>
-            <div class="modal__prompt-buttons">
-              <button @click="editPreset" class="modal__button modal__button--secondary" title="编辑当前预设">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                </svg>
-              </button>
-              <button @click="createNewPreset" class="modal__button modal__button--success" title="新建预设">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M12 5v14M5 12h14" />
-                </svg>
-              </button>
-              <button @click="deletePreset" class="modal__button modal__button--danger" title="删除当前预设">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M3 6h18"></path>
-                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2">
-                  </path>
-                </svg>
-              </button>
-              <button @click="saveAsNewPreset" class="modal__button modal__button--primary" title="另存为新预设">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
-                  <polyline points="17 21 17 13 7 13 7 21"></polyline>
-                  <polyline points="7 3 7 8 15 8"></polyline>
-                </svg>
-              </button>
-            </div>
-          </div>
-        </div>
+      <!-- API配置表单 -->
+      <div class="modal__form-group modal__form-group--switch">
+        <label for="api-enabled" class="modal__form-label">启用API</label>
+        <label class="modal__toggle-switch">
+          <input type="checkbox" id="api-enabled" v-model="localConfig.enabled">
+          <span class="modal__toggle-slider"></span>
+        </label>
+      </div>
 
-        <div class="modal__form-group">
-          <label class="modal__form-label">系统提示词</label>
-          <div class="modal__setting-detail">定义AI助手的行为和专业领域</div>
-          <textarea v-model="configModel.systemPrompt" class="modal__form-textarea"
-            placeholder="你是一个医学专家助手，擅长解释医学概念和知识点。"></textarea>
+      <div class="modal__form-group">
+        <label for="api-url" class="modal__form-label">API地址</label>
+        <input type="text" id="api-url" v-model="localConfig.apiUrl" class="modal__form-control"
+          placeholder="例如: https://api.openai.com/v1/chat/completions">
+      </div>
+
+      <div class="modal__form-group">
+        <label for="api-key" class="modal__form-label">API密钥</label>
+        <input type="password" id="api-key" v-model="localConfig.apiKey" class="modal__form-control"
+          placeholder="sk-...">
+      </div>
+
+      <div class="modal__form-group">
+        <label for="api-model" class="modal__form-label">模型名称</label>
+        <input type="text" id="api-model" v-model="localConfig.model" class="modal__form-control"
+          placeholder="例如: gpt-3.5-turbo">
+      </div>
+
+      <div class="modal__form-group modal__form-group--switch">
+        <label for="auto-generate" class="modal__form-label">自动生成</label>
+        <label class="modal__toggle-switch">
+          <input type="checkbox" id="auto-generate" v-model="localConfig.autoGenerate">
+          <span class="modal__toggle-slider"></span>
+        </label>
+      </div>
+
+      <div class="modal__form-group modal__form-group--switch">
+        <label for="auto-sync" class="modal__form-label">自动同步</label>
+        <label class="modal__toggle-switch">
+          <input type="checkbox" id="auto-sync" v-model="localConfig.autoSync">
+          <span class="modal__toggle-slider"></span>
+        </label>
+      </div>
+      <div class="modal__form-description">启用后，AI生成内容后将自动同步到远程仓库 (需配置GitHub)</div>
+
+
+      <div class="modal__form-group modal__form-group--switch">
+        <label for="stream-output" class="modal__form-label">流式输出</label>
+        <label class="modal__toggle-switch">
+          <input type="checkbox" id="stream-output" v-model="localConfig.streamOutput">
+          <span class="modal__toggle-slider"></span>
+        </label>
+      </div>
+
+      <div class="modal__form-group">
+        <label for="system-prompt" class="modal__form-label">系统提示词</label>
+        <textarea id="system-prompt" v-model="localConfig.systemPrompt" class="modal__form-control" rows="3"
+          placeholder="输入系统提示词"></textarea>
+      </div>
+
+      <div class="modal__form-group">
+        <label for="temperature" class="modal__form-label">温度 (0-1)</label>
+        <div class="modal__form-input-group">
+          <input type="range" id="temperature" v-model.number="localConfig.temperature" min="0" max="1" step="0.1">
+          <span>{{ localConfig.temperature?.toFixed(1) }}</span>
         </div>
       </div>
 
-      <div class="modal__settings-group">
-        <h3 class="modal__section-title">高级设置</h3>
-        <div class="modal__setting-item">
-          <div class="modal__setting-description">
-            <div class="modal__setting-name">启用流式输出</div>
-            <div class="modal__setting-detail">实时显示AI生成的内容</div>
-          </div>
-          <label class="modal__toggle-switch">
-            <input type="checkbox" v-model="configModel.streamOutput">
-            <span class="slider"></span>
-          </label>
+      <div class="modal__form-group">
+        <label for="max-tokens" class="modal__form-label">最大令牌数</label>
+        <input type="number" id="max-tokens" v-model.number="localConfig.maxTokens" min="1" class="modal__form-control">
+      </div>
+
+      <div class="modal__form-group">
+        <label for="top-p" class="modal__form-label">Top P (0-1)</label>
+        <div class="modal__form-input-group">
+          <input type="range" id="top-p" v-model.number="localConfig.topP" min="0" max="1" step="0.1">
+          <span>{{ localConfig.topP?.toFixed(1) }}</span>
         </div>
-        <div class="modal__form-group">
-          <label class="modal__form-label">温度</label>
-          <div class="modal__setting-detail">控制输出的随机性（0-1）</div>
-          <input type="number" v-model.number="configModel.temperature" class="modal__form-input" min="0" max="1"
-            step="0.1">
-        </div>
-        <div class="modal__form-group">
-          <label class="modal__form-label">Top P</label>
-          <div class="modal__setting-detail">控制输出的多样性（0-1）</div>
-          <input type="number" v-model.number="configModel.topP" class="modal__form-input" min="0" max="1" step="0.1">
-        </div>
+      </div>
+
+      <div class="modal__footer-buttons">
+        <button class="modal__button modal__button--secondary" @click="$emit('close')">取消</button>
+        <button class="modal__button modal__button--primary" @click="saveConfig">保存当前预设</button>
       </div>
     </div>
-    <template #footer>
-      <button @click="saveConfig" class="modal__button modal__button--success">保存配置</button>
-      <button @click="$emit('close')" class="modal__button modal__button--secondary">取消</button>
-    </template>
-  </BaseModal>
+  </ModalBase>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, watch } from 'vue';
-import BaseModal from './modal-base.vue';
+import { ref, watch, onMounted, onBeforeUnmount, computed, nextTick } from 'vue'
+import ModalBase from './modal-base.vue'
+import configService, { type ApiConfig, type ApiPreset } from '../services/config-service'
+import { showToast } from '@/utils/toast' // 引入 showToast
 
 const props = defineProps<{
   show: boolean;
-  currentConfig?: {
-    apiUrl?: string;
-    apiKey?: string;
-    model?: string;
-    systemPrompt?: string;
-    autoGenerateNotes?: boolean;
-    streamOutput?: boolean;
-    temperature?: number;
-    topP?: number;
-  };
 }>();
 
 const emit = defineEmits<{
   (e: 'close'): void;
-  (e: 'save', config: {
-    apiUrl: string;
-    apiKey: string;
-    model: string;
-    systemPrompt: string;
-    autoGenerateNotes: boolean;
-    streamOutput: boolean;
-    temperature: number;
-    topP: number;
-  }): void;
+  // 不再需要 'save' 事件，因为配置直接通过 service 保存
 }>();
 
-// 配置模型
-const configModel = reactive({
+const apiPresets = ref<ApiPreset[]>([]);
+const activePresetName = ref<string>('');
+const localConfig = ref<ApiConfig>({
+  enabled: false,
+  autoGenerate: false,
+  streamOutput: true,
+  autoSync: false,
   apiUrl: '',
   apiKey: '',
-  model: 'deepseek/deepseek-chat-v3-0324:free',
-  systemPrompt: '你是一个医学专家助手，擅长解释医学概念和知识点，请为学生提供详细、准确的笔记。',
-  autoGenerateNotes: true,
-  streamOutput: true,
+  model: '',
+  systemPrompt: '',
   temperature: 0.7,
-  topP: 0.9
+  maxTokens: 2000,
+  topP: 1
 });
 
-// 提示词预设
-interface PromptPreset {
-  id: string;
-  name: string;
-  systemPrompt: string;
-  isSystem?: boolean;
-}
+// --- 数据加载与同步 ---
 
-const promptPresets = ref<PromptPreset[]>([
-  {
-    id: 'medical',
-    name: '医学专家',
-    systemPrompt: '你是一个医学专家助手，擅长解释医学概念和知识点，请为学生提供详细、准确的笔记。'
-  },
-  {
-    id: 'educator',
-    name: '教育专家',
-    systemPrompt: '你是一个教育专家，擅长将复杂知识简化为易于理解的学习笔记，善于使用类比和例子。'
-  },
-  {
-    id: 'openrouter',
-    name: 'OpenRouter应用',
-    systemPrompt: '你是一个专业的助手，负责根据题目生成高质量的学习笔记，包含相关知识点、解释和记忆方法。请提供详细、准确、结构化的笔记，使用markdown格式以便更好地展示。'
-  }
-]);
+// 加载预设列表和当前活动预设
+const loadPresets = () => {
+  apiPresets.value = configService.getApiPresets();
+  activePresetName.value = configService.getActiveApiPresetName();
+  // 确保 localConfig 反映当前的活动预设
+  updateLocalConfigFromPreset(activePresetName.value);
+  // console.log('Presets loaded:', apiPresets.value, 'Active:', activePresetName.value);
+};
 
-// API预设
-interface ApiUrlPreset {
-  id: string;
-  name: string;
-  url: string;
-  defaultModel: string;
-}
-
-const apiUrlPresets = ref<ApiUrlPreset[]>([
-  {
-    id: 'openrouter',
-    name: 'OpenRouter API',
-    url: 'https://openrouter.ai/api/v1/chat/completions',
-    defaultModel: 'deepseek/deepseek-chat-v3-0324:free'
-  }
-]);
-
-// 添加API URL预设选择器
-const selectedApiPreset = ref('');
-
-function handleApiPresetChange() {
-  if (selectedApiPreset.value) {
-    const preset = apiUrlPresets.value.find(p => p.id === selectedApiPreset.value);
-    if (preset) {
-      configModel.apiUrl = preset.url;
-      configModel.model = preset.defaultModel;
-    }
-  }
-}
-
-const selectedPreset = ref('');
-
-// 监听配置变化
-watch(() => props.currentConfig, (newConfig) => {
-  if (newConfig) {
-    Object.assign(configModel, {
-      ...configModel,
-      ...newConfig
-    });
-  }
-}, { immediate: true, deep: true });
-
-// 处理预设选择变化
-function handlePresetChange() {
-  if (selectedPreset.value) {
-    const preset = promptPresets.value.find(p => p.id === selectedPreset.value);
-    if (preset) {
-      configModel.systemPrompt = preset.systemPrompt;
-    }
-  }
-}
-
-// 编辑当前预设
-function editPreset() {
-  if (!selectedPreset.value) {
-    alert('请先选择一个预设');
-    return;
-  }
-
-  const preset = promptPresets.value.find(p => p.id === selectedPreset.value);
+// 根据预设名称更新 localConfig
+const updateLocalConfigFromPreset = (presetName: string) => {
+  const preset = apiPresets.value.find(p => p.name === presetName);
   if (preset) {
-    preset.systemPrompt = configModel.systemPrompt;
-    savePresets();
+    // 仅复制 ApiConfig 的属性，排除 name
+    const { name, ...config } = preset;
+    localConfig.value = { ...config };
+    // console.log('Local config updated from preset:', presetName, localConfig.value);
+  } else {
+    console.warn(`Preset "${presetName}" not found when updating local config.`);
+    // 可以选择加载默认值或第一个预设的值
+    const firstPreset = apiPresets.value[0];
+    if (firstPreset) {
+      const { name, ...config } = firstPreset;
+      localConfig.value = { ...config };
+      activePresetName.value = firstPreset.name; // 同时更新活动名称
+    } else {
+      // 如果连第一个预设都没有（异常情况），加载默认 API 配置
+      localConfig.value = configService.getApiConfig(); // 获取默认或兜底配置
+    }
   }
-}
+};
 
-// 创建新预设
-function createNewPreset() {
-  const name = prompt('请输入新预设名称:');
-  if (!name) return;
 
-  const id = 'preset_' + Date.now();
-  promptPresets.value.push({
-    id,
-    name,
-    systemPrompt: configModel.systemPrompt
-  });
+// --- 生命周期钩子和监听器 ---
 
-  selectedPreset.value = id;
-  savePresets();
-}
+// 配置变更监听器
+const configChangeListener = () => {
+  // console.log('API config change detected by listener');
+  loadPresets(); // 重新加载预设列表和活动预设
+};
+
+onMounted(() => {
+  loadPresets(); // 初始加载
+  configService.addListener('api', configChangeListener); // 添加监听器
+});
+
+onBeforeUnmount(() => {
+  configService.removeListener('api', configChangeListener); // 移除监听器
+});
+
+// 监听模态框显示状态
+watch(() => props.show, (newVal) => {
+  if (newVal) {
+    loadPresets(); // 每次显示时重新加载，确保数据最新
+  }
+});
+
+// 监听活动预设名称的变化，自动更新表单内容
+watch(activePresetName, (newName) => {
+  // console.log('Active preset name changed:', newName);
+  updateLocalConfigFromPreset(newName);
+});
+
+
+// --- 预设管理操作 ---
+
+// 切换预设
+const handlePresetChange = () => {
+  if (activePresetName.value) {
+    // console.log('Preset changed via select:', activePresetName.value);
+    configService.setActiveApiPreset(activePresetName.value);
+    // setActiveApiPreset 会触发 listener，listener 会调用 loadPresets，
+    // loadPresets 会调用 updateLocalConfigFromPreset，所以这里不需要手动调用 update
+  }
+};
+
+// 添加预设
+const addPreset = () => {
+  const newName = prompt('请输入新预设的名称:', `预设 ${apiPresets.value.length + 1}`);
+  if (newName) {
+    const success = configService.addApiPreset(newName, activePresetName.value); // 从当前活动预设复制配置
+    if (success) {
+      // 添加成功后，切换到新的预设
+      nextTick(() => { // 确保 DOM 更新后再设置
+        activePresetName.value = newName;
+        configService.setActiveApiPreset(newName); // 确保 service 状态也更新
+        // loadPresets(); // listener 会自动调用
+      });
+    }
+  }
+};
+
+// 重命名预设
+const renamePreset = () => {
+  const oldName = activePresetName.value;
+  if (!oldName) return;
+
+  const newName = prompt(`重命名预设 "${oldName}" 为:`, oldName);
+  if (newName && newName !== oldName) {
+    const success = configService.renameApiPreset(oldName, newName);
+    if (success) {
+      // 重命名成功后，下拉菜单需要更新，活动名称可能也需要更新
+      nextTick(() => { // 确保 DOM 更新后再设置
+        loadPresets(); // 重新加载以获取更新后的列表和活动名称
+      });
+    }
+  }
+};
+
 
 // 删除预设
-function deletePreset() {
-  if (!selectedPreset.value) {
-    alert('请先选择一个预设');
+const deletePreset = () => {
+  const nameToDelete = activePresetName.value;
+  if (!nameToDelete) return;
+
+  if (apiPresets.value.length <= 1) {
+    showToast('无法删除最后一个预设', 'warning');
     return;
   }
 
-  if (confirm('确定要删除此预设吗?')) {
-    promptPresets.value = promptPresets.value.filter(p => p.id !== selectedPreset.value);
-    selectedPreset.value = '';
-    savePresets();
-  }
-}
-
-// 另存为新预设
-function saveAsNewPreset() {
-  const name = prompt('请输入新预设名称:');
-  if (!name) return;
-
-  const id = 'preset_' + Date.now();
-  promptPresets.value.push({
-    id,
-    name,
-    systemPrompt: configModel.systemPrompt
-  });
-
-  selectedPreset.value = id;
-  savePresets();
-}
-
-// 保存预设到本地存储
-function savePresets() {
-  localStorage.setItem('aiPromptPresets', JSON.stringify(promptPresets.value));
-}
-
-// 加载预设
-function loadPresets() {
-  const savedPresets = localStorage.getItem('aiPromptPresets');
-  if (savedPresets) {
-    try {
-      promptPresets.value = JSON.parse(savedPresets);
-    } catch (error) {
-      console.error('加载AI提示词预设失败:', error);
+  if (confirm(`确定要删除预设 "${nameToDelete}" 吗？`)) {
+    const success = configService.deleteApiPreset(nameToDelete);
+    if (success) {
+      // 删除成功后，下拉菜单和活动预设会自动更新（通过 listener -> loadPresets）
+      // 无需在此处手动更新 activePresetName 或 localConfig
+      // listener 会确保加载正确的下一个活动预设及其配置
     }
   }
-}
+};
 
-// 保存配置
+
+// --- 保存配置 ---
+
+// 保存当前活动预设的配置
 function saveConfig() {
-  const config = { ...configModel };
-  localStorage.setItem('aiApiConfig', JSON.stringify(config));
-  emit('save', config);
+  configService.updateApiConfig(localConfig.value); // updateApiConfig 现在保存的是当前活动预设
+  // emit('save', localConfig.value); // 不再需要发送 save 事件
   emit('close');
 }
-
-// 组件挂载时加载预设
-onMounted(async () => {
-  // 先尝试加载系统预设
-  try {
-    const response = await fetch('/prompts/index.json');
-    if (response.ok) {
-      const indexData = await response.json();
-      for (const item of indexData) {
-        try {
-          const promptResponse = await fetch(`/prompts/${item.path}`);
-          if (promptResponse.ok) {
-            const promptData = await promptResponse.json();
-            // 添加系统预设
-            promptPresets.value.push({
-              id: `system_${promptData.name}`,
-              name: promptData.name,
-              systemPrompt: promptData.system_prompt,
-              isSystem: true // 标记为系统预设
-            });
-            console.log(`加载系统预设: ${promptData.name}`);
-          }
-        } catch (promptError) {
-          console.error(`加载预设文件 ${item.path} 失败:`, promptError);
-        }
-      }
-    }
-  } catch (error) {
-    console.error('加载系统预设索引失败:', error);
-  }
-
-  // 再加载用户自定义预设
-  loadPresets();
-
-  // 加载保存的配置
-  const savedConfig = localStorage.getItem('aiApiConfig');
-  if (savedConfig) {
-    try {
-      const config = JSON.parse(savedConfig);
-      Object.assign(configModel, config);
-    } catch (error) {
-      console.error('加载AI配置失败:', error);
-    }
-  }
-});
 </script>

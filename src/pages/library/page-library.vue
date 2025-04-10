@@ -18,7 +18,7 @@
             <i class="moon-icon fas fa-moon"></i>
           </div>
           <SettingsButton class="page-library__action-button page-library__action-button--secondary"
-            @open-general-settings="showGeneralSettings = true" @open-repo-settings="showRepoConfig = true"
+            @open-general-settings="showGeneralSettings = true" @open-repo-settings="showlibrarySyncConfigModal = true"
             @open-debug="showDebugModal = true" />
         </div>
       </div>
@@ -152,12 +152,12 @@
         </div>
         <!-- 缓存题库可以与远程同步 - 仅当GitHub配置有效时显示 -->
         <div class="menu-item" v-if="selectedQuiz && selectedQuiz.source === QuizSourceType.LOCAL && isGithubConfigured"
-          @click="handleSyncFromRemote">
+          @click="handleGithubSync('fetch')">
           <BaseIcon name="refresh" size="16" />
           从远程同步
         </div>
         <div class="menu-item" v-if="selectedQuiz && selectedQuiz.source === QuizSourceType.LOCAL && isGithubConfigured"
-          @click="handlePushToRemote">
+          @click="handleGithubSync('push')">
           <BaseIcon name="upload" size="16" />
           推送到远程
         </div>
@@ -352,21 +352,14 @@
       </div>
 
       <!-- 题库数据管理模态框 -->
-      <div class="modal-overlay" :class="{ active: showlibraryDataModal }" @click.self="showlibraryDataModal = false">
-        <LibraryDataModal v-if="showlibraryDataModal" :quiz-data="quizData || undefined"
-          @close="showlibraryDataModal = false" @import-complete="loadQuizList" />
-      </div>
+      <LibraryDataModal v-if="showlibraryDataModal" :quiz-data="quizData || undefined" :show="showlibraryDataModal"
+        @close="showlibraryDataModal = false" @import-complete="loadQuizList" />
+
 
       <!-- 题库同步与仓库配置模态框 -->
-      <div class="modal-overlay" :class="{ active: showlibrarySyncConfigModal }"
-        @click.self="showlibrarySyncConfigModal = false">
-        <QuizSyncModal v-if="showlibrarySyncConfigModal" :current-quiz="{
-          name: selectedQuizItem?.name || '',
-          source: selectedQuizItem?.source || '',
-          isLocal: selectedQuizItem?.source === 'local',
-          exists: !!selectedQuizItem
-        }" @close="showlibrarySyncConfigModal = false" @sync-complete="loadQuizList" @save="handleRepoConfigSave" />
-      </div>
+      <QuizSyncModal :show="showlibrarySyncConfigModal" @close="showlibrarySyncConfigModal = false"
+        @sync-complete="loadQuizList" @save="handleRepoConfigSave" />
+
 
       <!-- 通用设置模态框 -->
       <ModalSettings :show="showGeneralSettings" :current-settings="generalSettings"
@@ -439,19 +432,21 @@ import DebugModal from '@/modals/modal-debug.vue'
 import LibraryDataModal from '@/modals/modal-library-data.vue'
 import QuizSyncModal from '@/modals/modal-quiz-sync.vue'
 import ModalSettings from '@/modals/modal-settings.vue'
-import type { GeneralSettings } from '@/modals/modal-settings.vue'
 import { showToast, injectToastStyles } from '../../utils/toast'
-import { QuizStore } from '../../stores/store-quiz'
+import configService, {
+  QuizMode, QuizSourceType,
+  QuizCategoryType
+} from '@/services/config-service'
 import type {
   QuizData,
   QuizItem,
-  GithubApiFile,
+  QuizConfig,
+  QuizItemExtended,
   LocalQuizCache,
-  QuizItemExtended
-} from './types'
-import { QuizMode, QuizSourceType, QuizCategoryType } from './types'
-import { parseTextQuiz } from './utils'
-import { enhancedValidQuizData } from './fixes'
+  GithubApiFile,
+  GeneralSettings
+} from '@/services/config-service'
+import { parseQuiz } from '@/services/service-quiz-parser'
 
 // 在页面加载前确保Material Icons和Toast样式已加载
 onMounted(() => {
@@ -496,7 +491,6 @@ const appliedQuizItem = ref<QuizItemExtended | null>(null);
 const isMenuClosing = ref(false);
 
 // 模态框显示状态
-const showRepoConfig = ref(false)
 const showGeneralSettings = ref(false)
 const showDebugModal = ref(false)
 const showlibraryDataModal = ref(false)
@@ -505,7 +499,7 @@ const showRenameModal = ref(false)
 const showQuizModeModal = ref(false)
 const newQuizName = ref('')
 const selectedQuiz = ref<{ source: QuizSourceType; quiz: QuizItem } | null>(null)
-const isDarkMode = ref(document.body.classList.contains('dark-theme'))
+const isDarkMode = ref(configService.getUiSettings().darkMode)
 
 // 计算属性
 const totalQuestionsValue = computed(() => {
@@ -563,7 +557,8 @@ const statsAccuracyRate = computed(() => {
 
 // 检查是否配置了远程题库
 const hasRemoteConfig = computed(() => {
-  return Boolean(localStorage.getItem('github_repo') && localStorage.getItem('github_token'))
+  const githubConfig = configService.getGithubConfig();
+  return Boolean(githubConfig?.repo && githubConfig?.token);
 })
 
 // 生命周期钩子
@@ -573,13 +568,12 @@ onMounted(async () => {
   refreshLoading.value = true;
 
   // 初始化主题
-  const savedTheme = localStorage.getItem('theme')
-  if (savedTheme === 'dark') {
-    isDarkMode.value = true
-    const themeToggle = document.querySelector('.page-library__theme-toggle') as HTMLElement
+  const uiSettings = configService.getUiSettings();
+  isDarkMode.value = uiSettings.darkMode;
+  if (isDarkMode.value) {
+    const themeToggle = document.querySelector('.page-library__theme-toggle') as HTMLElement;
     if (themeToggle) {
-      themeToggle.classList.add('dark')
-      document.body.classList.add('dark-theme')
+      themeToggle.classList.add('dark');
     }
   }
 
@@ -593,7 +587,6 @@ onMounted(async () => {
     // 恢复之前选择的题库
     restoreLastSelectedQuiz();
   } catch (error) {
-    console.error('初始化题库页面失败:', error);
     showToast('初始化题库页面失败，请刷新页面重试', 'error');
   } finally {
     refreshLoading.value = false;
@@ -603,31 +596,28 @@ onMounted(async () => {
 
 // 恢复上次选择的题库
 function restoreLastSelectedQuiz() {
-  const savedData = localStorage.getItem('quizData');
-  const lastQuiz = localStorage.getItem('lastLoadedQuiz');
+  // 使用configService获取数据
+  const lastQuiz = configService.getLastLoadedQuiz();
+  const quizDataFromService = configService.getQuizData();
 
-  if (savedData && lastQuiz) {
+  if (quizDataFromService && lastQuiz) {
     try {
-      quizData.value = JSON.parse(savedData);
-      lastLoadedQuiz.value = JSON.parse(lastQuiz);
+      quizData.value = quizDataFromService;
+      lastLoadedQuiz.value = lastQuiz;
 
-      // 恢复设置
-      const savedChapter = localStorage.getItem('selectedChapter');
-      if (savedChapter) selectedChapter.value = savedChapter;
-
-      const savedMode = localStorage.getItem('quizMode');
-      if (savedMode && Object.values(QuizMode).includes(savedMode as QuizMode)) {
-        quizMode.value = savedMode as QuizMode;
-      }
+      // 从configService恢复设置
+      const quizConfig = configService.getQuizConfig();
+      selectedChapter.value = quizConfig.chapterIndex;
+      quizMode.value = quizConfig.mode;
 
       // 恢复范围值
-      rangeStart.value = parseInt(localStorage.getItem('rangeStart') || '1');
-      rangeEnd.value = parseInt(localStorage.getItem('rangeEnd') || getMaxQuestionNumber().toString());
+      rangeStart.value = quizConfig.rangeStart;
+      rangeEnd.value = quizConfig.rangeEnd || getMaxQuestionNumber();
 
       // 恢复选中的题库
       const quiz = getMergedQuizList().find(q =>
-        q.name === lastLoadedQuiz.value.name &&
-        q.source === lastLoadedQuiz.value.source
+        q.name === lastQuiz.name &&
+        q.source === lastQuiz.source
       );
 
       if (quiz && quizData.value) {
@@ -646,7 +636,7 @@ function restoreLastSelectedQuiz() {
       showToast('已恢复上次的题库数据', 'success');
     } catch (error) {
       console.error('解析保存的题库数据失败:', error);
-      localStorage.removeItem('quizData');
+      configService.clearCurrentQuiz();
     }
   }
 }
@@ -690,26 +680,10 @@ async function loadQuizList() {
 // 加载缓存题库列表 - 简化版
 async function loadLocalQuizList() {
   try {
-    const savedQuizList = localStorage.getItem('cachedQuizList');
-
-    if (savedQuizList) {
-      const parsedList = JSON.parse(savedQuizList);
-
-      // 只保留有效的题库（有缓存数据的）
-      localQuizList.value = parsedList.filter((quiz: LocalQuizCache) => {
-        const cacheKey = `quizCache_${quiz.name}`;
-        return localStorage.getItem(cacheKey) !== null;
-      });
-
-      // 如果有无效题库被移除，更新缓存列表
-      if (localQuizList.value.length !== parsedList.length) {
-        localStorage.setItem('cachedQuizList', JSON.stringify(localQuizList.value));
-      }
-    } else {
-      localQuizList.value = [];
-    }
+    // 使用configService加载题库列表，而不是直接操作localStorage
+    localQuizList.value = configService.loadQuizList();
   } catch (error) {
-    console.warn('加载缓存题库列表失败:', error);
+    showToast('加载缓存题库列表失败', 'warning');
     localQuizList.value = [];
   }
 }
@@ -764,7 +738,6 @@ async function loadOnlineQuizList() {
       throw new Error('题库索引格式无效: 应为题库数组');
     }
   } catch (err) {
-    console.error('加载在线题库列表失败:', err);
     showToast(`加载在线题库列表失败: ${(err as Error).message}`, 'error');
     onlineQuizList.value = [];
   }
@@ -772,113 +745,82 @@ async function loadOnlineQuizList() {
 
 // 加载远程题库列表 - 优化版
 async function loadRemoteQuizList() {
-  // 如果未配置远程仓库，直接返回
-  if (!hasRemoteConfig.value) {
-    remoteQuizList.value = [];
-    return;
-  }
-
-  const owner = localStorage.getItem('github_owner');
-  const repoName = localStorage.getItem('github_repo');
-  const branch = localStorage.getItem('github_branch') || 'main';
-  const path = localStorage.getItem('github_path') || '';
-  const token = localStorage.getItem('github_token');
-
   try {
-    const headers: Record<string, string> = {};
-    if (token) {
-      headers['Authorization'] = `token ${token}`;
+    const githubConfig = configService.getGithubConfig();
+    if (!githubConfig?.repo || !githubConfig?.token) {
+      showToast('GitHub 配置不完整', 'error');
+      return;
     }
 
-    const repo = `${owner}/${repoName}`;
-    const apiUrl = `https://api.github.com/repos/${repo}/contents/${path}?ref=${branch}`;
+    // 构建API请求URL - 使用配置的路径或默认路径
+    const path = githubConfig.path || 'quizzes';
+    const apiUrl = `https://api.github.com/repos/${githubConfig.owner}/${githubConfig.repo}/contents/${path}`;
 
-    // 添加超时控制
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5秒超时
-
-    const response = await fetch(apiUrl, {
-      headers,
-      signal: controller.signal
-    }).finally(() => clearTimeout(timeoutId));
+    // 获取远程题库列表
+    const response = await fetch(`${apiUrl}?ref=${githubConfig.branch}`, {
+      headers: {
+        'Authorization': `token ${githubConfig.token}`,
+        'Accept': 'application/vnd.github.v3+json'
+      }
+    });
 
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(`GitHub API错误 (${response.status}): ${errorData.message || '未知错误'}`);
+      throw new Error(`获取远程题库列表失败 (${response.status}): ${await response.text()}`);
     }
 
-    const files = await response.json();
+    const data = await response.json();
 
-    if (!Array.isArray(files)) {
-      throw new Error('GitHub API返回格式错误');
+    // 确保data是数组
+    if (!Array.isArray(data)) {
+      throw new Error('获取的远程题库列表格式无效');
     }
 
-    remoteQuizList.value = files
-      .filter((file: GithubApiFile) =>
-        file.type === 'file' &&
-        (file.name.endsWith('.json') || file.name.endsWith('.txt'))
+    // 过滤出JSON和TXT文件
+    remoteQuizList.value = data
+      .filter((item: GithubApiFile) =>
+        item.type === 'file' &&
+        (item.name.endsWith('.json') || item.name.endsWith('.txt'))
       )
-      .map((file: GithubApiFile) => ({
-        name: file.name.replace(/\.(json|txt)$/, ''),
-        path: file.path,
-        download_url: file.download_url,
+      .map((item: GithubApiFile) => ({
+        id: `remote-${item.path}`,
         source: QuizSourceType.REMOTE,
-        info: `来自${repo}的远程题库`
+        name: item.name.replace(/\.(json|txt)$/, ''),
+        info: `GitHub: ${githubConfig.repo}/${path}`,
+        path: item.path,
+        title: item.name.replace(/\.(json|txt)$/, ''),
+        lastModified: Date.now(),
+        download_url: item.download_url
       }));
-  } catch (e) {
-    // 使用e代替err避免类型错误
-    console.error('加载GitHub题库列表失败:', e);
+
+    if (remoteQuizList.value.length > 0) {
+      showToast(`已加载 ${remoteQuizList.value.length} 个远程题库`, 'success');
+    } else {
+      showToast(`远程仓库 ${path} 中未找到题库文件`, 'warning');
+    }
+  } catch (error) {
+    console.error('加载远程题库失败:', error);
+    showToast(`加载远程题库失败: ${(error as Error).message}`, 'error');
     remoteQuizList.value = [];
-    throw e; // 重新抛出错误，由调用方决定如何处理
   }
 }
 
 // 保存当前题库状态到localStorage
 function saveQuizState() {
   if (quizData.value) {
-    // 保存到localStorage
-    localStorage.setItem('quizData', JSON.stringify(quizData.value));
-    localStorage.setItem('selectedChapter', selectedChapter.value);
-    localStorage.setItem('quizMode', quizMode.value);
-    localStorage.setItem('rangeStart', rangeStart.value.toString());
-    localStorage.setItem('rangeEnd', rangeEnd.value.toString());
-    localStorage.setItem('lastLoadedQuiz', JSON.stringify(lastLoadedQuiz.value));
+    // 使用configService统一管理状态
+    configService.setQuizData(quizData.value);
+    configService.saveLastLoadedQuiz(lastLoadedQuiz.value.name, lastLoadedQuiz.value.source);
+    configService.setQuizConfig({
+      chapterIndex: selectedChapter.value,
+      mode: quizMode.value,
+      rangeStart: parseInt(rangeStart.value.toString()),
+      rangeEnd: parseInt(rangeEnd.value.toString()),
+      randomize: quizMode.value === 'random',
+      wrongOnly: quizMode.value === 'wrong',
+    });
 
-    // 同时更新QuizStore
-    QuizStore.setQuizData(quizData.value);
-    QuizStore.setLastLoaded(lastLoadedQuiz.value.name, lastLoadedQuiz.value.source);
-
-    // 保存到QuizStore的存储
-    QuizStore.saveToStorage();
-
-    // 如果有名称，保存到独立缓存
-    if (lastLoadedQuiz.value.name) {
-      const quizCacheKey = `quizCache_${lastLoadedQuiz.value.name}`;
-      localStorage.setItem(quizCacheKey, JSON.stringify(quizData.value));
-
-      // 更新本地缓存列表
-      const existingIndex = localQuizList.value.findIndex(
-        q => q.name === lastLoadedQuiz.value.name
-      );
-
-      if (existingIndex >= 0) {
-        localQuizList.value[existingIndex].lastModified = Date.now();
-      } else {
-        // 添加到本地缓存列表
-        localQuizList.value.push({
-          id: `local-${Date.now()}`,
-          name: lastLoadedQuiz.value.name,
-          path: 'localStorage',
-          source: 'local',
-          info: quizData.value.description || '缓存题库',
-          title: quizData.value.title || lastLoadedQuiz.value.name,
-          lastModified: Date.now()
-        });
-      }
-
-      // 保存题库列表
-      localStorage.setItem('cachedQuizList', JSON.stringify(localQuizList.value));
-    }
+    // 保存到configService的存储
+    configService.saveQuizState();
   }
 }
 
@@ -890,7 +832,7 @@ const startQuiz = async () => {
   }
 
   // 设置刷题配置
-  QuizStore.setConfig({
+  configService.setQuizConfig({
     chapterIndex: selectedChapter.value,
     mode: quizMode.value === 'wrong' ? QuizMode.REVIEW : quizMode.value,
     rangeStart: parseInt(rangeStart.value.toString()),
@@ -900,7 +842,7 @@ const startQuiz = async () => {
   });
 
   // 保存状态
-  saveQuizState();
+  configService.saveQuizState();
 
   // 跳转到刷题页面
   router.push('/quiz');
@@ -1023,54 +965,85 @@ function handleDelete() {
 
 // 确认删除
 async function confirmDelete() {
-  if (!selectedQuiz.value) return;
+  console.log('Attempting to confirm delete...');
+  if (!selectedQuiz.value) {
+    console.log('Confirm delete aborted: No quiz selected.');
+    return;
+  }
 
   isDeleting.value = true;
+  console.log(`Deleting quiz: ${selectedQuiz.value.quiz.name} (Source: ${selectedQuiz.value.source})`);
 
   try {
-    if (selectedQuiz.value.source === 'local') {
+    if (selectedQuiz.value.source === 'local' || selectedQuiz.value.source === QuizSourceType.ONLINE_IMPORT || selectedQuiz.value.source === QuizSourceType.REMOTE_IMPORT) {
       deleteLocalQuiz();
     } else if (selectedQuiz.value.source === 'remote') {
       await deleteRemoteQuiz();
     }
     // 关闭确认对话框
     showDeleteConfirmModal.value = false;
+    console.log('Delete confirmation modal closed.');
   } catch (err) {
     console.error('删除题库失败:', err);
     errorDetails.value = `删除题库失败: ${(err as Error).message}`;
     showErrorModal.value = true;
   } finally {
     isDeleting.value = false;
+    console.log('Delete operation finished.');
   }
 }
 
-// 删除本地题库
 function deleteLocalQuiz() {
   if (!selectedQuiz.value) return;
 
-  const index = localQuizList.value.findIndex((q) => q.path === selectedQuiz.value?.quiz.path);
-  if (index > -1) {
-    localQuizList.value.splice(index, 1);
+  const quizToDelete = selectedQuiz.value.quiz;
+  const quizName = quizToDelete.name;
+  const quizSource = selectedQuiz.value.source;
 
-    // 更新本地缓存列表
-    localStorage.setItem('cachedQuizList', JSON.stringify(localQuizList.value));
+  console.log(`尝试删除本地题库: ${quizName} (来源: ${quizSource})`);
+
+  // 使用名称和来源精确查找索引
+  const index = localQuizList.value.findIndex(
+    (q) => q.name === quizName && q.source === quizSource
+  );
+
+  console.log(`找到要删除的索引: ${index}`);
+
+  if (index > -1) {
+    // 从列表中移除
+    localQuizList.value.splice(index, 1);
+    console.log(`已从题库列表中移除`);
+
+    // 使用configService更新题库列表和移除题库缓存
+    configService.saveQuizList(localQuizList.value);
+    configService.removeQuizFromStorage(quizName);
+    console.log(`已保存题库列表并移除缓存: ${quizName}`);
 
     // 如果当前加载的就是这个题库，也清空当前题库
     if (
       lastLoadedQuiz.value &&
-      lastLoadedQuiz.value.source === 'local' &&
-      lastLoadedQuiz.value.name === selectedQuiz.value.quiz.name
+      lastLoadedQuiz.value.source === quizSource &&
+      lastLoadedQuiz.value.name === quizName
     ) {
+      configService.clearCurrentQuiz();
       quizData.value = null;
-      lastLoadedQuiz.value = {
-        name: '',
-        source: ''
-      };
-      localStorage.removeItem('quizData');
-      localStorage.removeItem('lastLoadedQuiz');
+      lastLoadedQuiz.value = { name: '', source: '' };
+      selectedQuizItem.value = null;
+      appliedQuizItem.value = null;
+      console.log(`已清空当前题库数据，因为它是正在被删除的题库`);
     }
 
     showToast('题库删除成功', 'success');
+    selectedQuiz.value = null;
+
+    // 手动刷新题库列表，确保UI更新
+    loadQuizList();
+    console.log('已手动刷新题库列表以确保UI更新');
+  } else {
+    console.warn(`尝试删除本地题库失败：在列表中未找到 ${quizName} (来源: ${quizSource})`);
+    configService.removeQuizFromStorage(quizName);
+    console.log(`尝试从存储中移除: ${quizName}`);
+    showToast('删除失败：无法在列表中找到题库', 'error');
   }
 }
 
@@ -1078,11 +1051,12 @@ function deleteLocalQuiz() {
 async function deleteRemoteQuiz() {
   if (!selectedQuiz.value) return;
 
-  // 从GitHub获取必要的配置
-  const owner = localStorage.getItem('github_owner');
-  const repoName = localStorage.getItem('github_repo');
-  const branch = localStorage.getItem('github_branch') || 'main';
-  const token = localStorage.getItem('github_token');
+  // 使用configService获取GitHub配置
+  const githubConfig = configService.getGithubConfig();
+  const owner = githubConfig.owner;
+  const repoName = githubConfig.repo;
+  const branch = githubConfig.branch || 'main';
+  const token = githubConfig.token;
 
   if (!owner || !repoName || !token) {
     throw new Error('GitHub配置不完整，无法删除远程文件');
@@ -1149,13 +1123,12 @@ async function deleteRemoteQuiz() {
       lastLoadedQuiz.value.source === 'remote' &&
       lastLoadedQuiz.value.name === quiz.name
     ) {
+      configService.clearCurrentQuiz();
       quizData.value = null;
       lastLoadedQuiz.value = {
         name: '',
         source: ''
       };
-      localStorage.removeItem('quizData');
-      localStorage.removeItem('lastLoadedQuiz');
     }
 
     showToast('题库已成功从GitHub仓库删除', 'success');
@@ -1164,7 +1137,6 @@ async function deleteRemoteQuiz() {
 
 // 处理仓库配置保存
 function handleRepoConfigSave(config: Record<string, unknown>) {
-  console.log('仓库配置已保存:', config);
   // 刷新题库列表
   loadQuizList();
 }
@@ -1183,28 +1155,23 @@ function handleFileSelect(event: Event) {
   reader.onload = function (e: ProgressEvent<FileReader>) {
     try {
       const content = e.target?.result as string
-      let data
 
-      if (file.name.endsWith('.json')) {
-        // 解析JSON格式
-        data = JSON.parse(content)
-      } else if (file.name.endsWith('.txt')) {
-        // 解析文本格式 (简单格式)
-        data = parseTextQuiz(content)
-      } else {
-        throw new Error('不支持的文件格式')
-      }
+      // 使用统一解析器，传入文件名作为格式提示
+      const data = parseQuiz(content, file.name)
 
       // 使用增强版的验证函数，提高兼容性
-      if (enhancedValidQuizData(data)) {
+      if (configService.enhancedValidQuizData(data)) {
         quizData.value = data
-        QuizStore.setQuizData(data)
+        configService.setQuizData(data)
 
         // 记录当前加载的题库
         lastLoadedQuiz.value = {
           source: 'file',
           name: file.name.replace(/\.(json|txt)$/, ''),
         }
+
+        // 记录最后加载的题库
+        configService.saveLastLoadedQuiz(file.name.replace(/\.(json|txt)$/, ''), 'file');
 
         // 重置设置
         selectedChapter.value = 'all'
@@ -1236,12 +1203,11 @@ function handleFileSelect(event: Event) {
           localQuizList.value.push(localCacheEntry);
         }
 
-        // 保存题库列表
-        localStorage.setItem('cachedQuizList', JSON.stringify(localQuizList.value));
+        // 使用configService保存题库列表
+        configService.saveQuizList(localQuizList.value);
 
         // 保存独立缓存
-        const cacheKey = `quizCache_${localCacheEntry.name}`;
-        localStorage.setItem(cacheKey, JSON.stringify(data));
+        configService.saveQuizToStorage(localCacheEntry.name, data);
 
         // 显示成功消息
         showToast(`成功加载题库：${file.name}`, 'success');
@@ -1263,70 +1229,14 @@ function handleFileSelect(event: Event) {
     isLoading.value = false
   }
 
-  if (file.name.endsWith('.json') || file.name.endsWith('.txt')) {
-    reader.readAsText(file)
-  } else {
-    showToast('不支持的文件格式，请上传 .json 或 .txt 文件', 'error')
-    isLoading.value = false
-  }
+  reader.readAsText(file)
 }
 
 // 处理通用设置保存
 function handleGeneralSettingsSave(settings: GeneralSettings) {
-  console.log('保存通用设置:', settings)
-  // 应用设置，这里可以根据需要添加更多逻辑
-  if (settings.uiSettings) {
-    // 应用UI设置
-    document.documentElement.setAttribute('theme', settings.uiSettings.darkMode ? 'dark' : 'light')
-    // 应用主题颜色
-    const root = document.documentElement
-    const color = settings.uiSettings.themeColor === 'custom'
-      ? settings.uiSettings.customColor
-      : settings.uiSettings.themeColor
-    root.style.setProperty('--primary-color', color)
-    root.style.setProperty('--font-size-base', `${settings.uiSettings.fontSize}px`)
-
-    // 保存UI设置到localStorage
-    localStorage.setItem('theme', settings.uiSettings.darkMode ? 'dark' : 'light')
-    localStorage.setItem('themeColor', settings.uiSettings.themeColor)
-    localStorage.setItem('customColor', settings.uiSettings.customColor)
-    localStorage.setItem('fontSize', settings.uiSettings.fontSize.toString())
-    localStorage.setItem('fontFamily', settings.uiSettings.fontFamily)
-    localStorage.setItem('animationEnabled', settings.uiSettings.animationEnabled.toString())
-  }
-
-  // 应用Debug设置
-  if (settings.debugEnabled !== undefined) {
-    localStorage.setItem('debugEnabled', settings.debugEnabled.toString())
-  }
-
-  // 应用测验设置
-  if (settings.quizSettings) {
-    // 保存到localStorage以便在quiz页面加载时使用
-    localStorage.setItem('quizConfig', JSON.stringify(settings.quizSettings))
-
-    // 同时更新QuizStore的配置
-    const quizMode = settings.quizSettings.reviewMode
-      ? QuizMode.REVIEW
-      : (settings.quizSettings.randomMode ? QuizMode.RANDOM : QuizMode.NORMAL)
-
-    // 更新QuizStore配置
-    QuizStore.setConfig({
-      mode: quizMode,
-      randomize: settings.quizSettings.randomMode,
-      // 保留其他现有配置
-      chapterIndex: QuizStore.state.config.chapterIndex,
-      rangeStart: QuizStore.state.config.rangeStart,
-      rangeEnd: QuizStore.state.config.rangeEnd,
-      wrongOnly: QuizStore.state.config.wrongOnly
-    })
-
-    // 保存到存储
-    QuizStore.saveToStorage()
-  }
-
-  showToast('设置已保存', 'success')
-  showGeneralSettings.value = false
+  // 使用configService保存设置
+  configService.saveGeneralSettings(settings);
+  showGeneralSettings.value = false;
 }
 
 // 返回主页方法
@@ -1336,7 +1246,6 @@ const goToHome = () => {
 
 // 变量定义
 const quizLoaded = computed(() => quizData.value !== null)
-// const chapter = ref('all')  // 注释掉未使用的变量
 
 // 添加所需的变量和方法
 const activeFilter = ref<QuizCategoryType>(QuizCategoryType.CACHE)
@@ -1399,7 +1308,7 @@ function getMergedQuizList() {
       path: quiz.path,
       download_url: quiz.download_url,
       title: quiz.name,
-      lastModified: 0
+      lastModified: Date.now()
     }))
   ];
 }
@@ -1441,7 +1350,6 @@ function selectQuiz(quiz: QuizItemExtended) {
     appliedQuizItem.value = selectedQuizItem.value;
     showToast(`已加载题库: ${quiz.name}`, 'success');
   }).catch(err => {
-    console.error('加载题库失败:', err);
     showToast(`加载题库失败: ${(err as Error).message}`, 'error');
   }).finally(() => {
     loadingQuizItem.value = null;
@@ -1521,29 +1429,24 @@ async function fetchQuizData(quiz: QuizItemExtended) {
     const data = await response.json();
 
     // 验证数据格式
-    if (!enhancedValidQuizData(data)) {
+    if (!configService.enhancedValidQuizData(data)) {
       throw new Error(`无效的题库数据格式: ${quiz.name}`);
     }
 
     return data;
-  } catch {
-    // 捕获任何解析错误，但不使用错误对象
+  } catch (error) {
+    console.error(`题库数据格式错误: ${quiz.name}`, error);
     throw new Error(`题库数据格式错误: ${quiz.name}`);
   }
 }
 
 // 从缓存加载题库
 function loadQuizFromCache(quiz: QuizItemExtended) {
-  const cacheKey = `quizCache_${quiz.name}`;
-  const cachedData = localStorage.getItem(cacheKey);
+  // 使用configService加载题库数据
+  const cachedData = configService.loadQuizFromStorage(quiz.name);
 
   if (cachedData) {
-    try {
-      return JSON.parse(cachedData);
-    } catch (error) {
-      console.error(`解析缓存数据失败: ${quiz.name}`, error);
-      throw new Error(`缓存数据损坏: ${quiz.name}`);
-    }
+    return cachedData;
   } else if (quiz.source === QuizSourceType.LOCAL) {
     throw new Error(`找不到题库缓存: ${quiz.name}`);
   }
@@ -1553,8 +1456,8 @@ function loadQuizFromCache(quiz: QuizItemExtended) {
 
 // 将题库保存到缓存
 function saveQuizToCache(quiz: QuizItemExtended, data: QuizData) {
-  const cacheKey = `quizCache_${quiz.name}`;
-  localStorage.setItem(cacheKey, JSON.stringify(data));
+  // 使用configService保存题库数据
+  configService.saveQuizToStorage(quiz.name, data);
 
   // 设置保存来源类型
   const importSource = quiz.source === QuizSourceType.ONLINE
@@ -1582,8 +1485,8 @@ function saveQuizToCache(quiz: QuizItemExtended, data: QuizData) {
     localQuizList.value.push(localEntry);
   }
 
-  // 保存题库列表
-  localStorage.setItem('cachedQuizList', JSON.stringify(localQuizList.value));
+  // 使用configService保存题库列表
+  configService.saveQuizList(localQuizList.value);
 
   // 更新选中的题库来源为导入类型
   selectedQuizItem.value = {
@@ -1595,8 +1498,8 @@ function saveQuizToCache(quiz: QuizItemExtended, data: QuizData) {
 // 设置加载成功的题库数据
 function setupQuizData(quiz: QuizItemExtended, data: QuizData) {
   // 设置题库数据
-  quizData.value = data;
-  QuizStore.setQuizData(data);
+  quizData.value = data
+  configService.setQuizData(data)
 
   // 更新选中的题库的数据
   if (selectedQuizItem.value) {
@@ -1612,8 +1515,8 @@ function setupQuizData(quiz: QuizItemExtended, data: QuizData) {
     name: quiz.name
   };
 
-  // 更新QuizStore的最后加载记录
-  QuizStore.setLastLoaded(quiz.name, selectedQuizItem.value!.source);
+  // 更新最后加载的题库记录
+  configService.saveLastLoadedQuiz(quiz.name, selectedQuizItem.value!.source);
 
   // 重置设置
   selectedChapter.value = 'all';
@@ -1621,8 +1524,8 @@ function setupQuizData(quiz: QuizItemExtended, data: QuizData) {
   rangeStart.value = 1;
   rangeEnd.value = getMaxQuestionNumber();
 
-  // 更新QuizStore配置
-  QuizStore.setConfig({
+  // 更新测验配置
+  configService.setQuizConfig({
     chapterIndex: selectedChapter.value,
     mode: quizMode.value,
     rangeStart: rangeStart.value,
@@ -1638,16 +1541,17 @@ function setupQuizData(quiz: QuizItemExtended, data: QuizData) {
 // 加载统计数据
 function loadStatsData() {
   try {
-    // 从本地存储加载统计数据
-    const statsData = localStorage.getItem('quizStats');
-    if (statsData) {
-      const stats = JSON.parse(statsData);
-      answeredQuestions.value = stats.totalAnswered || 0;
-      correctQuestions.value = stats.correctCount || 0;
-      userAnswerData.value = stats;
-    }
+    // 使用configService获取统计数据，不再直接操作localStorage
+    answeredQuestions.value = configService.getQuizAnsweredCount();
+    correctQuestions.value = configService.getQuizCorrectCount();
+    userAnswerData.value = {
+      totalAnswered: answeredQuestions.value,
+      correctCount: correctQuestions.value,
+      wrongCount: configService.getQuizAnsweredCount() - configService.getQuizCorrectCount(),
+      dailyActivity: []
+    };
   } catch (error) {
-    console.error('加载统计数据失败:', error);
+    showToast('加载统计数据失败', 'error');
   }
 }
 
@@ -1704,24 +1608,18 @@ function openQuizModeModal() {
 
 // 确认刷题模式
 function confirmQuizMode() {
-  // 保存选择的刷题模式
-  localStorage.setItem('quizMode', quizMode.value);
-  localStorage.setItem('rangeStart', rangeStart.value.toString());
-  localStorage.setItem('rangeEnd', rangeEnd.value.toString());
-
-  // 更新QuizStore的配置
-  QuizStore.setConfig({
+  // 保存选择的刷题模式并更新配置
+  configService.setQuizConfig({
     mode: quizMode.value,
     rangeStart: rangeStart.value,
     rangeEnd: rangeEnd.value,
-    // 保留其他现有配置
-    randomize: QuizStore.state.config.randomize,
-    chapterIndex: QuizStore.state.config.chapterIndex,
-    wrongOnly: QuizStore.state.config.wrongOnly
+    randomize: quizMode.value === 'random',
+    chapterIndex: selectedChapter.value,
+    wrongOnly: quizMode.value === 'wrong'
   });
 
-  // 保存到存储
-  QuizStore.saveToStorage();
+  // 保存状态
+  configService.saveQuizState();
 
   // 关闭模态框
   showQuizModeModal.value = false;
@@ -1731,37 +1629,60 @@ function confirmQuizMode() {
 
 // 检查GitHub是否已配置
 const isGithubConfigured = computed(() => {
-  return Boolean(
-    localStorage.getItem('github_owner') &&
-    localStorage.getItem('github_repo') &&
-    localStorage.getItem('github_token')
-  );
+  const githubConfig = configService.getGithubConfig();
+  return Boolean(githubConfig.owner && githubConfig.repo && githubConfig.token);
 });
 
-// 从远程同步
-function handleSyncFromRemote() {
+// 处理GitHub同步功能
+async function handleGithubSync(action: 'fetch' | 'push') {
   if (!selectedQuiz.value) return;
 
   closeContextMenu();
-  showToast('正在从远程同步题库...', 'info');
+  const quiz = selectedQuiz.value.quiz;
+  const quizName = quiz.name;
+  const actionText = action === 'fetch' ? '从远程同步' : '推送到远程';
 
-  // 这里实现同步逻辑
-  setTimeout(() => {
-    showToast('同步功能尚未实现', 'warning');
-  }, 1000);
-}
+  showToast(`正在${actionText}题库...`, 'info');
+  isLoading.value = true;
 
-// 推送到远程
-function handlePushToRemote() {
-  if (!selectedQuiz.value) return;
+  try {
+    let success = false;
 
-  closeContextMenu();
-  showToast('正在推送题库到远程...', 'info');
+    if (action === 'fetch') {
+      // 从GitHub获取题库
+      const data = await configService.syncQuizFromGithub(quizName);
+      success = !!data;
 
-  // 这里实现推送逻辑
-  setTimeout(() => {
-    showToast('推送功能尚未实现', 'warning');
-  }, 1000);
+      if (success && data) {
+        // 注意：实际同步的题库名可能与请求的题库名不同
+        // 例如，可能匹配了部分名称或使用了其他匹配方法
+        // 因此我们需要判断返回的数据是否与当前已加载题库相关
+
+        // 如果当前加载的题库与请求同步的题库相关，则刷新数据
+        if (lastLoadedQuiz.value && lastLoadedQuiz.value.name === quizName) {
+          quizData.value = data;
+          if (selectedQuizItem.value) {
+            selectedQuizItem.value.data = data;
+          }
+        }
+
+        // 成功后无论如何都刷新题库列表
+        await loadQuizList();
+      }
+    } else {
+      // 推送题库到GitHub
+      success = await configService.pushQuizToGithub(quizName);
+    }
+
+    if (success) {
+      // 如果成功，刷新题库列表
+      await loadQuizList();
+    }
+  } catch (error) {
+    showToast(`${actionText}失败: ${(error as Error).message}`, 'error');
+  } finally {
+    isLoading.value = false;
+  }
 }
 
 // 错误详情模态框
@@ -1802,21 +1723,34 @@ function confirmRename() {
       // 缓存题库重命名
       const quiz = localQuizList.value.find((q) => q.path === selectedQuiz.value?.quiz.path);
       if (quiz) {
+        const oldName = quiz.name;
         quiz.name = newQuizName.value;
 
         // 更新本地缓存列表
-        localStorage.setItem('cachedQuizList', JSON.stringify(localQuizList.value));
+        configService.saveQuizList(localQuizList.value);
 
-        // 如果当前加载的就是这个题库，也更新title
+        // 如果存在缓存数据，需要重命名缓存
+        const quizData = configService.loadQuizFromStorage(oldName);
+        if (quizData) {
+          // 保存到新名称
+          configService.saveQuizToStorage(newQuizName.value, quizData);
+          // 删除旧缓存
+          configService.removeQuizFromStorage(oldName);
+        }
+
+        // 如果当前加载的就是这个题库，也更新title和lastLoadedQuiz
         if (
-          quizData.value &&
           lastLoadedQuiz.value &&
           lastLoadedQuiz.value.source === 'local' &&
           lastLoadedQuiz.value.name === selectedQuiz.value.quiz.name
         ) {
-          quizData.value.title = newQuizName.value;
+          if (quizData) {
+            quizData.title = newQuizName.value;
+            configService.setQuizData(quizData);
+          }
+
           lastLoadedQuiz.value.name = newQuizName.value;
-          saveQuizState();
+          configService.saveLastLoadedQuiz(newQuizName.value, lastLoadedQuiz.value.source);
         }
 
         showToast('题库重命名成功', 'success');
@@ -1836,15 +1770,17 @@ function confirmRename() {
         ) {
           quizData.value.title = newQuizName.value;
           lastLoadedQuiz.value.name = newQuizName.value;
-          saveQuizState();
+
+          // 使用configService保存
+          configService.setQuizData(quizData.value);
+          configService.saveLastLoadedQuiz(newQuizName.value, lastLoadedQuiz.value.source);
         }
 
         showToast('题库重命名成功（仅本地显示名称变更）', 'success');
       }
     }
   } catch (err) {
-    console.error('重命名题库失败:', err);
-    showToast('重命名题库失败', 'error');
+    showToast(`重命名题库失败: ${(err as Error).message}`, 'error');
   } finally {
     // 关闭重命名模态框
     showRenameModal.value = false;
@@ -1853,46 +1789,25 @@ function confirmRename() {
 
 // 切换主题方法
 const handleToggleTheme = () => {
-  const themeToggle = document.querySelector('.page-library__theme-toggle') as HTMLElement
-  if (themeToggle) {
-    themeToggle.classList.toggle('dark')
-    const isDark = themeToggle.classList.contains('dark')
-    isDarkMode.value = isDark
+  // 使用configService切换主题
+  configService.toggleDarkMode();
 
-    if (isDark) {
-      document.body.classList.add('dark-theme')
-      localStorage.setItem('theme', 'dark')
-    } else {
-      document.body.classList.remove('dark-theme')
-      localStorage.setItem('theme', 'light')
-    }
+  // 更新界面状态
+  isDarkMode.value = configService.getUiSettings().darkMode;
+
+  // 更新切换按钮样式
+  const themeToggle = document.querySelector('.page-library__theme-toggle') as HTMLElement;
+  if (themeToggle) {
+    themeToggle.classList.toggle('dark', isDarkMode.value);
   }
 }
 
 // 添加通用设置对象
 const generalSettings = reactive<GeneralSettings>({
-  uiSettings: {
-    darkMode: document.documentElement.getAttribute('theme') === 'dark',
-    themeColor: 'default',
-    customColor: '#4caf50',
-    fontSize: parseInt(getComputedStyle(document.documentElement).getPropertyValue('--font-size-base') || '14px'),
-    fontFamily: 'sans-serif',
-    animationEnabled: true
-  },
-  quizSettings: {
-    autoSubmit: false,
-    autoNext: true,
-    allowSkip: true,
-    showNotesAfterAnswer: true,
-    lockAnswerAfterSubmit: false,
-    showCorrectAnswerImmediately: true,
-    showProgress: true,
-    swipeGestureEnabled: true,
-    randomMode: false,
-    reviewMode: false,
-    viewWrongAfterAll: true
-  },
-  debugEnabled: localStorage.getItem('debugEnabled') === 'true'
+  uiSettings: configService.getUiSettings(),
+  quizSettings: configService.getQuizSettings(),
+  debugEnabled: configService.isDebugEnabled(),
+  apiConfig: configService.getApiConfig()
 });
 
 // 删除相关状态

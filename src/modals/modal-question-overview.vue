@@ -11,18 +11,7 @@
 
 <script setup lang="ts">
 import BaseModal from './modal-base.vue';
-
-// 定义问题对象的接口
-interface Question {
-  id?: string | number;
-  number?: number;
-  answer?: string;
-  userAnswer?: string | null;
-  question?: string;
-  options?: string[];
-  notes?: string;
-  chapterTitle?: string;
-}
+import { type Question } from '@/services/config-service'; // 导入Question接口
 
 const props = defineProps({
   show: { type: Boolean, required: true },

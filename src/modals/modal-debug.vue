@@ -1,38 +1,43 @@
 <template>
-  <div class="modal modal--active">
-    <div class="modal__content">
-      <div class="modal__header">
-        <h2 class="modal__title">调试</h2>
-        <button class="modal__close" @click="$emit('close')">&times;</button>
+  <BaseModal title="调试" :show="show" @close="$emit('close')">
+    <div class="modal__debug-info">
+      <h3>系统信息</h3>
+      <div class="modal__debug-item">
+        <span class="modal__debug-label">浏览器</span>
+        <span class="modal__debug-value">{{ browserInfo }}</span>
       </div>
-      <div class="modal__body">
-        <div class="modal__debug-info">
-          <h3>系统信息</h3>
-          <div class="modal__debug-item">
-            <span>浏览器：</span>
-            <span>{{ browserInfo }}</span>
-          </div>
-          <div class="modal__debug-item">
-            <span>本地存储使用：</span>
-            <span>{{ formatBytes(localStorageSize) }}</span>
-          </div>
-          <h3>题库缓存</h3>
-          <div class="modal__debug-item" v-for="(item, index) in cacheItems" :key="index">
-            <span>{{ item.key }}：</span>
-            <span>{{ formatBytes(item.size) }}</span>
-          </div>
-        </div>
+      <div class="modal__debug-item">
+        <span class="modal__debug-label">本地存储使用</span>
+        <span class="modal__debug-value">{{ formatBytes(localStorageSize) }}</span>
       </div>
-      <div class="modal__footer">
-        <button class="modal__button modal__button--danger" @click="clearCache">清除缓存</button>
-        <button class="modal__button modal__button--secondary" @click="$emit('close')">关闭</button>
+      <h3>题库缓存</h3>
+      <div v-if="cacheItems.length === 0" class="modal__debug-empty">
+        <span>暂无缓存数据</span>
+      </div>
+      <div v-else class="modal__debug-item" v-for="(item, index) in cacheItems" :key="index">
+        <span class="modal__debug-label">{{ item.key }}</span>
+        <span class="modal__debug-value">{{ formatBytes(item.size) }}</span>
       </div>
     </div>
-  </div>
+
+    <template #footer>
+      <button class="modal__button modal__button--danger" @click="clearCache">清除缓存</button>
+      <button class="modal__button modal__button--secondary" @click="$emit('close')">关闭</button>
+    </template>
+  </BaseModal>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
+import configService from '@/services/config-service';
+import BaseModal from './modal-base.vue';
+
+const props = defineProps({
+  show: {
+    type: Boolean,
+    default: false
+  }
+});
 
 defineEmits(['close']);
 
@@ -40,35 +45,23 @@ const browserInfo = ref('');
 const localStorageSize = ref(0);
 const cacheItems = ref<{ key: string; size: number; }[]>([]);
 
-onMounted(() => {
-  // 获取浏览器信息
-  browserInfo.value = navigator.userAgent;
+// 监听显示状态变化
+watch(() => props.show, (newVal) => {
+  if (newVal) {
+    // 当模态框显示时更新统计信息
+    updateStorageInfo();
+  }
+}, { immediate: true });
 
-  // 计算localStorage使用情况
-  calculateStorageUsage();
+onMounted(() => {
+  browserInfo.value = navigator.userAgent;
+  updateStorageInfo();
 });
 
-// 计算localStorage使用量
-function calculateStorageUsage() {
-  let total = 0;
-  const items: { key: string; size: number; }[] = [];
-
-  for (let i = 0; i < localStorage.length; i++) {
-    const key = localStorage.key(i);
-    if (key) {
-      const value = localStorage.getItem(key) || '';
-      const size = (key.length + value.length) * 2; // 估算大小（UTF-16，每个字符2字节）
-
-      total += size;
-
-      // 如果是题库相关缓存，添加到列表
-      if (key.startsWith('quizCache_')) {
-        items.push({ key: key.replace('quizCache_', ''), size });
-      }
-    }
-  }
-
-  localStorageSize.value = total;
+// 更新存储统计信息
+function updateStorageInfo() {
+  const { totalSize, items } = configService.getCacheStats();
+  localStorageSize.value = totalSize;
   cacheItems.value = items;
 }
 
@@ -85,21 +78,11 @@ function formatBytes(bytes: number) {
 
 // 清除缓存
 function clearCache() {
-  // 确认框
   if (confirm('确定要清除所有题库缓存吗？这将删除所有本地保存的题库数据。')) {
-    // 遍历localStorage，删除题库相关的缓存
-    for (let i = localStorage.length - 1; i >= 0; i--) {
-      const key = localStorage.key(i);
-      if (key && (key.startsWith('quizCache_') || key === 'cachedQuizList')) {
-        localStorage.removeItem(key);
-      }
+    const cleared = configService.clearQuizCache();
+    if (cleared) {
+      updateStorageInfo();
     }
-
-    // 重新计算存储使用情况
-    calculateStorageUsage();
-
-    // 显示提示
-    alert('缓存已清除');
   }
 }
 </script>

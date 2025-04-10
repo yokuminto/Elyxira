@@ -4,4 +4,7 @@ numpy
 keyboard
 PyQt5
 paddleocr
-paddlepaddle 
+paddlepaddle
+mss
+pyautogui
+pynput

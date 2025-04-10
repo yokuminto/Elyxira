@@ -48,17 +48,7 @@
 <script setup lang="ts">
 import { reactive, watch } from 'vue';
 import BaseModal from './modal-base.vue';
-
-interface Question {
-  id?: string | number;
-  number?: number;
-  question: string;
-  options: string[];
-  answer: string;
-  notes?: string;
-  userAnswer?: string | null;
-  chapterTitle?: string;
-}
+import { type Question } from '@/services/config-service';
 
 const props = defineProps<{
   show: boolean;
@@ -72,16 +62,25 @@ const emit = defineEmits<{
 
 // 创建一个可编辑的问题副本
 const editedQuestion = reactive<Question>({
-  question: '',
+  title: '',
   options: ['', ''],
   answer: 'A',
-  notes: ''
+  notes: '',
+  question: '',
 });
 
 // 当问题更改时，更新编辑的问题
 watch(() => props.question, (newQuestion) => {
   if (newQuestion) {
-    Object.assign(editedQuestion, JSON.parse(JSON.stringify(newQuestion)));
+    const questionCopy = JSON.parse(JSON.stringify(newQuestion));
+    if (typeof questionCopy.answer !== 'string') {
+      if (typeof questionCopy.answer === 'number') {
+        questionCopy.answer = String.fromCharCode(65 + questionCopy.answer);
+      } else {
+        questionCopy.answer = 'A';
+      }
+    }
+    Object.assign(editedQuestion, questionCopy);
   }
 }, { immediate: true, deep: true });
 
@@ -96,8 +95,13 @@ function removeOption(index: number) {
     editedQuestion.options.splice(index, 1);
 
     // 如果删除的是当前答案，将答案重置为A
-    const answerIndex = editedQuestion.answer.charCodeAt(0) - 65;
-    if (answerIndex === index || answerIndex >= editedQuestion.options.length) {
+    if (typeof editedQuestion.answer === 'string') {
+      const answerIndex = editedQuestion.answer.charCodeAt(0) - 65;
+      if (answerIndex === index || answerIndex >= editedQuestion.options.length) {
+        editedQuestion.answer = 'A';
+      }
+    } else {
+      // 如果答案不是字符串（可能是数字或数组），直接重置为 'A'
       editedQuestion.answer = 'A';
     }
   }
@@ -105,6 +109,7 @@ function removeOption(index: number) {
 
 // 保存编辑后的问题
 function saveQuestion() {
-  emit('save', JSON.parse(JSON.stringify(editedQuestion)));
+  const questionToSave: Question = JSON.parse(JSON.stringify(editedQuestion));
+  emit('save', questionToSave);
 }
 </script>

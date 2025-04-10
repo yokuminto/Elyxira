@@ -60,7 +60,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/quiz',
     name: 'quiz',
-    component: () => import('@/pages/quiz/page-quiz.vue'),
+    component: loadView('quiz'),
     meta: { title: '测验' },
   },
   {

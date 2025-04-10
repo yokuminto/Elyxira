@@ -132,7 +132,7 @@ const goBack = () => router.back();
   background-color: var(--code-background, #f8f9fa);
   border-radius: 6px;
   padding: 0.5rem;
-  border: 1px solid var(--border-color, #dee2e6);
+  border: 1px solid var(--border, #dee2e6);
 }
 
 .error-details__title {

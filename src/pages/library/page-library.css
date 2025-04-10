@@ -103,8 +103,7 @@
 
 .page-library__search {
   position: relative;
-  flex: 1;
-  min-width: 250px;
+  display: flex-line;
   max-width: 400px;
 }
 
@@ -319,7 +318,7 @@
 } /* Time */
 .page-library__table th:nth-child(5),
 .page-library__table td:nth-child(5) {
-  min-width: 96px;
+  width: 96px;
 } /* Actions */
 
 /* 删除不需要的圆角样式，使用overflow:hidden控制 */
@@ -387,7 +386,7 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  justify-content: flex-end; /* Align buttons to the right */
+  justify-content: flex-start; /* Align buttons to the right */
 }
 
 .page-library__table-more {
@@ -1072,10 +1071,10 @@
      动画效果 (Animations)
      ========================================================================== */
 @keyframes spin {
-  from {
+  0% {
     transform: rotate(0deg);
   }
-  to {
+  100% {
     transform: rotate(360deg);
   }
 }
@@ -1180,4 +1179,166 @@
   border-radius: var(--radius);
   animation: fadeIn 0.2s ease;
   backdrop-filter: blur(2px);
+}
+
+/* ==========================================================================
+     配置导入导出样式 (Config Import/Export)
+     ========================================================================== */
+.import-config-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem;
+  background-color: var(--bg-white-light);
+}
+
+.import-option {
+  display: flex;
+  flex-direction: column;
+  padding: 0.75rem;
+  background-color: var(--card);
+  border-radius: var(--radius);
+  border: 1px solid transparent;
+  transition: all var(--transition-duration) var(--transition-timing);
+}
+
+.import-option:hover {
+  border-color: var(--border);
+  box-shadow: var(--shadow-light);
+}
+
+.import-option-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.import-option-label input[type='checkbox'] {
+  width: 16px;
+  height: 16px;
+}
+
+.import-option-desc {
+  color: var(--text-light);
+  font-size: 0.85rem;
+  margin-left: 1.65rem;
+}
+
+.config-action-buttons {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.config-action-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius);
+  background-color: var(--bg-white-light);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-duration) var(--transition-timing);
+}
+
+.config-action-button:hover {
+  background-color: var(--color-blue-light);
+  color: var(--color-white);
+}
+
+.config-action-button--primary {
+  background-color: var(--color-blue-light);
+  color: var(--color-white);
+}
+
+.config-action-button--primary:hover {
+  background-color: var(--color-blue);
+}
+
+.config-action-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  padding: 1rem;
+  background-color: var(--bg-white-light);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+}
+
+.config-action-summary-title {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.config-action-summary-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.25rem 0;
+  border-bottom: 1px solid var(--border-gray-transparent);
+}
+
+.config-action-summary-item:last-child {
+  border-bottom: none;
+}
+
+.config-action-summary-label {
+  color: var(--text-light);
+}
+
+.config-action-summary-value {
+  color: var(--text);
+  font-weight: 500;
+}
+
+/* 配置下拉菜单 */
+.page-library__action-dropdown {
+  position: relative;
+}
+
+.page-library__dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  min-width: 150px;
+  background-color: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
+  padding: 0.5rem 0;
+  z-index: 100;
+  animation: menuFadeIn 0.2s ease;
+}
+
+.page-library__dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  color: var(--text);
+  cursor: pointer;
+  transition: background-color var(--transition-duration) var(--transition-timing);
+}
+
+.page-library__dropdown-item:hover {
+  background-color: var(--bg-white-light);
+}
+
+@media (max-width: 768px) {
+  .page-library__table th:nth-child(3),
+  .page-library__table td:nth-child(3) {
+    display: none;
+  } /* Description */
 }
