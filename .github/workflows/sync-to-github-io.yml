@@ -1,0 +1,41 @@
+name: 同步到GitHub Pages
+
+on:
+  push:
+    branches:
+      - main # 当main分支有提交时触发
+  workflow_dispatch: # 允许手动触发
+
+jobs:
+  sync-to-github-io:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出源码
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # 获取完整历史以便同步
+
+      - name: 设置Node环境
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: 安装依赖
+        run: npm ci
+
+      - name: 构建项目
+        run: npm run build
+
+      - name: 强制推送到GitHub Pages仓库
+        run: |
+          cd dist
+          git init
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add .
+          git commit -m "由GitHub Actions自动部署"
+          git remote add origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/elyxira/elyxira.github.io.git
+          git push -f origin main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
