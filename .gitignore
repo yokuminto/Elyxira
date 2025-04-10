@@ -24,7 +24,6 @@ playwright-report/
 
 # 编辑器和IDE文件
 .vscode/*
-!.vscode/extensions.json
 .idea/
 *.suo
 *.ntvs*
@@ -43,7 +42,7 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-# Kotlin/Java相关
-kotlin-project/build/
-*.class
-*.jar
+# 本地工具文件
+tools/*
+requirements.txt
+*.bat

@@ -17,7 +17,7 @@ pip install -r requirements.txt
 
 echo Starting the application...
 
-python python/elyxiraOCR.py chcp 65001 > python/log.txt 2>&1
+python tools/elyxiraOCR.py chcp 65001 > tools/log.txt 2>&1
 
 echo Deactivating virtual environment...
 deactivate
