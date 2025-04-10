@@ -41,7 +41,11 @@ export class QuizService {
   static async loadOnlineQuizList(): Promise<QuizItem[]> {
     try {
       const indexUrl = '/data/index.json'
-      const response = await fetch(indexUrl)
+      const response = await fetch(indexUrl, {
+        headers: {
+          Accept: 'application/json, text/plain, */*',
+        },
+      })
 
       if (!response.ok) {
         throw new Error(
@@ -107,6 +111,8 @@ export class QuizService {
       const repo = `${owner}/${repoName}`
       const apiUrl = `https://api.github.com/repos/${repo}/contents/${path}?ref=${branch}`
 
+      // 添加Accept头以确保正确的MIME类型
+      headers['Accept'] = 'application/json, text/plain, */*'
       const response = await fetch(apiUrl, { headers })
 
       if (!response.ok) {
@@ -144,7 +150,12 @@ export class QuizService {
    * @returns 题库数据
    */
   static async loadQuizFromUrl(url: string): Promise<QuizData> {
-    const response = await fetch(url)
+    // 添加Accept头以确保正确的MIME类型
+    const response = await fetch(url, {
+      headers: {
+        Accept: 'application/json, text/plain, */*',
+      },
+    })
 
     if (!response.ok) {
       throw new Error(`获取题库失败 (${response.status})`)

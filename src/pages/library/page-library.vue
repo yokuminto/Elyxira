@@ -719,7 +719,12 @@ async function loadOnlineQuizList() {
   try {
     const indexUrl = '/data/index.json';
 
-    const response = await fetch(indexUrl);
+    // 修改fetch请求，添加正确的headers来确保正确的MIME类型
+    const response = await fetch(indexUrl, {
+      headers: {
+        'Accept': 'application/json'
+      }
+    });
 
     if (!response.ok) {
       throw new Error(`无法加载题库索引文件 (${response.status}): 请确认public/data/index.json文件存在且格式正确`);

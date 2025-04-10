@@ -45,4 +45,3 @@ __pycache__/
 # 本地工具文件
 tools/*
 requirements.txt
-*.bat

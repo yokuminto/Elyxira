@@ -1,29 +1,34 @@
 <!doctype html>
 <html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- 简单的emoji favicon方法 -->
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg viewBox='0 0 18 20' xmlns='http://www.w3.org/2000/svg'><text x='0' y='15'>📖</text></svg>"
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Elyxira - 开源学习平台，助力临床技能提升与医考备考" />
+    <meta name="theme-color" content="#3182ce" />
+    <title>Elyxira - 开源学习平台</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+      type="text/css"
+    />
+    <style>
+      @font-face {
+        font-family: 'Emoji';
+        src:
+          local('Apple Color Emoji'), local('Android Emoji'), local('Segoe UI Emoji'),
+          local('Noto Color Emoji');
+        unicode-range: U+1F300-1F5FF, U+1F600-1F64F, U+1F680-1F6FF, U+2600-26FF;
+      }
+    </style>
+  </head>
 
-<head>
-  <meta charset="UTF-8" />
-  <!-- 简单的emoji favicon方法 -->
-  <link rel="icon"
-    href="data:image/svg+xml,<svg viewBox='0 0 18 20' xmlns='http://www.w3.org/2000/svg'><text x='0' y='15'>📖</text></svg>" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Elyxira - 开源学习平台，助力临床技能提升与医考备考" />
-  <meta name="theme-color" content="#3182ce" />
-  <title>Elyxira - 开源学习平台</title>
-  <style>
-    @font-face {
-      font-family: 'Emoji';
-      src:
-        local('Apple Color Emoji'), local('Android Emoji'), local('Segoe UI Emoji'),
-        local('Noto Color Emoji');
-      unicode-range: U+1F300-1F5FF, U+1F600-1F64F, U+1F680-1F6FF, U+2600-26FF;
-    }
-  </style>
-</head>
-
-<body>
-  <div id="app"></div>
-  <script type="module" src="src/main.ts"></script>
-</body>
-
+  <body>
+    <div id="app"></div>
+    <script type="module" src="src/main.ts"></script>
+  </body>
 </html>
