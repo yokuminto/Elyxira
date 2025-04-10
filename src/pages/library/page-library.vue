@@ -362,8 +362,8 @@
 
 
       <!-- 通用设置模态框 -->
-      <ModalSettings :show="showGeneralSettings" :current-settings="generalSettings"
-        @close="showGeneralSettings = false" @save="handleGeneralSettingsSave" />
+      <ModalSettings :show="showGeneralSettings" :current-settings="appSettings" @close="showGeneralSettings = false"
+        @save="handleAppSettingsSave" />
 
       <!-- 调试模态框 -->
       <div class="modal-overlay" :class="{ active: showDebugModal }" @click.self="showDebugModal = false">
@@ -435,7 +435,7 @@ import ModalSettings from '@/modals/modal-settings.vue'
 import { showToast, injectToastStyles } from '../../utils/toast'
 import configService, {
   QuizMode, QuizSourceType,
-  QuizCategoryType
+  QuizCategoryType,
 } from '@/services/config-service'
 import type {
   QuizData,
@@ -444,7 +444,8 @@ import type {
   QuizItemExtended,
   LocalQuizCache,
   GithubApiFile,
-  GeneralSettings
+  GeneralSettings,
+  AppSettings
 } from '@/services/config-service'
 import { parseQuiz } from '@/services/service-quiz-parser'
 
@@ -1232,12 +1233,20 @@ function handleFileSelect(event: Event) {
   reader.readAsText(file)
 }
 
-// 处理通用设置保存
-function handleGeneralSettingsSave(settings: GeneralSettings) {
-  // 使用configService保存设置
-  configService.saveGeneralSettings(settings);
-  showGeneralSettings.value = false;
-}
+// 添加一个反应式的 AppSettings 变量
+const appSettings = reactive(configService.getSettings());
+
+// 处理通用设置保存的函数
+const handleAppSettingsSave = (settings: AppSettings) => {
+  configService.updateSettings(settings);
+  // 更新本地响应式变量，如果 ModalSettings 修改了 settings 的话
+  Object.assign(appSettings, configService.getSettings());
+  isDarkMode.value = settings.uiSettings.darkMode;
+};
+
+// 保持原有 handleGeneralSettingsSave 的引用（如果其他地方还在用）
+// 或者，如果确定不再需要，可以完全移除
+const handleGeneralSettingsSave = handleAppSettingsSave;
 
 // 返回主页方法
 const goToHome = () => {
@@ -1801,14 +1810,6 @@ const handleToggleTheme = () => {
     themeToggle.classList.toggle('dark', isDarkMode.value);
   }
 }
-
-// 添加通用设置对象
-const generalSettings = reactive<GeneralSettings>({
-  uiSettings: configService.getUiSettings(),
-  quizSettings: configService.getQuizSettings(),
-  debugEnabled: configService.isDebugEnabled(),
-  apiConfig: configService.getApiConfig()
-});
 
 // 删除相关状态
 const showDeleteConfirmModal = ref(false)

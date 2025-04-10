@@ -901,14 +901,13 @@ async function renderNotesForCurrentQuestion() {
 
       // 修复加粗文本问题
       .replace(/\\*\\*([^\\*]+)\\*\\*/g, '<strong>$1</strong>');
-    // 去除CSS变量引用，避免Mermaid解析错误 -- 移除此行
-    // .replace(/var\\(--[^)]+\\)/g, '');
 
     // 解析 Markdown
     const htmlContent = marked.parse(processedContent) as string;
 
     // 包裹最终内容
     renderedNotesHtml.value = `${htmlContent}`;
+
 
     // 在流式生成时添加光标动画
     if (isGeneratingNote.value) {
