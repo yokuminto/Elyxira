@@ -126,8 +126,8 @@
           <div class="page-home__footer-column">
             <h3 class="page-home__footer-title">学习</h3>
             <div class="page-home__footer-links">
-              <a href="/library" class="page-home__footer-link">题库 »</a>
-              <a href="/notes" class="page-home__footer-link">笔记 »</a>
+              <RouterLink to="/library" class="page-home__footer-link">题库 »</RouterLink>
+              <RouterLink to="/notes" class="page-home__footer-link">笔记 »</RouterLink>
             </div>
           </div>
 
@@ -135,8 +135,8 @@
           <div class="page-home__footer-column">
             <h3 class="page-home__footer-title">工具</h3>
             <div class="page-home__footer-links">
-              <a href="/ai-assistant" class="page-home__footer-link">题库录入（未完工） »</a>
-              <a href="/flashcards" class="page-home__footer-link">自动纠错（未完工） »</a>
+              <RouterLink to="/ai-assistant" class="page-home__footer-link">题库录入（未完工） »</RouterLink>
+              <RouterLink to="/flashcards" class="page-home__footer-link">自动纠错（未完工） »</RouterLink>
             </div>
           </div>
 
@@ -146,7 +146,7 @@
             <div class="page-home__footer-links">
               <a href="https://github.com/yokuminto/elyxira" target="_blank" rel="noopener noreferrer"
                 class="page-home__footer-link">GitHub »</a>
-              <a href="/about" class="page-home__footer-link">关于我们 »</a>
+              <RouterLink to="/about" class="page-home__footer-link">关于我们 »</RouterLink>
             </div>
           </div>
         </div>
@@ -362,10 +362,17 @@ onMounted(() => {
     anchor.addEventListener('click', function (this: HTMLAnchorElement, e: Event) {
       e.preventDefault()
       const targetId = this.getAttribute('href')
-      if (targetId === '#') return
-      const targetElement = document.querySelector(targetId as string)
-      if (targetElement) {
-        targetElement.scrollIntoView({ behavior: 'smooth' })
+      // 检查 targetId 是否有效且不包含斜杠（即不是路由链接）
+      if (!targetId || targetId === '#' || targetId.includes('/')) return
+
+      try {
+        const targetElement = document.querySelector(targetId)
+        if (targetElement) {
+          targetElement.scrollIntoView({ behavior: 'smooth' })
+        }
+      } catch (error) {
+        // 捕获无效选择器错误，以防万一
+        console.error(`平滑滚动错误: 无效的选择器 '${targetId}'`, error)
       }
     })
   })
