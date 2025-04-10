@@ -1,4 +1,4 @@
-name: 同步到GitHub Pages
+name: 组织仓库自动推送
 
 on:
   push:
@@ -15,27 +15,14 @@ jobs:
         with:
           fetch-depth: 0 # 获取完整历史以便同步
 
-      - name: 设置Node环境
-        uses: actions/setup-node@v4
+      - name: 部署到组织仓库
+        uses: JamesIves/github-pages-deploy-action@v4
         with:
-          node-version: '20'
-          cache: 'npm'
-
-      - name: 安装依赖
-        run: npm ci
-
-      - name: 构建项目
-        run: npm run build
-
-      - name: 强制推送到GitHub Pages仓库
-        run: |
-          cd dist
-          git init
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git add .
-          git commit -m "由GitHub Actions自动部署"
-          git remote add origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/elyxira/elyxira.github.io.git
-          git push -f origin main
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          folder: . # 部署整个仓库
+          token: ${{ secrets.GH_PAGES_TOKEN }}
+          repository-name: elyxira/elyxira.github.io
+          branch: main
+          clean: true # 清理目标分支上的旧文件
+          git-config-name: GitHub Action
+          git-config-email: action@github.com
+          force: true
