@@ -1342,3 +1342,147 @@
     display: none;
   } /* Description */
 }
+
+/* ==========================================================================
+     响应式设计 (Responsive Design)
+     ========================================================================== */
+
+@media (max-width: 992px) {
+  .page-library__content {
+    padding: 1.5rem;
+  }
+  .page-library__stats-grid {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .page-library {
+    padding: 1rem;
+  }
+  .page-library__content {
+    padding: 1rem;
+  }
+  .page-library__search {
+    max-width: 64px; /* 允许搜索框占满 */
+  }
+  .page-library__filter-select {
+    width: 128px; /* 下拉选择框占满 */
+  }
+  .page-library__table-container {
+    padding: 0.5rem;
+  }
+  /* 隐藏描述列 */
+  .page-library__table th:nth-child(3),
+  .page-library__table td:nth-child(3) {
+    display: none;
+  }
+  /* 隐藏时间列 */
+  .page-library__table th:nth-child(4),
+  .page-library__table td:nth-child(4) {
+    display: none;
+  }
+  /* 调整剩余列宽 */
+  .page-library__table th:nth-child(1),
+  .page-library__table td:nth-child(1) {
+    width: auto;
+  } /* Title */
+  .page-library__table th:nth-child(2),
+  .page-library__table td:nth-child(2) {
+    width: 80px;
+  } /* Source */
+  .page-library__table th:nth-child(5),
+  .page-library__table td:nth-child(5) {
+    width: 120px;
+  } /* Actions */
+
+  .page-library__table th,
+  .page-library__table td {
+    padding: 0.75rem 0.5rem;
+    white-space: normal; /* 允许单元格内容换行 */
+    font-size: 0.85rem;
+  }
+  .page-library__table td {
+    white-space: nowrap; /* 覆盖上面的 normal，保持单行，但允许省略 */
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .page-library__grid {
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); /* 减小卡片最小宽度 */
+    gap: 0.75rem;
+  }
+  .page-library__card {
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+  .page-library__stats-grid {
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); /* 进一步减小统计卡片宽度 */
+    gap: 8px;
+    padding: 0.75rem;
+  }
+  .page-library__stat-card {
+    padding: 10px;
+    flex-direction: column; /* 堆叠图标和信息 */
+    align-items: flex-start; /* 左对齐 */
+  }
+  .page-library__stat-icon {
+    margin-right: 0;
+    margin-bottom: 8px;
+  }
+  .page-library__modal {
+    width: 95%; /* 模态框宽度适应屏幕 */
+    max-height: 90vh;
+  }
+  .page-library__modal-header,
+  .page-library__modal-body,
+  .page-library__modal-footer {
+    padding: 1rem; /* 统一模态框内边距 */
+  }
+}
+
+@media (max-width: 480px) {
+  .page-library__table th:nth-child(2), /* 隐藏 Source 列 */
+  .page-library__table td:nth-child(2) {
+    display: none;
+  }
+  .page-library__table th:nth-child(5), /* Actions 列自适应 */
+  .page-library__table td:nth-child(5) {
+    width: auto;
+    min-width: 100px; /* 保证操作按钮有空间 */
+  }
+  .page-library__table-actions {
+    flex-wrap: wrap; /* 允许操作按钮换行 */
+    justify-content: flex-start;
+  }
+  .page-library__start-button {
+    min-width: 120px;
+    padding: 0.6rem 1.2rem;
+    font-size: 0.9rem;
+  }
+  .page-library__grid {
+    grid-template-columns: 1fr; /* 单列显示卡片 */
+  }
+  .page-library__stats-grid {
+    grid-template-columns: 1fr 1fr; /* 统计卡片最多两列 */
+  }
+  .page-library__stat-title {
+    font-size: 12px;
+  }
+  .page-library__stat-value {
+    font-size: 16px;
+  }
+  .page-library__empty {
+    padding: 2rem 1rem;
+  }
+  .page-library__empty-icon {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+  }
+  .page-library__empty-title {
+    font-size: 1.1rem;
+  }
+  .page-library__empty-subtitle {
+    font-size: 0.85rem;
+    margin-bottom: 1rem;
+  }
+}
