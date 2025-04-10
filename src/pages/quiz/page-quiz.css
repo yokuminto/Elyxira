@@ -976,49 +976,6 @@
   font-family: 'JetBrains Mono', monospace; /* Ensure monospace in pre */
 }
 
-.markdown-body .mermaid {
-  .node rect {
-    fill: var(--note-mermaid-bg) !important;
-    stroke: var(--note-mermaid-border) !important;
-    rx: 4px;
-    ry: 4px;
-    margin: 2px;
-  }
-
-  .edgeLabel {
-    background-color: transparent !important;
-    padding: 1px 3px;
-  }
-
-  .edgeLabel div {
-    background-color: transparent !important;
-  }
-
-  .edgeLabel p {
-    padding: 1px 3px;
-  }
-
-  .label {
-    font-size: 14px;
-    padding: 2px 4px;
-  }
-
-  .node rect {
-    fill: var(--note-mermaid-label-bg) !important;
-    stroke: var(--note-mermaid-node-border) !important;
-  }
-
-  .edgePath .path {
-    stroke-width: 1.5px;
-    stroke-dasharray: 2, 2;
-  }
-
-  .cluster rect {
-    rx: 6px;
-    ry: 6px;
-  }
-}
-
 .markdown-body blockquote {
   border-left: 4px solid var(--note-quote-border);
   background-color: var(--note-quote-bg);
@@ -1096,6 +1053,49 @@
 .markdown-body .note-success {
   background-color: var(--bg-green);
   border-color: var(--c-green);
+}
+
+.markdown-body .mermaid {
+  .node rect {
+    fill: var(--note-mermaid-bg) !important;
+    stroke: var(--note-mermaid-border) !important;
+    rx: 4px;
+    ry: 4px;
+    margin: 2px;
+  }
+
+  .edgeLabel {
+    background-color: transparent !important;
+    padding: 1px 3px;
+  }
+
+  .edgeLabel div {
+    background-color: transparent !important;
+  }
+
+  .edgeLabel p {
+    padding: 1px 3px;
+  }
+
+  .label {
+    font-size: 14px;
+    padding: 2px 4px;
+  }
+
+  .node rect {
+    fill: var(--note-mermaid-label-bg) !important;
+    stroke: var(--note-mermaid-node-border) !important;
+  }
+
+  .edgePath .path {
+    stroke-width: 1.5px;
+    stroke-dasharray: 2, 2;
+  }
+
+  .cluster rect {
+    rx: 6px;
+    ry: 6px;
+  }
 }
 
 /* ---------- 模态框 (Modal) ---------- */
@@ -1477,6 +1477,13 @@ input:checked + .slider:before {
 
   .markdown-body {
     padding: 0.5rem;
+    margin: 1rem 0.5rem 2rem 0.5rem;
+    background-color: var(--note-bg);
+    color: var(--note-text);
+    line-height: 1.25;
+    font-size: 0.95rem;
+    box-shadow: var(--shadow);
+    font-weight: 300;
   }
 
   /* 表格样式 */

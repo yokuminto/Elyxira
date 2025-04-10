@@ -2,7 +2,7 @@
  * 存储工具模块
  * 用于提供本地存储相关操作
  */
-import type { QuizData } from '@/pages/library/types'
+import type { QuizData } from '@/services/config-service'
 
 /**
  * 保存题库到本地存储

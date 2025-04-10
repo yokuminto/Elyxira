@@ -1,7 +1,7 @@
 // src/main.ts
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
-import App from './app.vue'
+import App from './App.vue'
 import router from './router'
 import ErrorHandler from './pages/error/handler-error'
 // 导入 Toast 插件

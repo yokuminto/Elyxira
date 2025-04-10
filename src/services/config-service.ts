@@ -955,12 +955,18 @@ class ConfigService {
         typedConfig.apiPresets.length > 0
       ) {
         // 验证并合并每个导入的预设
-        newSettings.apiPresets = typedConfig.apiPresets.map((p) => ({
-          name:
-            typeof p.name === 'string' && p.name.trim() ? p.name.trim() : `Imported-${Date.now()}`, // 提供默认名称
-          ...DEFAULT_API_CONFIG, // 从默认配置开始
-          ...p, // 应用导入的配置
-        }))
+        newSettings.apiPresets = typedConfig.apiPresets.map((p) => {
+          // 先确定预设名称
+          const presetName =
+            typeof p.name === 'string' && p.name.trim() ? p.name.trim() : `Imported-${Date.now()}`
+          // 构建预设对象，确保 name 只设置一次
+          const preset = {
+            ...DEFAULT_API_CONFIG, // 从默认配置开始
+            ...p, // 应用导入的配置 (会覆盖默认值，可能包含 name)
+            name: presetName, // 强制使用我们验证/生成的名称
+          }
+          return preset
+        })
 
         // 验证并设置活动预设名称
         if (
@@ -972,11 +978,11 @@ class ConfigService {
           // 如果导入的活动名称无效，则使用第一个导入的预设名称
           newSettings.activeApiPresetName = newSettings.apiPresets[0].name
         }
-      } else if ((typedConfig as any).apiSettings) {
-        // 使用 any 处理旧格式
+      } else if ('apiSettings' in typedConfig && typedConfig.apiSettings) {
         // 兼容旧格式：如果只有 apiSettings，将其转换为单个预设
         console.warn("导入旧版配置格式，将 apiSettings 转换为 'Imported Default' 预设。")
-        const importedApiConfig = (typedConfig as any).apiSettings as ApiConfig // 使用 any 处理旧格式
+        // Assuming the structure is compatible with Partial<ApiConfig>
+        const importedApiConfig = typedConfig.apiSettings as Partial<ApiConfig> // Use Partial<ApiConfig> or a more specific type if known
         newSettings.apiPresets = [
           createDefaultPreset({ ...DEFAULT_API_CONFIG, ...importedApiConfig }, 'Imported Default'),
         ]
@@ -1899,6 +1905,40 @@ class ConfigService {
       console.error('题库数据验证失败:', error)
       return false
     }
+  }
+
+  /**
+   * 从文件导入配置
+   * @param file 文件对象
+   * @returns 是否导入成功
+   */
+  public async importConfigFromFile(file: File): Promise<boolean> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = (event) => {
+        try {
+          if (event.target && typeof event.target.result === 'string') {
+            const configData = JSON.parse(event.target.result)
+            const success = this.importConfig(configData)
+            if (success) {
+              resolve(true)
+            } else {
+              reject(new Error('Invalid config file format or content.'))
+            }
+          } else {
+            reject(new Error('Failed to read file content.'))
+          }
+        } catch (e) {
+          console.error('Error parsing config file:', e)
+          reject(new Error('Failed to parse config file. Ensure it is valid JSON.'))
+        }
+      }
+      reader.onerror = (error) => {
+        console.error('Error reading file:', error)
+        reject(new Error('Failed to read the selected file.'))
+      }
+      reader.readAsText(file)
+    })
   }
 }
 

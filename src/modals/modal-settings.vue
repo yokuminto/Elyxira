@@ -267,7 +267,7 @@ function importConfig() {
   const file = fileInput.files[0];
 
   configService.importConfigFromFile(file)
-    .then(success => {
+    .then((success: boolean) => {
       if (success) {
         isImportModalVisible.value = false;
         // 重新加载应用或刷新设置
@@ -276,7 +276,7 @@ function importConfig() {
         }, 1500);
       }
     })
-    .catch(error => {
+    .catch((error: Error) => {
       showToast('导入配置失败：' + error.message, 'error');
     });
 }

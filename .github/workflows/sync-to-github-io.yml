@@ -1,28 +1,44 @@
-name: 组织仓库自动推送
+name: 构建并部署到 GitHub Pages
 
 on:
   push:
     branches:
-      - main # 当main分支有提交时触发
+      - main # 当 main 分支有提交时触发构建和部署
   workflow_dispatch: # 允许手动触发
 
 jobs:
-  sync-to-github-io:
+  build-and-deploy: # 修改 job 名称以反映其功能
     runs-on: ubuntu-latest
     steps:
       - name: 检出源码
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0 # 获取完整历史以便同步
+        # 移除 fetch-depth: 0，通常构建不需要完整历史
 
-      - name: 部署到组织仓库
+      # 新增步骤：设置 Node.js
+      - name: 设置 Node.js 环境
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20' # 你可以根据项目需要调整 Node 版本
+          cache: 'npm' # 缓存 npm 依赖以加快后续构建速度
+
+      # 新增步骤：安装依赖
+      - name: 安装依赖
+        run: npm ci # 使用 npm ci 通常比 npm install 更快且更适合 CI 环境
+
+      # 新增步骤：构建项目
+      - name: 构建项目
+        run: npm run build # 执行你在 package.json 中定义的构建脚本
+
+      # 新增步骤：创建 .nojekyll 文件
+      - name: 在 dist 目录创建 .nojekyll 文件
+        run: touch dist/.nojekyll # 确保 GitHub Pages 不使用 Jekyll 处理
+
+      - name: 部署到 elyxira.github.io
         uses: JamesIves/github-pages-deploy-action@v4
         with:
-          folder: . # 部署整个仓库
+          folder: dist # 修改这里，指定部署 dist 目录
           token: ${{ secrets.GH_PAGES_TOKEN }}
           repository-name: elyxira/elyxira.github.io
-          branch: main
+          branch: main # 部署到目标仓库的 main 分支
           clean: true # 清理目标分支上的旧文件
-          git-config-name: GitHub Action
-          git-config-email: action@github.com
-          force: true
+          # 移除不必要的 git-config-* 和 force 选项
