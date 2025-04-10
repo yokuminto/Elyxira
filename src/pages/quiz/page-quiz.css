@@ -1477,6 +1477,13 @@ input:checked + .slider:before {
 
   .markdown-body {
     padding: 0.5rem;
+    margin: 1rem 0.5rem 2rem 0.5rem;
+    background-color: var(--note-bg);
+    color: var(--note-text);
+    line-height: 1.25;
+    font-size: 0.95rem;
+    box-shadow: var(--shadow);
+    font-weight: 300;
   }
 
   /* 表格样式 */
