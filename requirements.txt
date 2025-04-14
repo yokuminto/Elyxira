@@ -8,3 +8,4 @@ paddlepaddle
 mss
 pyautogui
 pynput
+pytesseract

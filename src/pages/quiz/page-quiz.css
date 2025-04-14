@@ -1,5 +1,3 @@
-/* ============== 基础动画 =============== */
-
 .slide-up {
   animation: slideUp 0.5s ease-out forwards;
 }
@@ -64,8 +62,6 @@
   }
 }
 
-/* ========== 页面布局与基础样式 ========== */
-
 .page-quiz {
   background-color: var(--bg-light, #f5f7fa);
   min-height: 100vh;
@@ -87,21 +83,19 @@
   flex-direction: column;
   gap: 1rem;
   max-width: 1000px;
-  width: 100%; /* 确保内容区域占满可用空间 */
+  width: 100%;
   margin: 0 auto;
   background-color: var(--card);
   border-radius: var(--radius);
   box-shadow: var(--shadow-very-dark);
-  box-sizing: border-box; /* 确保padding包含在宽度内 */
+  box-sizing: border-box;
 }
 
-/* 提高卡片悬浮效果 */
 .page-quiz__option:hover {
   transform: translateY(-3px);
   border-color: var(--c-blue);
 }
 
-/* 调整容器内边距 */
 .page-quiz__question-area {
   position: relative;
   padding: 0;
@@ -111,7 +105,6 @@
   width: 100%;
 }
 
-/* 修改进度条容器样式 */
 .page-quiz__progress-footer {
   position: relative;
   width: 100%;
@@ -151,9 +144,6 @@
   transition: width 0.8s cubic-bezier(0.65, 0, 0.35, 1);
 }
 
-/* =============== 组件样式 =============== */
-
-/* ---------- 页眉 (Header) ---------- */
 .page-quiz__header {
   display: flex;
   justify-content: space-between;
@@ -244,7 +234,6 @@
   background-color: var(--bg-hover);
 }
 
-/* ---------- 选项栏 (Options Bar) ---------- */
 .page-quiz__options-bar {
   display: flex;
   flex-direction: row;
@@ -321,7 +310,6 @@
   border-color: var(--color-blue-dark);
 }
 
-/* 添加按钮内SVG图标样式 */
 .page-quiz__mode-button svg {
   min-width: 16px;
   min-height: 16px;
@@ -336,7 +324,6 @@
   vertical-align: middle;
 }
 
-/* ---------- 按钮区域 (Action Buttons) ---------- */
 .page-quiz__action-buttons-container {
   display: flex;
   flex-direction: column;
@@ -364,7 +351,6 @@
   margin-left: auto;
 }
 
-/* 按钮基础样式 */
 .page-quiz__button {
   gap: 8px;
   padding: 0.5rem;
@@ -376,13 +362,11 @@
   border: none;
 }
 
-/* 悬浮效果 - 主要操作按钮 */
 .page-quiz__button:hover {
   transform: translateY(-3px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-/* 提交按钮 */
 .page-quiz__submit-button {
   background-color: var(--c-blue);
   color: white;
@@ -391,7 +375,6 @@
   position: relative;
 }
 
-/* 下一题按钮 */
 .page-quiz__next-button {
   background-color: var(--c-green);
   color: white;
@@ -399,7 +382,6 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-/* 键盘快捷键提示 */
 .page-quiz__key-shortcut-hint {
   color: white;
   background-color: rgba(255, 255, 255, 0.2);
@@ -411,21 +393,18 @@
   z-index: 5;
 }
 
-/* 导航按钮 */
 .page-quiz__nav-button {
   background-color: var(--bg-white);
   color: var(--text-main);
   border: 1px solid var(--border);
 }
 
-/* 重做按钮 */
 .page-quiz__redo-button {
   background-color: var(--bg-white);
   color: var(--text-main);
   border: 1px solid var(--border);
 }
 
-/* 全部提交按钮 */
 .page-quiz__submit-all-button {
   background-color: var(--c-red);
   color: white;
@@ -433,7 +412,6 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-/* 按钮宽度控制 - 支持通过添加额外类名控制宽度 */
 .button-width-auto {
   width: auto;
 }
@@ -450,7 +428,6 @@
   width: 100%;
 }
 
-/* ---------- 同步状态 (Sync Status) ---------- */
 .page-quiz__button.sync-status {
   position: relative;
   overflow: hidden;
@@ -494,7 +471,6 @@
   animation: spin 1s linear infinite;
 }
 
-/* ---------- 表单元素 (Form Elements - Select) ---------- */
 .select-styled {
   padding: 10px 14px;
   border: 1px solid var(--border);
@@ -535,7 +511,6 @@
   box-shadow: 0 0 0 2px var(--bg-blue);
 }
 
-/* 确保按钮禁用状态样式 */
 .page-quiz__submit-button:disabled,
 .page-quiz__nav-button:disabled,
 .page-quiz__redo-button:disabled,
@@ -546,8 +521,6 @@
   box-shadow: none !important;
 }
 
-/* 选项样式 - 只保留四种基本状态 */
-/* ---------- 选项列表 (Options List) ---------- */
 .page-quiz__options-list {
   list-style: none;
   padding: 0;
@@ -575,13 +548,11 @@
   border-color: var(--c-blue);
 }
 
-/* 选中状态 */
 .page-quiz__option--selected {
   background-color: var(--bg-blue);
   border-color: var(--c-blue);
 }
 
-/* 正确状态 */
 .page-quiz__option--correct {
   background-color: var(--bg-green) !important;
   border-color: var(--c-green) !important;
@@ -592,7 +563,6 @@
   font-weight: 500;
 }
 
-/* 错误状态 */
 .page-quiz__option--incorrect {
   background-color: var(--bg-red) !important;
   border-color: var(--c-red) !important;
@@ -633,7 +603,6 @@
   z-index: 5;
 }
 
-/* ---------- 问题区域 (Question Area) ---------- */
 .page-quiz__question-text {
   font-size: 1.1rem;
   margin-bottom: 20px;
@@ -658,7 +627,6 @@
   display: inline-block;
 }
 
-/* ---------- 导航按钮 (Navigation Buttons - Old Style) ---------- */
 .page-quiz__navigation {
   display: flex;
   justify-content: space-between;
@@ -674,7 +642,6 @@
   flex-wrap: wrap;
 }
 
-/* ---------- 进度条 (Progress Bar) ---------- */
 .page-quiz__progress {
   display: flex;
   align-items: center;
@@ -719,7 +686,6 @@
   text-align: right;
 }
 
-/* ---------- 笔记区域 (Notes Area) ---------- */
 .page-quiz__notes {
   background-color: var(--card);
   border-radius: var(--radius);
@@ -808,7 +774,6 @@
 }
 
 .page-quiz__notes-editor {
-  /* Styles apply when active */
 }
 
 .page-quiz__notes-editor--hidden {
@@ -873,7 +838,6 @@
   width: 100%;
 }
 
-/* ---------- Markdown 内容样式 (Markdown Content Styles) ---------- */
 .markdown-body {
   display: inline-flex;
   flex-direction: column;
@@ -942,7 +906,10 @@
   text-decoration: underline;
 }
 
-.markdown-body p,
+.markdown-body p {
+  overflow-wrap: break-word;
+}
+
 .markdown-body ul,
 .markdown-body ol,
 .markdown-body blockquote,
@@ -961,6 +928,7 @@
   font-family: 'JetBrains Mono', monospace;
   border: 1px solid var(--note-code-border);
   vertical-align: baseline;
+  word-break: break-word;
 }
 
 .markdown-body pre {
@@ -969,7 +937,7 @@
   margin: 0 0 1.2em 0;
   border: 1px solid var(--note-code-border);
   border-radius: var(--radius);
-  overflow: auto;
+  overflow-x: auto;
   position: relative;
 }
 
@@ -981,15 +949,14 @@
   white-space: pre;
   display: block;
   border: none;
-  border-radius: 0;
-  font-size: 0.9em;
-  line-height: 1.5;
+  border-radius: var(--radius);
+  overflow: hidden;
+  max-width: 100%;
   overflow-x: auto;
   font-family: 'JetBrains Mono', monospace;
   vertical-align: initial;
 }
 
-/* Optional: Language indicator for code blocks */
 .markdown-body pre[class*='language-']::before {
   content: attr(class);
   position: absolute;
@@ -1003,7 +970,7 @@
   font-family: sans-serif;
   text-transform: uppercase;
 }
-/* Adjust selector if class name includes more than just language */
+
 .markdown-body pre code[class*='language-']::before {
   display: none;
 }
@@ -1081,7 +1048,6 @@
   border-color: var(--c-green);
 }
 
-/* Fixed Mermaid Styles - Standard CSS */
 .markdown-body .mermaid {
   background-color: var(--note-mermaid-container-bg, transparent);
   padding: 1em;
@@ -1137,10 +1103,6 @@
   max-width: 100%;
 }
 
-/* ---------- 模态框 (Modal) ---------- */
-/* 使用 src/styles/modal.css 中定义的通用模态框样式 */
-
-/* 切换开关样式 */
 .toggle-switch {
   position: relative;
   display: inline-block;
@@ -1183,7 +1145,6 @@ input:checked + .slider:before {
   transform: translateX(20px);
 }
 
-/* ---------- 通知提示 (Toast Notifications) ---------- */
 .toast {
   position: fixed;
   bottom: -100px;
@@ -1227,26 +1188,24 @@ input:checked + .slider:before {
   background-color: var(--c-blue);
 }
 
-/* ---------- 辅助组件 (Loading Spinner) ---------- */
 .loading-spinner {
   display: inline-block;
   width: 18px;
   height: 18px;
-  border: 2px solid rgba(255, 255, 255, 0.3); /* Default for dark bg buttons */
+  border: 2px solid rgba(255, 255, 255, 0.3);
   border-radius: 50%;
-  border-top-color: white; /* Default for dark bg buttons */
+  border-top-color: white;
   animation: spin 0.8s linear infinite;
   vertical-align: middle;
 }
 
-/* 调整加载器颜色（对于浅色背景） */
 .page-quiz__button:not(.page-quiz__button--primary):not(.page-quiz__button--success):not(
     .page-quiz__button--danger
   )
   .loading-spinner,
 .loading-container .loading-spinner {
-  border-color: rgba(0, 0, 0, 0.1); /* Use theme text color base */
-  border-top-color: var(--c-blue); /* Spinner color */
+  border-color: rgba(0, 0, 0, 0.1);
+  border-top-color: var(--c-blue);
 }
 
 .loading-container {
@@ -1272,7 +1231,6 @@ input:checked + .slider:before {
   animation: pulse 1.5s infinite ease-in-out;
 }
 
-/* 修复缺少的部分样式 */
 .page-quiz__notes-display--hidden {
   display: none;
 }
@@ -1281,7 +1239,6 @@ input:checked + .slider:before {
   display: none;
 }
 
-/* 调整rAF动画效果 */
 .slide-up,
 .fade-in,
 .scale-in {
@@ -1289,7 +1246,6 @@ input:checked + .slider:before {
   backface-visibility: hidden;
 }
 
-/* 替换原有的独立快捷键提示样式 */
 .page-quiz__key-hint {
   font-size: 0.7rem;
   font-weight: normal;
@@ -1306,7 +1262,6 @@ input:checked + .slider:before {
   z-index: 5;
 }
 
-/* 表格样式 */
 .markdown-body table {
   border-collapse: separate;
   border-spacing: 0;
@@ -1338,7 +1293,6 @@ input:checked + .slider:before {
   background-color: var(--note-table-row-even);
 }
 
-/* 小型表格样式 */
 .markdown-body .table-small {
   width: auto;
   margin: 1em 0;
@@ -1350,7 +1304,6 @@ input:checked + .slider:before {
   font-size: 0.9em;
 }
 
-/* AI生成笔记按钮 */
 .page-quiz__ai-button {
   display: flex;
   align-items: center;
@@ -1389,7 +1342,6 @@ input:checked + .slider:before {
   animation: spin 1s linear infinite;
 }
 
-/* 打字机光标动画 */
 .typing-cursor {
   display: inline-block;
   width: 1.5px;
@@ -1411,7 +1363,6 @@ input:checked + .slider:before {
   }
 }
 
-/* 流式生成效果增强 */
 .page-quiz__notes-display {
   scroll-behavior: smooth;
 }
@@ -1420,7 +1371,6 @@ input:checked + .slider:before {
   transition: none;
 }
 
-/* 响应式适配 - 手机端 */
 @media (max-width: 768px) {
   .page-quiz {
     padding: 0;
@@ -1445,24 +1395,20 @@ input:checked + .slider:before {
     margin-bottom: 0.75rem;
   }
 
-  /* 隐藏章节选择器前的文字 */
   .page-quiz__chapter-select > span {
     display: none;
   }
 
-  /* 编辑题目按钮隐藏文字，只保留图标 */
   .page-quiz__mode-button span {
     display: none;
   }
 
-  /* 调整按钮大小以保证界面平衡 */
   .page-quiz__mode-button {
     padding: 6px;
     min-width: 36px;
     justify-content: center;
   }
 
-  /* 操作按钮区域在手机端分成两行显示 - 更强制的规则 */
   .page-quiz__action-buttons-container {
     width: 100% !important;
   }
@@ -1493,7 +1439,6 @@ input:checked + .slider:before {
     gap: 8px !important;
   }
 
-  /* 确保按钮适当缩放 */
   .page-quiz__action-left .page-quiz__button,
   .page-quiz__action-right .page-quiz__button {
     flex: 1 !important;
@@ -1503,7 +1448,6 @@ input:checked + .slider:before {
     margin: 0 !important;
   }
 
-  /* 修复其他可能影响按钮布局的样式 */
   .page-quiz__action-row > div,
   .page-quiz__action-row > button {
     width: auto !important;
@@ -1525,7 +1469,6 @@ input:checked + .slider:before {
     font-weight: 300;
   }
 
-  /* 表格样式 */
   .markdown-body table {
     overflow-x: hidden;
   }

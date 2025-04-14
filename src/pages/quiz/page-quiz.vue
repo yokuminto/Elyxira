@@ -2131,10 +2131,10 @@ watch(selectedChapter, (newChapter) => {
   loading.value = false; // 加载完成
 });
 
-// 格式化题目文本，去除顿号
+// 格式化题目文本，将选项字母后的顿号替换为空格
 function formatQuestionText(text: string | undefined): string {
   if (!text) return '';
-  // 将所有顿号（、）替换为空字符
-  return text.replace(/、/g, '');
+  // 使用正则表达式匹配 A、 B、 C、 D、 E、 并将顿号替换为空格
+  return text.replace(/([A-E])、/g, '$1 ');
 }
 </script>
