@@ -2046,6 +2046,19 @@ function getCompleteApiConfig() {
   return configService.getApiConfig();
 }
 
+// 辅助函数：比较题目 ID
+function compareQuestionIds(a: Question, b: Question): number {
+  const idA = String(a.id || '');
+  const idB = String(b.id || '');
+  // 尝试解析为数字进行比较，失败则使用字符串比较
+  const numA = parseInt(idA.replace(/[^0-9]/g, ''), 10);
+  const numB = parseInt(idB.replace(/[^0-9]/g, ''), 10);
+  if (!isNaN(numA) && !isNaN(numB) && numA !== numB) {
+    return numA - numB;
+  }
+  return idA.localeCompare(idB);
+}
+
 // 新增：根据章节过滤题目
 function filterQuestionsByChapter(chapterTitle: string) {
   const fullQuizData = QuizStore.getQuizData();
@@ -2061,20 +2074,27 @@ function filterQuestionsByChapter(chapterTitle: string) {
 
   if (chapterTitle === 'all') {
     // 加载所有章节题目
-    fullQuizData.chapters.forEach((chapter, chapterIndex) => {
+    fullQuizData.chapters.forEach((chapter) => { // 移除 chapterIndex
       if (!chapter.questions) return;
-      chapter.questions.forEach((q, questionIndex) => {
-        const questionId = q.id || `q-${chapterIndex}-${questionIndex}`;
+
+      // 1. 复制并按 ID 排序当前章节的问题
+      const sortedQuestions = [...chapter.questions].sort(compareQuestionIds);
+
+      // 2. 遍历排序后的问题，编号并添加到 filteredQuestions
+      sortedQuestions.forEach((q, sortedIndex) => {
+        // 使用题目自身的 ID 或生成一个唯一 ID
+        const questionId = q.id || `q-${chapter.title}-${sortedIndex}`; // 使用章节标题和排序索引生成ID
         const userAnswerRecord = userAnswers[questionId];
         filteredQuestions.push({
           ...q,
-          id: questionId,
+          id: questionId, // 确保使用原始或生成的 ID
           title: q.title || '',
           options: q.options || [],
           answer: typeof q.answer === 'string' ? q.answer : String(q.answer ?? ''),
           question: q.question || q.title || '',
           chapterTitle: chapter.title,
-          number: q.number || (questionIndex + 1),
+          // number: q.number || (questionIndex + 1), // 移除旧逻辑
+          number: sortedIndex + 1, // 使用排序后的索引生成编号 (从1开始)
           userAnswer: userAnswerRecord ? userAnswerRecord.answer : null
         });
       });
@@ -2083,45 +2103,42 @@ function filterQuestionsByChapter(chapterTitle: string) {
     // 加载指定章节题目
     const targetChapter = fullQuizData.chapters.find(c => c.title === chapterTitle);
     if (targetChapter && targetChapter.questions) {
-      filteredQuestions = targetChapter.questions.map((q, index) => {
-        const questionId = q.id || `q-${chapterTitle}-${index}`;
+      // 1. 复制并按 ID 排序当前章节的问题
+      const sortedQuestions = [...targetChapter.questions].sort(compareQuestionIds);
+
+      // 2. 遍历排序后的问题，编号并映射到 filteredQuestions
+      filteredQuestions = sortedQuestions.map((q, sortedIndex) => {
+        const questionId = q.id || `q-${chapterTitle}-${sortedIndex}`;
         const userAnswerRecord = userAnswers[questionId];
         return {
           ...q,
-          id: questionId,
+          id: questionId, // 确保使用原始或生成的 ID
           title: q.title || '',
           options: q.options || [],
           answer: typeof q.answer === 'string' ? q.answer : String(q.answer ?? ''),
           question: q.question || q.title || '',
           chapterTitle: chapterTitle,
-          number: q.number || (index + 1),
+          // number: q.number || (index + 1), // 移除旧逻辑
+          number: sortedIndex + 1, // 使用排序后的索引生成编号 (从1开始)
           userAnswer: userAnswerRecord ? userAnswerRecord.answer : null
         };
       });
     }
   }
 
-  // 根据 quizSettings.randomMode 决定排序或打乱
+  // 根据 quizSettings.randomMode 决定是否打乱 (保留此逻辑)
   if (quizSettings.value.randomMode) {
     // Fisher-Yates shuffle algorithm
     for (let i = filteredQuestions.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [filteredQuestions[i], filteredQuestions[j]] = [filteredQuestions[j], filteredQuestions[i]];
     }
-  } else {
-    // 按 ID 排序 (简单字符串比较)
-    filteredQuestions.sort((a, b) => {
-      const idA = String(a.id || '');
-      const idB = String(b.id || '');
-      // 尝试解析为数字进行比较，失败则使用字符串比较
-      const numA = parseInt(idA.replace(/[^0-9]/g, ''), 10);
-      const numB = parseInt(idB.replace(/[^0-9]/g, ''), 10);
-      if (!isNaN(numA) && !isNaN(numB) && numA !== numB) {
-        return numA - numB;
-      }
-      return idA.localeCompare(idB);
-    });
   }
+  // 移除原来的全局排序逻辑 (else 分支)
+  // else {
+  //   // 按 ID 排序 (简单字符串比较) - 已在章节内排序，此处移除
+  // }
+
 
   localQuestions.value = filteredQuestions;
   error.value = filteredQuestions.length === 0 ? '该章节下没有题目' : null;
@@ -2165,12 +2182,5 @@ function formatQuestionTitle(title: string | undefined): string {
   if (!title) return '';
   // 移除开头的数字和点号 (e.g., "1. ", "02. ")
   return title.replace(/^\d+\.\s*/, '');
-}
-
-// 格式化题目文本（主要用于处理选项内的顿号）
-function formatQuestionText(text: string | undefined): string {
-  if (!text) return '';
-  // 使用正则表达式匹配 A、 B、 C、 D、 E、 并将顿号替换为空格
-  return text.replace(/([A-E])、/g, '$1 ');
 }
 </script>
