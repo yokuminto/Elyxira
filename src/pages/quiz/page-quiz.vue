@@ -97,7 +97,7 @@
           <div class="page-quiz__question-text" ref="questionTextRef"
             :class="{ 'slide-up': uiSettings.animationEnabled }">
             <span class="page-quiz__question-id">第{{ currentQuestion.number || (currentIndex + 1) }}题</span>
-            <span v-html="formatQuestionText(currentQuestion.question)"></span>
+            <span v-html="formatQuestionTitle(currentQuestion.question)"></span>
           </div>
 
           <ul class="page-quiz__options-list"
@@ -2101,6 +2101,28 @@ function filterQuestionsByChapter(chapterTitle: string) {
     }
   }
 
+  // 根据 quizSettings.randomMode 决定排序或打乱
+  if (quizSettings.value.randomMode) {
+    // Fisher-Yates shuffle algorithm
+    for (let i = filteredQuestions.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [filteredQuestions[i], filteredQuestions[j]] = [filteredQuestions[j], filteredQuestions[i]];
+    }
+  } else {
+    // 按 ID 排序 (简单字符串比较)
+    filteredQuestions.sort((a, b) => {
+      const idA = String(a.id || '');
+      const idB = String(b.id || '');
+      // 尝试解析为数字进行比较，失败则使用字符串比较
+      const numA = parseInt(idA.replace(/[^0-9]/g, ''), 10);
+      const numB = parseInt(idB.replace(/[^0-9]/g, ''), 10);
+      if (!isNaN(numA) && !isNaN(numB) && numA !== numB) {
+        return numA - numB;
+      }
+      return idA.localeCompare(idB);
+    });
+  }
+
   localQuestions.value = filteredQuestions;
   error.value = filteredQuestions.length === 0 ? '该章节下没有题目' : null;
 
@@ -2132,6 +2154,20 @@ watch(selectedChapter, (newChapter) => {
 });
 
 // 格式化题目文本，将选项字母后的顿号替换为空格
+function formatQuestionText(text: string | undefined): string {
+  if (!text) return '';
+  // 使用正则表达式匹配 A、 B、 C、 D、 E、 并将顿号替换为空格
+  return text.replace(/([A-E])、/g, '$1 ');
+}
+
+// 新增：格式化题目文本，移除开头的题号
+function formatQuestionTitle(title: string | undefined): string {
+  if (!title) return '';
+  // 移除开头的数字和点号 (e.g., "1. ", "02. ")
+  return title.replace(/^\d+\.\s*/, '');
+}
+
+// 格式化题目文本（主要用于处理选项内的顿号）
 function formatQuestionText(text: string | undefined): string {
   if (!text) return '';
   // 使用正则表达式匹配 A、 B、 C、 D、 E、 并将顿号替换为空格
