@@ -188,7 +188,12 @@
           <!-- 笔记区域 -->
           <div class="page-quiz__notes" :class="{ 'page-quiz__notes--hidden': !notesVisible }">
             <div class="page-quiz__notes-header">
-              <h3 class="page-quiz__notes-title">笔记</h3>
+              <h3 class="page-quiz__notes-title">
+                笔记
+                <span v-if="isGeneratingCurrent" class="notes-generation-status current">
+                  题目({{ activeGenerationIndex !== null ? activeGenerationIndex + 1 : '?' }})生成笔记中...
+                </span>
+              </h3>
               <div class="page-quiz__notes-actions">
                 <button class="page-quiz__button page-quiz__button--icon sync-status" :class="syncStatusClass"
                   :title="syncStatusTitle" @click="triggerSync" :disabled="syncStatus === 'pending'">
@@ -200,19 +205,8 @@
                     <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
                   </svg>
                 </button>
-                <button @click="openSyncConfigModal"
-                  class="page-quiz__button page-quiz__button--secondary page-quiz__button--icon" title="远程仓库配置">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                    class="feather feather-github">
-                    <path
-                      d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22">
-                    </path>
-                  </svg>
-                </button>
-                <button @click="toggleNotesEditor" :disabled="isQuizSubmitted"
-                  class="page-quiz__button page-quiz__button--secondary page-quiz__button--icon"
-                  :title="isEditingNotes ? '取消编辑' : '编辑笔记'">
+                <button @click="toggleNotesEditor" :disabled="isQuizSubmitted || isGenerating"
+                  class="page-quiz__button page-quiz__button--icon" :title="isEditingNotes ? '取消编辑' : '编辑笔记'">
                   <svg v-if="!isEditingNotes" xmlns="http://www.w3.org/2000/svg" width="16" height="16"
                     viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                     stroke-linejoin="round" class="feather feather-edit">
@@ -226,29 +220,48 @@
                     <line x1="6" y1="6" x2="18" y2="18"></line>
                   </svg>
                 </button>
-                <button @click="triggerAINotesGeneration" :disabled="isGeneratingNote || isQuizSubmitted"
-                  class="page-quiz__button page-quiz__button--primary page-quiz__ai-button" title="AI生成笔记">
-                  <span v-if="isGeneratingNote" class="loading-spinner"></span>
+                <button @click="triggerAINotesGeneration" :disabled="isQuizSubmitted || isGenerating"
+                  class="page-quiz__button page-quiz__button--icon page-quiz__ai-button icon-only" :class="{
+                    'button--loading': isGeneratingCurrent
+                  }" :title="isGeneratingCurrent ? '正在生成笔记...' : 'AI生成笔记'">
+                  <span v-if="isGeneratingCurrent" class="loading-spinner"></span>
                   <svg v-else xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                     class="feather feather-zap">
                     <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
                   </svg>
                 </button>
-                <button @click="showApiConfigModal = true"
-                  class="page-quiz__button page-quiz__button--secondary page-quiz__button--icon" title="AI设置">
+                <button @click="openSyncConfigModal"
+                  class="page-quiz__button page-quiz__button--icon page-quiz__settings-button" title="GitHub仓库设置">
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="3"></circle>
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                    class="feather feather-github">
                     <path
-                      d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
+                      d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22">
                     </path>
+                  </svg>
+                </button>
+                <button @click="showApiConfigModal = true"
+                  class="page-quiz__button page-quiz__button--icon page-quiz__settings-button" title="API设置">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                    class="feather feather-sliders">
+                    <line x1="4" y1="21" x2="4" y2="14"></line>
+                    <line x1="4" y1="10" x2="4" y2="3"></line>
+                    <line x1="12" y1="21" x2="12" y2="12"></line>
+                    <line x1="12" y1="8" x2="12" y2="3"></line>
+                    <line x1="20" y1="21" x2="20" y2="16"></line>
+                    <line x1="20" y1="12" x2="20" y2="3"></line>
+                    <line x1="1" y1="14" x2="7" y2="14"></line>
+                    <line x1="9" y1="8" x2="15" y2="8"></line>
+                    <line x1="17" y1="16" x2="23" y2="16"></line>
                   </svg>
                 </button>
               </div>
             </div>
             <div ref="notesDisplayRef" class="page-quiz__notes-display markdown-body"
               :class="{ 'page-quiz__notes-display--hidden': isEditingNotes }" v-html="renderedNotesHtml"></div>
+
             <div class="page-quiz__notes-editor" :class="{ 'page-quiz__notes-editor--hidden': !isEditingNotes }">
               <div class="page-quiz__markdown-toolbar">
                 <button @click="insertMarkdown('**粗体**')">粗体</button>
@@ -275,8 +288,9 @@
       @close="showOverviewModal = false" @jump-to="jumpToQuestion" />
     <ModalStatistics :show="showModalStatistics" :stats="quizStats" @close="showModalStatistics = false"
       @view-wrong="viewWrongQuestions" @continue="showModalStatistics = false" @back-home="navigateBack" />
-    <ModalSettings :show="showModalSettings" :current-settings="configAsGeneralSettings"
-      @close="showModalSettings = false" @save="applySettings" />
+    <ModalSettings :show="showModalSettings" :ui-settings="uiSettings" :quiz-settings="quizSettings"
+      :debug-enabled="configService.isDebugEnabled()" @close="showModalSettings = false"
+      @save="applySettingsFromModal" />
     <ModalQuestionEdit :show="showEditModal" :question="questionToEdit as any"
       @close="showEditModal = false; questionToEdit = null" @save="handleSaveQuestion" />
     <ModalQuizSync :show="showSyncConfigModal" @close="showSyncConfigModal = false" @save="handleSyncConfigSave"
@@ -291,15 +305,13 @@
 <script setup lang="ts">
 import { ref, computed, reactive, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { marked } from 'marked'
+import { Marked } from 'marked'
+import { markedXhtml } from "marked-xhtml"
 import mermaid from 'mermaid'
-import { QuizStore } from '@/stores/store-quiz'
-import { QuizMode, type Question } from '@/services/config-service' // 直接导入Question
-import type { QuizData as StoreQuizData, Chapter as StoreChapter, AppSettings } from '@/services/config-service'
+import configService, { QuizMode, type Question, type GithubConfig, type UiSettings, type QuizSettings } from '@/services/config-service' // Added GithubConfig, UiSettings, QuizSettings import
+import type { QuizData as StoreQuizData, Chapter as StoreChapter, AppSettings, ApiConfig } from '@/services/config-service' // Keep types if needed, update ApiConfig import
 import './page-quiz.css'
 import '../../styles/variables.css'
-import * as storage from '@/utils/storage'
-import configService from '@/services/config-service'
 import { showToast } from '@/utils/toast'
 
 // 引入子组件
@@ -314,35 +326,12 @@ import ModalApiConfig from '@/modals/modal-api-config.vue'
 const router = useRouter();
 
 // 类型定义
-// 删除本地的Question接口定义
-
-// 添加用户答案记录接口
 interface UserAnswerRecord {
   answer: string;
   timestamp?: number;
   isCorrect?: boolean;
 }
 
-// 用户答案映射类型定义
-interface UserAnswersMap {
-  [questionId: string]: UserAnswerRecord;
-}
-
-// 添加实际JSON数据格式的接口定义
-interface RawQuestionData {
-  id?: number | string;
-  question?: string;
-  title?: string;
-  options?: string[];
-  answer?: string | number | number[];
-  notes?: string;
-  explanation?: string;
-  userAnswer?: string | null;
-  previousAnswer?: string;
-  number?: number;
-}
-
-// 测验统计数据
 interface QuizStats {
   totalQuestions: number;
   answeredCount: number;
@@ -350,22 +339,22 @@ interface QuizStats {
   wrongQuestionIds: string[];
 }
 
-// API回调类型定义
-type StreamCallback = (chunk: string) => void;
-type CompletionCallback = (finalNote: string, error?: string) => void;
-
-// ... existing code ...
+type StreamCallback = (chunk: string, targetIndex: number) => void;
+type CompletionCallback = (finalNote: string, targetIndex: number, error?: string) => void;
 type MermaidRenderCallback = (svgCode: string) => void;
 
 // 响应式状态
 const loading = ref(true);
 const error = ref<string | null>(null);
-const localQuestions = ref<Question[]>([]); // 使用导入的 Question 类型
+const localQuestions = ref<Question[]>([]);
 const currentIndex = ref(0);
 const selectedAnswer = ref<string | null>(null);
 const isQuizSubmitted = ref(false);
 const wrongQuestionIds = ref<string[]>([]);
 const isReviewingWrong = ref(false);
+const renderedNotesHtml = ref(''); // 添加缺失的HTML内容引用
+const syncStatus = ref('idle');
+const activeGenerationIndex = ref<number | null>(null);
 
 // --- 使用 configService 获取设置 ---
 const quizSettings = computed(() => configService.getQuizSettings());
@@ -375,10 +364,8 @@ const apiConfig = computed(() => configService.getApiConfig());
 
 // 笔记状态
 const isEditingNotes = ref(false);
-const isGeneratingNote = ref(false);
+const isGenerating = ref(false);
 const notesEditText = ref('');
-const renderedNotesHtml = ref('');
-const syncStatus = ref('idle');
 
 // 模态框状态
 const showOverviewModal = ref(false);
@@ -387,7 +374,7 @@ const showModalSettings = ref(false);
 const showEditModal = ref(false);
 const showSyncConfigModal = ref(false);
 const showApiConfigModal = ref(false);
-const questionToEdit = ref<Question | null>(null); // 使用导入的 Question 类型
+const questionToEdit = ref<Question | null>(null);
 
 // 提示信息状态
 const toast = reactive<{ show: boolean; message: string; type: 'info' | 'success' | 'warning' | 'error' }>({
@@ -397,29 +384,33 @@ const toast = reactive<{ show: boolean; message: string; type: 'info' | 'success
 });
 
 // DOM引用
-const questionAreaRef = ref<HTMLElement | null>(null);
-const notesDisplayRef = ref<HTMLElement | null>(null);
+const questionAreaRef = ref<HTMLDivElement | null>(null);
+const notesDisplayRef = ref<HTMLDivElement | null>(null);
 const notesTextareaRef = ref<HTMLTextAreaElement | null>(null);
+const reasoningDisplayRef = ref<HTMLDivElement | null>(null);
 const questionTextRef = ref<HTMLElement | null>(null);
 
 // 主题状态
 const isDarkMode = computed(() => uiSettings.value.darkMode);
 
+// 计算属性：是否为当前问题生成笔记
+const isGeneratingCurrent = computed(() => {
+  return isGenerating.value && activeGenerationIndex.value !== null;
+});
+
 // 章节选择相关变量
 const selectedChapter = ref('all');
 const chapters = ref<string[]>([]);
 
-// 题库数据
-// 删除本地的 Chapter 和 QuizData 接口定义
-
 // --- 计算属性 ---
 const quizTitle = computed(() => {
-  const quizData = QuizStore.state.quizData;
-  if (!quizData) return '测验';
-  return quizData.title || QuizStore.state.lastLoaded.name || '测验';
+  // UPDATE: Use configService to get quiz title
+  const quizData = configService.getQuizData();
+  const lastLoaded = configService.getLastLoadedQuiz();
+  if (!quizData && !lastLoaded?.name) return '测验';
+  return quizData?.title || lastLoaded?.name || '测验';
 });
 
-// 当前显示的问题对象
 const currentQuestion = computed<Question | null>(() => {
   if (currentIndex.value >= 0 && currentIndex.value < localQuestions.value.length) {
     return localQuestions.value[currentIndex.value];
@@ -427,62 +418,49 @@ const currentQuestion = computed<Question | null>(() => {
   return null;
 });
 
-// 当前问题是否已回答
 const isCurrentAnswered = computed(() => {
   return currentQuestion.value?.userAnswer !== null && currentQuestion.value?.userAnswer !== undefined;
 });
 
-// 是否可以提交答案
 const canSubmit = computed(() => {
-  // 需要选择了答案，且如果已经回答过则需要没有锁定答案
   return selectedAnswer.value !== null &&
     !isQuizSubmitted.value &&
     !quizSettings.value.reviewMode &&
     (!isCurrentAnswered.value || !quizSettings.value.lockAnswerAfterSubmit);
 });
 
-// 如果选错且配置了锁定，则锁定
 const isAnswerLocked = computed(() => {
-  // 注意: lockAnswerAfterWrong 已废弃，仅使用 lockAnswerAfterSubmit
   return isCurrentAnswered.value && quizSettings.value.lockAnswerAfterSubmit;
 });
 
-// 是否可以进入下一题
 const canGoNext = computed(() => {
   return !isQuizSubmitted.value &&
     (currentIndex.value < totalQuestions.value - 1 || (isCurrentAnswered.value || quizSettings.value.reviewMode || quizSettings.value.allowSkip));
 });
 
-// 是否可以返回上一题
 const canGoPrev = computed(() => {
   return currentIndex.value > 0 && !isQuizSubmitted.value;
 });
 
-// 问题总数
 const totalQuestions = computed(() => localQuestions.value.length);
 
-// 已回答问题数量
 const answeredCount = computed(() => {
   return localQuestions.value.filter(q => q.userAnswer !== null && q.userAnswer !== undefined).length;
 });
 
-// 正确回答数量
 const correctCount = computed(() => {
   return localQuestions.value.filter(q => q.userAnswer !== null && q.userAnswer !== undefined && q.userAnswer === q.answer).length;
 });
 
-// 进度百分比
 const progressPercent = computed(() => {
   return totalQuestions.value > 0 ? Math.round((answeredCount.value / totalQuestions.value) * 100) : 0;
 });
 
-// 正确率百分比
 const accuracyPercent = computed(() => {
   if (answeredCount.value === 0) return 0;
   return Math.round((correctCount.value / answeredCount.value) * 100);
 });
 
-// 测验统计数据
 const quizStats = computed<QuizStats>(() => ({
   totalQuestions: totalQuestions.value,
   answeredCount: answeredCount.value,
@@ -490,19 +468,11 @@ const quizStats = computed<QuizStats>(() => ({
   wrongQuestionIds: wrongQuestionIds.value.map(String)
 }));
 
-// 笔记是否应该可见
 const notesVisible = computed(() => {
   if (!currentQuestion.value) return false;
-  // 使用 quizSettings 替代本地 config
   return forceShowNotes.value || !quizSettings.value.showNotesAfterAnswer || quizSettings.value.reviewMode || isCurrentAnswered.value;
 });
 
-// 配置转换为通用设置对象
-const configAsGeneralSettings = computed(() => {
-  return configService.getSettings();
-});
-
-// 同步状态相关计算属性
 const syncStatusClass = computed(() => {
   switch (syncStatus.value) {
     case 'pending': return 'sync-pending';
@@ -525,33 +495,26 @@ const syncStatusTitle = computed(() => {
 let toastTimer: number | null = null;
 
 function showCustomToast(message: string, type: 'info' | 'success' | 'warning' | 'error' = 'info', duration = 3000) {
-  // 清除上一个定时器，防止Toast堆叠
   if (toastTimer) {
     clearTimeout(toastTimer);
     toastTimer = null;
     const existingToast = document.querySelector('.page-quiz .toast--show');
     if (existingToast) existingToast.remove();
   }
-
   toast.message = message;
   toast.type = type;
   toast.show = true;
-
-  // 设置定时器隐藏Toast
   toastTimer = setTimeout(() => {
     toast.show = false;
     toastTimer = null;
   }, duration);
 }
 
-// 返回上级页面
 function navigateBack() {
   router.push('/library');
 }
 
-// 初始化
 function initializeQuiz() {
-  console.log("初始化测验界面...");
   loading.value = true;
   isQuizSubmitted.value = false;
   isReviewingWrong.value = false;
@@ -560,34 +523,26 @@ function initializeQuiz() {
 
   initMermaid();
   setupKeyboardListeners();
-
-  // 初始化时，加载题库数据并根据初始章节(默认all)过滤
   loadQuizDataAndFilter();
-
-  console.log("测验界面初始化完成");
 }
 
-// 新增：加载题库数据并根据章节过滤
 function loadQuizDataAndFilter() {
   loading.value = true;
   error.value = null;
 
-  const quizData = QuizStore.getQuizData();
+  // UPDATE: Use configService
+  const quizData = configService.getQuizData();
   if (!quizData || !quizData.chapters) {
     error.value = '题库数据为空，请返回选择题库';
     loading.value = false;
     return;
   }
 
-  // 提取章节列表
-  chapters.value = quizData.chapters.map(c => c.title);
-
-  // 根据当前选中的章节过滤题目 (初始为 'all')
+  // UPDATE: Use configService
+  chapters.value = configService.getQuizChapters(); // quizData.chapters.map(c => c.title);
   filterQuestionsByChapter(selectedChapter.value);
 
-  // 如果有题目，加载第一题
   if (localQuestions.value.length > 0) {
-    // 延迟加载，确保DOM渲染完成
     nextTick(() => {
       loadQuestion(currentIndex.value);
     });
@@ -595,11 +550,15 @@ function loadQuizDataAndFilter() {
     error.value = '当前章节没有题目';
   }
 
+  // UPDATE: Use configService for initial state
+  const savedConfig = configService.getQuizConfig();
+  selectedChapter.value = savedConfig.chapterIndex || 'all';
+  // Apply other saved config if needed (mode, range)
+
   loading.value = false;
 }
 
-// 加载指定索引的问题
-function loadQuestion(index: number) {
+async function loadQuestion(index: number) {
   if (index < 0 || index >= localQuestions.value.length) {
     console.warn("无效的问题索引:", index);
     if (!isQuizSubmitted.value) submitQuiz();
@@ -607,52 +566,55 @@ function loadQuestion(index: number) {
   }
 
   currentIndex.value = index;
-  selectedAnswer.value = null; // 清除上一题的选择
-  isEditingNotes.value = false; // 重置笔记编辑状态
+  selectedAnswer.value = null;
+  isEditingNotes.value = false;
+  // UPDATE: User answer should already be part of the question object from configService state
+  // selectedAnswer.value = currentQuestion.value?.userAnswer ?? null;
 
-  // 恢复当前问题的用户答案（如果存在）
-  selectedAnswer.value = currentQuestion.value?.userAnswer ?? null;
+  // 渲染当前题目的笔记
+  await renderNotesForCurrentQuestion(); // 修改为 await
 
-  renderNotesForCurrentQuestion(); // 渲染当前题目的笔记
-
-  // 平滑滚动到问题区域顶部
   if (questionAreaRef.value) {
     questionAreaRef.value.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  emitStateChange();
+  // UPDATE: Call configService to save state if needed implicitly, or remove explicit state emitting
+  // emitStateChange();
 
-  // 检查是否需要预生成下一题笔记
-  if (apiConfig.value.enabled && apiConfig.value.autoGenerate) {
-    checkAndGenerateNextNote();
-  }
+  nextTick(() => {
+    const currentApiConfig = configService.getApiConfig();
+    if (currentApiConfig.enabled && currentApiConfig.autoGenerate) {
+      checkAndTriggerAutoGeneration();
+    }
+  });
 }
 
 function handleOptionClick(key: string) {
-  // 如果已提交测验、回顾模式或答案已锁定，则不允许选择
-  // 使用 quizSettings 替代本地 config
   if (isQuizSubmitted.value || quizSettings.value.reviewMode || isAnswerLocked.value) {
-    // 如果已提交/回顾模式/已锁定，则不允许选择
     return;
   }
-
-  // 如果之前已回答且不允许修改答案，则不进行任何操作
-  // 使用 quizSettings 替代本地 config
   if (isCurrentAnswered.value && quizSettings.value.lockAnswerAfterSubmit) {
     return;
   }
-
   selectedAnswer.value = key;
-
-  // 如果已经回答过且现在选择了不同的答案，则需要重新设置问题状态
   if (isCurrentAnswered.value && currentQuestion.value && currentQuestion.value.userAnswer !== key) {
-    // 更新用户答案
     currentQuestion.value.userAnswer = key;
-    saveCurrentAnswerState(); // 保存当前答案状态
-  }
+    // UPDATE: Update configService stats and save state
+    configService.updateQuizStats({
+      totalAnswered: 1,
+      correctCount: 0,
+      wrongCount: 1
+    });
+    configService.saveQuizState(); // Persist the answer
 
-  // 如果配置了自动提交且尚未回答
-  // 使用 quizSettings 替代本地 config
+    // Update wrong question list based on the new answer
+    const questionIdStr = String(currentQuestion.value.id);
+    const wasWrong = wrongQuestionIds.value.includes(questionIdStr);
+
+    if (!wasWrong) {
+      wrongQuestionIds.value.push(questionIdStr);
+    }
+  }
   if (quizSettings.value.autoSubmit && !isCurrentAnswered.value) {
     nextTick(() => {
       submitAnswer();
@@ -660,54 +622,46 @@ function handleOptionClick(key: string) {
   }
 }
 
-// 提交当前答案
-// 提交当前答案
 function submitAnswer() {
-  // 检查是否可以提交答案：有选择的答案 且 (尚未回答或已回答但允许修改)
-  // 使用 quizSettings 替代本地 config
   if (selectedAnswer.value === null || (isCurrentAnswered.value && quizSettings.value.lockAnswerAfterSubmit)) return;
-
   const question = currentQuestion.value;
   if (!question) return;
+  const isCorrect = compareAnswers(selectedAnswer.value, question.answer);
 
-  const isCorrect = selectedAnswer.value === question.answer;
+  if (question.userAnswer !== selectedAnswer.value) {
+    question.userAnswer = selectedAnswer.value;
 
-  // 如果已回答且选择的答案与原答案相同，无需再次提交
-  if (isCurrentAnswered.value && question.userAnswer === selectedAnswer.value) return;
+    configService.updateQuizStats({
+      totalAnswered: 1,
+      correctCount: isCorrect ? 1 : 0,
+      wrongCount: isCorrect ? 0 : 1
+    });
+    configService.saveQuizState();
 
-  // 更新本地问题的 userAnswer
-  question.userAnswer = selectedAnswer.value;
+    const questionIdStr = String(question.id);
+    const wasWrong = wrongQuestionIds.value.includes(questionIdStr);
 
-  // 更新错题记录
-  if (!isCorrect) {
-    if (!wrongQuestionIds.value.includes(String(question.id))) {
-      wrongQuestionIds.value.push(String(question.id));
-    }
-  } else {
-    // 如果现在答对了，从错题记录中移除
-    const index = wrongQuestionIds.value.indexOf(String(question.id));
-    if (index !== -1) {
-      wrongQuestionIds.value.splice(index, 1);
+    if (!isCorrect && !wasWrong) {
+      wrongQuestionIds.value.push(questionIdStr);
+    } else if (isCorrect && wasWrong) {
+      const index = wrongQuestionIds.value.indexOf(questionIdStr);
+      if (index !== -1) {
+        wrongQuestionIds.value.splice(index, 1);
+      }
     }
   }
 
-  saveCurrentAnswerState(); // 保存当前答案到 localStorage
-
-  // 如果配置了自动下一题
-  // 使用 quizSettings 替代本地 config
   if (quizSettings.value.autoNext && currentIndex.value < totalQuestions.value - 1) {
-    setTimeout(nextQuestion, 1000); // 延迟以便用户看到反馈
+    setTimeout(nextQuestion, 1000);
   }
 }
 
-// 显示上一题
 function previousQuestion() {
   if (canGoPrev.value) {
     loadQuestion(currentIndex.value - 1);
   }
 }
 
-// 显示下一题
 function nextQuestion() {
   if (currentIndex.value < totalQuestions.value - 1) {
     loadQuestion(currentIndex.value + 1);
@@ -716,53 +670,49 @@ function nextQuestion() {
   }
 }
 
-// 跳转到指定题目
 function jumpToQuestion(index: number) {
   if (index >= 0 && index < totalQuestions.value) {
     loadQuestion(index);
   }
 }
 
-// 交卷处理
 function submitQuiz() {
   if (isQuizSubmitted.value) return;
   isQuizSubmitted.value = true;
-  showModalStatistics.value = true; // 显示统计模态框
-
-  // 保存测验结果到本地存储
-  const stats = quizStats.value;
+  showModalStatistics.value = true;
+  const stats = quizStats.value; // This is session stats
+  // Keep saving session stats snapshot if needed
   localStorage.setItem('lastQuizStats', JSON.stringify({
     ...stats,
     timestamp: Date.now(),
     quizTitle: quizTitle.value
   }));
+  // Optionally save cumulative stats from configService as well
+  // configService.saveQuizStatsToStorage();
 }
 
-// 重做测验
 function redoQuiz() {
   if (window.confirm('确定要重做本次测验吗？所有答题记录将被清空。')) {
     isQuizSubmitted.value = false;
     wrongQuestionIds.value = [];
     selectedAnswer.value = null;
-
-    // 清除所有本地问题的 userAnswer
-    localQuestions.value.forEach(q => q.userAnswer = null);
-
-    // 清除localStorage中的答案
-    const userAnswers = localStorage.getItem('userAnswers');
-    if (userAnswers) {
-      const answersData = JSON.parse(userAnswers);
-      const currentQuizIds = localQuestions.value.map(q => q.id?.toString() || '');
-
-      // 只清除当前测验中题目的答案
-      currentQuizIds.forEach(id => {
-        if (id && answersData[id]) {
-          delete answersData[id];
-        }
+    // UPDATE: Clear answers in configService state
+    const quizData = configService.getQuizData();
+    if (quizData) {
+      quizData.chapters.forEach(chapter => {
+        chapter.questions.forEach(q => {
+          if (localQuestions.value.some(lq => lq.id === q.id)) { // Only clear for current filtered questions
+            q.userAnswer = null;
+          }
+        });
       });
-
-      localStorage.setItem('userAnswers', JSON.stringify(answersData));
+      configService.setQuizData(quizData); // Update internal state
+      configService.saveQuizState(); // Persist cleared answers
     }
+
+    // REMOVE: localStorage clearing for userAnswers, handled by saveQuizState
+    // const userAnswers = localStorage.getItem('userAnswers');
+    // ... (removed code block) ...
 
     currentIndex.value = 0; // 回到第一题
     loadQuestion(0);
@@ -786,8 +736,10 @@ function viewWrongQuestions() {
     localQuestions.value = wrongQs.map(q => ({ ...q, userAnswer: null })); // 重置错题的答案状态
     isQuizSubmitted.value = false; // 允许在错题模式下答题
     isReviewingWrong.value = true; // 标记为错题回顾模式
-    wrongQuestionIds.value = [];   // 清空当前错题记录
+    wrongQuestionIds.value = [];   // 清空当前错题记录 (or maybe keep them to track progress within wrong mode?)
     currentIndex.value = 0;
+    // UPDATE: Update configService mode?
+    // configService.setQuizConfig({ mode: QuizMode.WRONG }); // If configService tracks mode
     loadQuestion(0);
     showToast(`已切换到错题回顾 (${wrongQs.length}题)`, 'info');
   } else {
@@ -799,70 +751,54 @@ function viewWrongQuestions() {
 
 // 切换笔记编辑状态
 function toggleNotesEditor() {
-
   isEditingNotes.value = !isEditingNotes.value;
   if (isEditingNotes.value) {
-    // 进入编辑模式，加载当前笔记内容
+    // 切换到编辑模式，获取当前笔记内容
     notesEditText.value = currentQuestion.value?.notes || '';
+
     nextTick(() => {
-      autoResizeTextarea();
-      notesTextareaRef.value?.focus();
+      if (notesTextareaRef.value) {
+        notesTextareaRef.value.focus();
+        autoResizeTextarea();
+      }
     });
   }
 }
 
 // 保存笔记
 function saveNotes() {
-  if (!currentQuestion.value || !isEditingNotes.value) return;
+  if (!currentQuestion.value) return;
 
-  const newNotes = notesEditText.value;
-  if (currentQuestion.value.notes !== newNotes) {
-    currentQuestion.value.notes = newNotes; // 更新本地数据
-    renderNotesForCurrentQuestion(); // 更新显示
-    showToast('笔记已保存', 'success');
+  // 直接保存编辑后的笔记内容，不再处理标记
+  const updatedNotes = notesEditText.value;
 
-    // 保存笔记到题库数据
-    saveNotesToQuizData();
+  // 设置问题的笔记
+  currentQuestion.value.notes = updatedNotes;
 
-    // 保存状态到configService
-    QuizStore.saveToStorage();
-  }
-  isEditingNotes.value = false; // 保存后退出编辑模式
-}
-
-// 新增：将笔记保存到题库数据
-function saveNotesToQuizData() {
-  if (!currentQuestion.value || !QuizStore.state.quizData) return;
-
-  const questionId = currentQuestion.value.id;
-  const newNotes = currentQuestion.value.notes;
-
-  // 获取当前可写的题库数据
-  const quizData = QuizStore.getQuizData();
-  if (!quizData || !quizData.chapters) return;
-
-  // 查找并更新题库中对应题目的笔记
-  let found = false;
-  for (const chapter of quizData.chapters) {
-    if (!chapter.questions) continue;
-
-    for (const question of chapter.questions) {
-      if (question.id === questionId) {
-        question.notes = newNotes;
-        found = true;
-        break;
-      }
+  // 使用configService保存笔记
+  if (currentQuestion.value.id) {
+    const success = configService.saveNoteToQuestion(currentQuestion.value.id, updatedNotes);
+    if (!success) {
+      showToast('保存笔记失败', 'error');
+      return;
     }
-    if (found) break;
+    // 更新本地问题对象
+    const localQIndex = localQuestions.value.findIndex(q => q.id === currentQuestion.value?.id);
+    if (localQIndex > -1) {
+      localQuestions.value[localQIndex].notes = updatedNotes;
+    }
+  } else {
+    showToast('无法保存笔记：缺少问题ID', 'error');
+    return;
   }
 
-  if (found) {
-    // 更新QuizStore的题库数据
-    QuizStore.setQuizData(quizData);
+  // 更新笔记呈现
+  isEditingNotes.value = false;
+  nextTick(() => {
+    renderNotesForCurrentQuestion();
+  });
 
-    // 保存到存储，确保笔记与题库数据一起保存
-    QuizStore.saveToStorage();
-  }
+  showToast('笔记已保存', 'success');
 }
 
 // 渲染当前问题的笔记 (Markdown + Mermaid)
@@ -874,149 +810,130 @@ async function renderNotesForCurrentQuestion() {
 
   const noteContent = currentQuestion.value.notes || '';
 
-  if (!noteContent) {
+  if (!noteContent && !isGenerating.value) {
     renderedNotesHtml.value = '<p class="page-quiz__notes-placeholder">这道题目还没有笔记...</p>';
     return;
   }
 
   try {
-    // 配置 marked 选项
-    const markedOptions = {
-      breaks: true,
-      gfm: true,
-      tables: true,
-      headerIds: false,
-      html: true,
-      xhtml: true
-    };
-    marked.setOptions(markedOptions);
+    // 使用configService.renderNote渲染内容
+    const renderResult = await configService.renderNote(noteContent, isGeneratingCurrent.value, markedInstance);
 
-    // 预处理笔记内容，处理一些特殊格式
-    const processedContent = noteContent
-      // 将 • 开头的行转为 HTML 无序列表
-      .replace(/^([\\s]*?)[•\\-\\*]\\s+(.*?)$/gm, '<li>$2</li>')
-
-      // 将 数字+. 开头的行转为 HTML 有序列表
-      .replace(/^([\\s]*?)(\\d+\\.\\s+)(.*?)$/gm, '<ol>$2$3</ol>')
-
-      // 正确处理 Markdown 粗体
-      .replace(/\*\*([^\*]+)\*\*/g, '<strong>$1</strong>'); // Use correct regex for bold
-
-    // 解析 Markdown
-    const htmlContent = marked.parse(processedContent) as string;
-
-    // 包裹最终内容
-    renderedNotesHtml.value = `${htmlContent}`;
-
-
-    // 在流式生成时添加光标动画
-    if (isGeneratingNote.value) {
-      // 需要找到 .markdown-body 内部的最后一个元素来追加光标
-      // 暂时简单追加到末尾，后续可优化
-      renderedNotesHtml.value = renderedNotesHtml.value.replace('</div>', '<span class="typing-cursor"></span></div>');
+    const mainHtmlContent = renderResult.contentHtml;
+    // 更新渲染的HTML
+    if (mainHtmlContent) {
+      renderedNotesHtml.value = mainHtmlContent;
+    } else if (isGenerating.value) {
+      renderedNotesHtml.value = '<p class="page-quiz__notes-placeholder">等待内容生成...</p>';
+    } else {
+      renderedNotesHtml.value = '<p class="page-quiz__notes-placeholder">这道题目还没有笔记...</p>';
     }
 
-    // 动态添加生成中的class
+    // 添加生成中的样式类
     nextTick(() => {
       if (notesDisplayRef.value) {
-        if (isGeneratingNote.value) {
+        if (isGeneratingCurrent.value) {
           notesDisplayRef.value.classList.add('generating');
+          notesDisplayRef.value.scrollTop = notesDisplayRef.value.scrollHeight;
         } else {
           notesDisplayRef.value.classList.remove('generating');
         }
       }
     });
 
-    // 等待 DOM 更新后再处理 Mermaid
+    // 处理Mermaid图表
     await nextTick();
+    processMermaidInElement(notesDisplayRef.value, isGeneratingCurrent.value);
 
-    if (notesDisplayRef.value) {
-      try {
-        // 确保 Mermaid 初始化
-        await initMermaid();
-
-        // 替换 language-mermaid 类元素为 mermaid 类元素
-        // 修改选择器以查找 pre > code.language-mermaid
-        const mermaidCodeBlocks = notesDisplayRef.value.querySelectorAll('pre code.language-mermaid');
-        mermaidCodeBlocks.forEach(block => {
-          try {
-            const code = block.textContent || '';
-            if (!code.trim()) return;
-
-            const mermaidDiv = document.createElement('div');
-            mermaidDiv.className = 'mermaid';
-            mermaidDiv.textContent = code;
-
-            // 查找父元素 pre 标签
-            const preElement = block.closest('pre');
-            if (preElement && preElement.parentNode) {
-              // 使用新的mermaidDiv替换掉整个preElement
-              preElement.parentNode.replaceChild(mermaidDiv, preElement);
-            }
-          } catch (e) {
-            console.error('替换Mermaid代码块失败:', e);
-          }
-        });
-
-
-        // 一次性初始化所有Mermaid图表
-        mermaid.init(undefined, '.mermaid').catch(err => {
-          console.error('Mermaid渲染错误:', err);
-          // 处理渲染失败的情况 - 添加错误信息
-          const notesDisplay = notesDisplayRef.value;
-          if (notesDisplay) {
-            const errorElements = notesDisplay.querySelectorAll('.mermaid:not(svg)');
-            errorElements.forEach(el => {
-              const errorNode = document.createElement('div');
-              errorNode.className = 'page-quiz__notes-error';
-              errorNode.innerHTML = `<p>Mermaid图表渲染失败</p>
-                <details>
-                  <summary>查看原始代码</summary>
-                  <pre>${el.textContent}</pre>
-                </details>`;
-              el.parentNode?.replaceChild(errorNode, el);
-            });
-          }
-        });
-      } catch (mermaidError) {
-        console.error('Mermaid处理失败:', mermaidError);
-        // 不让Mermaid错误影响整个笔记渲染
-        const notesDisplay = notesDisplayRef.value;
-        if (notesDisplay) {
-          const mermaidBlocks = notesDisplay.querySelectorAll('.mermaid:not(svg)');
-          mermaidBlocks.forEach(block => {
-            const errorNode = document.createElement('div');
-            errorNode.className = 'page-quiz__notes-error';
-            errorNode.innerHTML = `<p>Mermaid图表处理失败</p>
-              <details>
-                <summary>查看原始代码</summary>
-                <pre>${block.textContent}</pre>
-              </details>`;
-            block.parentNode?.replaceChild(errorNode, block);
-          });
-        }
-      }
-    }
-
-    // 如果是在生成笔记中，滚动到底部
-    if (isGeneratingNote.value && notesDisplayRef.value) {
-      nextTick(() => {
-        if (notesDisplayRef.value) {
-          // 平滑滚动到底部
-          notesDisplayRef.value.scrollTop = notesDisplayRef.value.scrollHeight;
-
-          // 聚焦到笔记区域，增强用户体验
-          notesDisplayRef.value.focus();
-        }
-      });
-    }
   } catch (error) {
-    console.error('Markdown/Mermaid渲染失败:', error);
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    renderedNotesHtml.value = `<p class="page-quiz__notes-error">笔记渲染出错: ${errorMessage}</p>`;
+    console.error('Markdown渲染错误:', error);
+    renderedNotesHtml.value = `<p class="page-quiz__notes-error">笔记内容解析失败: ${error instanceof Error ? error.message : '未知错误'}</p>`;
   }
 }
 
+// 处理指定元素中的Mermaid图表
+async function processMermaidInElement(element: HTMLElement | null, isGenerating: boolean) {
+  if (!element) return;
+
+  try {
+    // 确保 Mermaid 初始化
+    await initMermaid();
+
+    // 替换 language-mermaid 类元素为 mermaid 类元素
+    const mermaidCodeBlocks = element.querySelectorAll('pre code.language-mermaid');
+    mermaidCodeBlocks.forEach(block => {
+      try {
+        const code = block.textContent || '';
+        if (!code.trim()) return;
+
+        const mermaidDiv = document.createElement('div');
+        mermaidDiv.className = 'mermaid';
+        mermaidDiv.textContent = code;
+
+        const preElement = block.closest('pre');
+        if (preElement && preElement.parentNode) {
+          preElement.parentNode.replaceChild(mermaidDiv, preElement);
+        }
+      } catch (e) {
+        console.error('替换Mermaid代码块失败:', e);
+      }
+    });
+
+    // 只在非生成状态下初始化mermaid，避免频繁重绘
+    if (!isGenerating) {
+      mermaid.init(undefined, '.mermaid').catch(err => {
+        console.error('Mermaid渲染错误:', err);
+      });
+    }
+  } catch (mermaidError) {
+    console.error('Mermaid处理失败:', mermaidError);
+  }
+}
+
+// 将Markdown表格转换为HTML表格
+function convertMarkdownTablesToHtml(content: string): string {
+  if (!content) return content;
+
+  // 正则表达式匹配Markdown表格结构
+  // 表格行: | cell1 | cell2 | ...
+  // 表格分隔行: |------|-------|...
+  const tableRegex = /^\s*\|(.+)\|\s*\n\s*\|([\s\-:|]+)\|\s*\n((?:\s*\|.+\|\s*\n?)+)/gm;
+
+  return content.replace(tableRegex, (match, headerRow, separatorRow, bodyRows) => {
+    const headers = headerRow.split('|').map((cell: string) => cell.trim());
+    const rows = bodyRows.trim().split('\n').map((row: string) => {
+      return row.split('|').map((cell: string) => cell.trim());
+    });
+
+    // 生成HTML表格
+    let htmlTable = '<table border="1" style="border-collapse: collapse; width: 100%; margin: 16px 0;">\n';
+
+    // 表头
+    htmlTable += '  <thead>\n    <tr>\n';
+    headers.forEach((header: string) => {
+      if (header) {
+        htmlTable += `      <th style="padding: 8px; border: 1px solid #ddd;">${header}</th>\n`;
+      }
+    });
+    htmlTable += '    </tr>\n  </thead>\n';
+
+    // 表格内容
+    htmlTable += '  <tbody>\n';
+    rows.forEach((row: string[]) => {
+      htmlTable += '    <tr>\n';
+      row.forEach((cell: string) => {
+        if (cell) {
+          htmlTable += `      <td style="padding: 8px; border: 1px solid #ddd;">${cell}</td>\n`;
+        }
+      });
+      htmlTable += '    </tr>\n';
+    });
+    htmlTable += '  </tbody>\n';
+    htmlTable += '</table>';
+
+    return htmlTable;
+  });
+}
 // 在笔记编辑区插入 Markdown 标记
 function insertMarkdown(markup: string) {
   const textarea = notesTextareaRef.value;
@@ -1028,7 +945,7 @@ function insertMarkdown(markup: string) {
   const selectedText = text.substring(start, end);
   let insertedMarkup = markup;
 
-  // 简单的占位符替换
+  // 占位符替换
   if (selectedText) {
     if (markup.includes('粗体')) insertedMarkup = markup.replace('粗体', selectedText);
     else if (markup.includes('斜体')) insertedMarkup = markup.replace('斜体', selectedText);
@@ -1040,7 +957,8 @@ function insertMarkdown(markup: string) {
   }
 
   textarea.value = text.substring(0, start) + insertedMarkup + text.substring(end);
-  notesEditText.value = textarea.value; // 更新 v-model 绑定
+  notesEditText.value = textarea.value; // 更新v-model绑定
+
   // 设置光标位置
   textarea.focus();
   nextTick(() => {
@@ -1049,7 +967,7 @@ function insertMarkdown(markup: string) {
   });
 }
 
-// 自动调整 Textarea 高度
+// 自动调整文本区高度
 function autoResizeTextarea() {
   const textarea = notesTextareaRef.value;
   if (textarea) {
@@ -1062,70 +980,37 @@ function autoResizeTextarea() {
   }
 }
 
-// 获取AI API配置
-function getAIAPIConfig() {
-  const savedConfig = localStorage.getItem('aiApiConfig');
-  const defaultConfig = {
-    apiUrl: '',
-    apiKey: '',
-    model: 'deepseek-r1-250120',
-    systemPrompt: '你是一个医学专家助手，擅长解释医学概念和知识点，请为学生提供详细、准确的笔记。',
-    temperature: 0.7,
-    topP: 0.9
-  };
-
-  if (savedConfig) {
-    try {
-      return { ...defaultConfig, ...JSON.parse(savedConfig) };
-    } catch (error) {
-      console.error('解析API配置失败:', error);
-      return defaultConfig;
-    }
-  }
-  return defaultConfig;
-}
-
-// 实际调用AI API生成笔记
-async function generateAINotes(question: Question | null, completionCallback: CompletionCallback, streamCallback?: StreamCallback) {
+// 实际调用AI API生成笔记 (MODIFIED to accept index and pass it to callbacks)
+async function generateAINotes(
+  question: Question | null,
+  generationTargetIndex: number, // ADDED: Index parameter
+  completionCallback: CompletionCallback,
+  streamCallback?: StreamCallback
+) {
+  console.log(`[LOG] 进入 generateAINotes: 目标索引=${generationTargetIndex}, 问题=`, question ? question.id : 'null'); // DEBUG -> LOG
   if (!question) {
-    completionCallback('', '无法获取问题信息');
+    // FIX: Add generationTargetIndex
+    completionCallback('', generationTargetIndex, '无法获取问题信息');
     return;
   }
 
-  // 使用 configService 获取 API 配置
   const currentApiConfig = configService.getApiConfig();
 
-  // 验证必要的API配置
   if (!currentApiConfig.apiUrl || !currentApiConfig.apiKey) {
     showToast('请先配置AI API设置', 'info');
     showApiConfigModal.value = true;
-    completionCallback('', '请先在API配置中设置API地址和密钥');
+    // FIX: Add generationTargetIndex
+    completionCallback('', generationTargetIndex, '请先在API配置中设置API地址和密钥');
     return;
   }
 
   try {
-    // 构建请求数据
-    const questionData = {
-      question: question.question,
-      options: question.options,
-      answer: question.answer
-    };
+    // 使用configService获取请求参数
+    const requestData = configService.getNotesGenerationRequestParams(question);
 
-    const prompt = `请根据以下题目生成详细的学习笔记，包括重点知识、相关概念解释和记忆技巧：\n\n问题：${questionData.question}\n\n选项：${JSON.stringify(questionData.options)}\n\n正确答案：${questionData.answer}`;
+    console.log(`[LOG] generateAINotes: 发起 API 请求, 目标索引=${generationTargetIndex}, URL=${currentApiConfig.apiUrl}`);
 
-    const requestData = {
-      // 使用 configService 中的配置
-      model: currentApiConfig.model,
-      messages: [
-        { role: "system", content: currentApiConfig.systemPrompt },
-        { role: "user", content: prompt }
-      ],
-      stream: currentApiConfig.streamOutput !== false, // 使用 configService 中的配置
-      temperature: currentApiConfig.temperature,       // 使用 configService 中的配置
-      top_p: currentApiConfig.topP                     // 使用 configService 中的配置
-    };
-
-    const response = await fetch(currentApiConfig.apiUrl, { // 使用 configService 中的配置
+    const response = await fetch(currentApiConfig.apiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -1135,6 +1020,8 @@ async function generateAINotes(question: Question | null, completionCallback: Co
     });
 
     if (!response.ok) {
+      const errorBody = await response.text();
+      console.error(`[LOG] API 请求失败: ${response.status} ${response.statusText}`, errorBody);
       throw new Error(`API请求失败: ${response.status} ${response.statusText}`);
     }
 
@@ -1144,215 +1031,133 @@ async function generateAINotes(question: Question | null, completionCallback: Co
       // 处理流式输出
       const reader = response.body?.getReader();
       if (!reader) throw new Error('无法读取响应流');
+      console.log(`[LOG] generateAINotes: 开始读取流 for index ${generationTargetIndex}`);
 
       const decoder = new TextDecoder();
       let buffer = '';
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
+      // 网络波动保护相关变量
+      let lastDataReceived = Date.now();
+      const dataTimeout = 30000; // 30秒无数据视为超时
+      const heartbeatInterval = setInterval(() => {
+        const now = Date.now();
+        const elapsed = now - lastDataReceived;
+        if (elapsed > dataTimeout) {
+          console.warn(`[WARN] 数据流接收超时(${elapsed}ms)，可能存在网络问题`);
+          showToast('网络连接不稳定，数据接收中断', 'warning');
+          clearInterval(heartbeatInterval);
+        }
+      }, 10000); // 每10秒检查一次
 
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-        buffer = lines.pop() || '';
+      try {
+        let retryCount = 0;
+        const maxRetries = 3;
 
-        for (const line of lines) {
-          if (line.startsWith('data: ') && line !== 'data: [DONE]') {
-            try {
-              const data = JSON.parse(line.substring(6));
-              if (data.choices && data.choices[0].delta && data.choices[0].delta.content) {
-                const content = data.choices[0].delta.content;
-                generatedNote += content;
-                if (streamCallback) {
-                  streamCallback(content);
+        while (true) {
+          try {
+            const { done, value } = await reader.read();
+
+            // 重置超时计时器，因为收到了数据
+            lastDataReceived = Date.now();
+
+            if (done) {
+              console.log(`[LOG] generateAINotes: 流读取完成 (done) for index ${generationTargetIndex}`);
+              break;
+            }
+
+            // 将新块添加到缓冲区
+            buffer += decoder.decode(value, { stream: true });
+            retryCount = 0; // 成功接收数据，重置重试计数
+
+            // 从缓冲区处理完整行
+            while (true) {
+              const lineEnd = buffer.indexOf('\n');
+              if (lineEnd === -1) break;
+
+              const line = buffer.slice(0, lineEnd).trim();
+              buffer = buffer.slice(lineEnd + 1);
+
+              if (line.startsWith('data: ')) {
+                const data = line.slice(6);
+                if (data === '[DONE]') break;
+
+                try {
+                  const parsed = JSON.parse(data);
+                  const content = parsed.choices[0]?.delta?.content ||
+                    parsed.choices[0]?.message?.content || '';
+
+                  if (content) {
+                    console.log(`[LOG] generateAINotes: 收到content='${content}'`);
+                    generatedNote += content;
+                    if (streamCallback) {
+                      streamCallback(content, generationTargetIndex);
+                    }
+                  }
+                } catch (e) {
+                  console.error('[ERROR] generateAINotes: 解析流式 JSON 出错:', e, '原始行:', line);
+                  // 忽略无效的JSON
                 }
               }
-            } catch (e) {
-              console.error('解析流式响应出错:', e);
+            }
+          } catch (e) {
+            // 网络错误处理逻辑
+            retryCount++;
+            const isNetworkError = e instanceof Error &&
+              (e.message.includes('network') || e.message.includes('fetch') || e.message.includes('abort'));
+
+            if (isNetworkError && retryCount <= maxRetries) {
+              console.warn(`[WARN] 流读取出错，正在进行第${retryCount}次重试:`, e.message);
+              showToast(`网络不稳定，正在重试(${retryCount}/${maxRetries})...`, 'warning');
+              // 等待短暂时间后重试
+              await new Promise(resolve => setTimeout(resolve, 2000));
+              continue;
+            } else {
+              // 重试次数用尽或非网络错误，抛出以终止循环
+              throw e;
             }
           }
         }
+      } finally {
+        clearInterval(heartbeatInterval);
+        reader.cancel();
       }
+      console.log(`[LOG] generateAINotes: 流处理完成 for index ${generationTargetIndex}. Final Note Length: ${generatedNote.length}`);
     } else {
       // 处理非流式输出
       const data = await response.json();
-      if (data.choices && data.choices[0] && data.choices[0].message) {
-        generatedNote = data.choices[0].message.content;
+      if (data.choices && data.choices[0]) {
+        // 兼容不同的API响应格式
+        if (data.choices[0].message) {
+          generatedNote = data.choices[0].message.content || '';
+        } else if (data.choices[0].text) {
+          generatedNote = data.choices[0].text || '';
+        } else if (data.choices[0].delta && data.choices[0].delta.content) {
+          generatedNote = data.choices[0].delta.content || '';
+        }
       }
+
+      console.log(`[LOG] generateAINotes: 非流式输出生成的最终笔记:`, generatedNote);
     }
 
-    completionCallback(generatedNote);
+    // 使用configService格式化笔记
+    const formattedNote = generatedNote.trim();
+    completionCallback(formattedNote, generationTargetIndex);
   } catch (error) {
-    completionCallback('', error instanceof Error ? error.message : '未知错误');
+    completionCallback('', generationTargetIndex, error instanceof Error ? error.message : '未知错误');
   }
 }
 
-// 触发 AI 笔记生成
+// 触发 AI 笔记生成 (Manual Trigger - MODIFIED)
 function triggerAINotesGeneration() {
-  if (!currentQuestion.value || isGeneratingNote.value || isQuizSubmitted.value) return;
+  if (!currentQuestion.value || isQuizSubmitted.value) return;
 
-  // 强制显示笔记区域
+  // 显示笔记区域
   forceShowNotes.value = true;
 
-  isGeneratingNote.value = true;
-  showToast('AI笔记生成中...', 'info');
-
-  // 清空之前的笔记内容
-  if (currentQuestion.value) {
-    currentQuestion.value.notes = '';
-    renderNotesForCurrentQuestion();
-  }
-
-  // 定义节流变量
-  let lastRenderTime = 0;
-  const baseThrottleDelay = 100; // 基础节流延迟，毫秒
-  let throttleDelay = baseThrottleDelay;
-  let pendingChunks = '';
-  let renderTimeout: number | null = null;
-  let autoSaveTimeout: number | null = null;
-
-  // 定义自动保存函数
-  const autoSaveNotes = () => {
-    if (currentQuestion.value && currentQuestion.value.notes) {
-      // 使用新的保存到题库数据的方法
-      saveNotesToQuizData();
-      // 不再单独保存笔记
-      // saveCurrentNotesState();
-    }
-
-    // 定期保存，确保数据不会丢失
-    if (isGeneratingNote.value) {
-      autoSaveTimeout = window.setTimeout(autoSaveNotes, 5000); // 每5秒自动保存一次
-    }
-  };
-
-  // 启动自动保存
-  autoSaveTimeout = window.setTimeout(autoSaveNotes, 5000);
-
-  // 定义流式和完成回调
-  const handleStreamChunk: StreamCallback = (chunk) => {
-    if (apiConfig.value.streamOutput && currentQuestion.value) {
-      // 添加到当前内容
-      currentQuestion.value.notes = (currentQuestion.value.notes || '') + chunk;
-      pendingChunks += chunk;
-
-      // 智能节流处理
-      const now = Date.now();
-      const timeSinceLastRender = now - lastRenderTime;
-
-      // 快速渲染换行、代码块等重要格式标记
-      const hasImportantMarkers = /\n|```|\*\*|#|>|-\s|1\.|<|!\[/.test(pendingChunks);
-
-      // 动态调整节流延迟 - 根据内容长度和时间动态调整
-      if (pendingChunks.length > 100) {
-        throttleDelay = baseThrottleDelay * 2; // 大块内容时增加延迟
-      } else if (hasImportantMarkers) {
-        throttleDelay = 0; // 关键格式立即渲染
-      }
-
-      // 清除之前的延迟渲染
-      if (renderTimeout) {
-        clearTimeout(renderTimeout);
-        renderTimeout = null;
-      }
-
-      // 判断是否应该立即渲染
-      if (timeSinceLastRender > throttleDelay || hasImportantMarkers) {
-        renderNotesForCurrentQuestion(); // 增量渲染
-        lastRenderTime = now;
-        pendingChunks = '';
-      } else {
-        // 如果暂时不渲染，设置一个延迟渲染的定时器确保内容最终会显示
-        renderTimeout = window.setTimeout(() => {
-          if (pendingChunks.length > 0) {
-            renderNotesForCurrentQuestion();
-            pendingChunks = '';
-          }
-        }, throttleDelay - timeSinceLastRender);
-      }
-    }
-  };
-
-  const handleCompletion: CompletionCallback = (finalNote, error) => {
-    // 清除可能存在的延迟渲染计时器
-    if (renderTimeout) {
-      clearTimeout(renderTimeout);
-      renderTimeout = null;
-    }
-
-    // 清除自动保存计时器
-    if (autoSaveTimeout) {
-      clearTimeout(autoSaveTimeout);
-      autoSaveTimeout = null;
-    }
-
-    // 标记结束前确保最终内容已经渲染
-    if (currentQuestion.value) {
-      currentQuestion.value.notes = finalNote;
-      renderNotesForCurrentQuestion();
-
-      // 延迟标记生成结束，让最终渲染和光标消失有一个平滑过渡
-      setTimeout(() => {
-        isGeneratingNote.value = false;
-
-        // 再次渲染以移除光标和生成中状态
-        renderNotesForCurrentQuestion();
-
-        if (error) {
-          showToast(`笔记生成失败: ${error}`, 'error');
-        } else {
-          // 确保完成后保存笔记
-          saveNotesToLocalStorage(); // 保存生成的笔记
-          showToast('AI笔记生成完成', 'success');
-
-          // 检查是否需要自动同步到远程仓库，只检查autoSync设置
-          if (apiConfig.value.autoSync) {
-            showToast('正在自动同步到远程仓库...', 'info');
-            triggerSync();
-          }
-        }
-      }, 300); // 300ms延迟，让过渡更加平滑
-    } else {
-      isGeneratingNote.value = false;
-      if (error) {
-        showToast(`笔记生成失败: ${error}`, 'error');
-      }
-    }
-  };
-
-  // 调用实际的AI笔记生成函数
-  generateAINotes(currentQuestion.value, handleCompletion, handleStreamChunk);
+  // 使用统一的请求生成函数，传入当前索引和手动标记
+  requestNoteGeneration(currentIndex.value, true);
 }
 
-// 检查并触发下一个问题的笔记生成
-function checkAndGenerateNextNote() {
-  // 使用 apiConfig 计算属性替代本地 config
-  if (!apiConfig.value?.enabled || !apiConfig.value?.autoGenerate || isGeneratingNote.value) return;
-
-  const nextIndex = currentIndex.value + 1;
-  if (nextIndex < localQuestions.value.length) {
-    const nextQ = localQuestions.value[nextIndex];
-    // 如果下一个问题存在且没有笔记，则请求生成
-    if (nextQ && (!nextQ.notes || nextQ.notes.trim() === '')) {
-      console.log(`Requesting background note generation for question ID: ${nextQ.id || (nextIndex + 1)}`);
-
-      // 使用实际的AI笔记生成函数
-      generateAINotes(nextQ, (finalNote, error) => {
-        if (error) {
-          console.warn(`Background note generation failed for QID ${nextQ.id}: ${error}`);
-        } else {
-          nextQ.notes = finalNote;
-          console.log(`Background note generation completed for QID ${nextQ.id}`);
-
-          // 将笔记保存到题库数据，而非单独保存
-          saveNotesToQuizData();
-          // 不再使用单独保存笔记的方法
-          // saveNotesToLocalStorage();
-        }
-      });
-    }
-  }
-}
 // 触发笔记同步
 function triggerSync() {
   if (syncStatus.value === 'pending') return;
@@ -1361,10 +1166,14 @@ function triggerSync() {
   showToast('笔记同步中...', 'info');
 
   try {
-    // 保存到本地存储 (使用 QuizStore 保存)
-    saveNotesToQuizData(); // 确保最新笔记已在QuizStore中
+    // 确保当前问题的最新笔记在同步前保存到 QuizStore
+    if (currentQuestion.value) {
+      // Note: saveNoteToQuestion already updates and saves, direct call might be redundant
+      // We assume notes are up-to-date in configService state due to prior saves
+      // configService.saveNoteToQuestion(currentQuestion.value.id, currentQuestion.value.notes);
+    }
 
-    // 获取GitHub配置 (从 configService 获取)
+    // 获取GitHub配置
     const githubConfig = configService.getGithubConfig();
     const owner = githubConfig.owner;
     const repo = githubConfig.repo;
@@ -1378,35 +1187,34 @@ function triggerSync() {
     if (!owner || !repo || !token) {
       syncStatus.value = 'error';
       showToast('请先配置GitHub仓库信息', 'error');
-      // 考虑打开设置模态框
       showSyncConfigModal.value = true;
       return;
     }
 
     // 构建API路径
-    let apiPath = path.replace(/\/+$/, '');
+    let apiPath = path.replace(/\/$/, '');
     if (!apiPath.endsWith('.json')) {
       apiPath = apiPath ? `${apiPath}/${syncQuizName}.json` : `${syncQuizName}.json`;
     }
 
     // 获取要同步的完整题库数据
-    const currentQuizData = QuizStore.getQuizData();
+    const currentQuizData = configService.getQuizData();
     if (!currentQuizData) {
       syncStatus.value = 'error';
       showToast('无法获取当前题库数据进行同步', 'error');
       return;
     }
 
-    // 准备要同步的内容 (整个题库)
-    const contentJson = JSON.stringify(currentQuizData, null, 2); // Pretty print JSON
+    // 准备要同步的内容
+    const contentJson = JSON.stringify(currentQuizData, null, 2);
     const encodedContent = btoa(unescape(encodeURIComponent(contentJson)));
 
     // 执行同步
-    forceSyncToGithub(owner, repo, branch, apiPath, token, encodedContent, useForceSync)
+    configService.pushQuizToGithub(syncQuizName, useForceSync)
       .then(success => {
         if (success) {
           syncStatus.value = 'success';
-          showToast('笔记已成功同步到GitHub', 'success');
+          showToast('题库已成功同步到GitHub', 'success'); // Message adjusted slightly
           setTimeout(() => syncStatus.value = 'idle', 2000);
         } else {
           syncStatus.value = 'error';
@@ -1417,89 +1225,16 @@ function triggerSync() {
         console.error('同步失败:', err);
         syncStatus.value = 'error';
         showToast(`同步失败: ${err instanceof Error ? err.message : '未知错误'}`, 'error');
+      })
+      .finally(() => {
+        // Ensure status is reset if promise resolved/rejected but wasn't success/error
+        // if (syncStatus.value === 'pending') syncStatus.value = 'error'; // Or 'idle'?
       });
+
   } catch (err) {
     console.error('同步笔记失败:', err);
     syncStatus.value = 'error';
     showToast(`同步失败: ${err instanceof Error ? err.message : '未知错误'}`, 'error');
-  }
-}
-
-// 强制同步到GitHub
-async function forceSyncToGithub(
-  owner: string,
-  repo: string,
-  branch: string,
-  path: string,
-  token: string,
-  encodedContent: string,
-  forceSync = true,
-  retryCount = 0,
-  maxRetries = 3
-): Promise<boolean> {
-  try {
-    const headers = {
-      'Authorization': `token ${token}`,
-      'Accept': 'application/vnd.github.v3+json'
-    };
-
-    // 1. 获取文件SHA（如果存在）
-    let sha: string | null = null;
-    try {
-      const fileResponse = await fetch(
-        `https://api.github.com/repos/${owner}/${repo}/contents/${path}?ref=${branch}`,
-        { headers }
-      );
-
-      if (fileResponse.ok) {
-        const fileData = await fileResponse.json();
-        sha = fileData.sha;
-      } else if (fileResponse.status !== 404) {
-        throw new Error(`获取文件信息失败: ${fileResponse.status} ${fileResponse.statusText}`);
-      }
-    } catch (error) {
-      const httpError = error as { status?: number };
-      if (httpError.status !== 404) {
-        throw error;
-      }
-    }
-
-    // 2. 准备提交内容
-    const requestBody: Record<string, unknown> = {
-      message: `${forceSync ? 'Force sync' : 'Sync'} notes at ${new Date().toISOString()}`,
-      content: encodedContent,
-      branch: branch
-    };
-
-    if (sha) {
-      requestBody.sha = sha;
-    }
-
-    // 3. 执行提交
-    const updateResponse = await fetch(
-      `https://api.github.com/repos/${owner}/${repo}/contents/${path}`,
-      {
-        method: 'PUT',
-        headers: { ...headers, 'Content-Type': 'application/json' },
-        body: JSON.stringify(requestBody)
-      }
-    );
-
-    if (updateResponse.ok) {
-      return true;
-    } else {
-      const errorData = await updateResponse.json();
-      // 处理冲突情况，尝试重试
-      if (updateResponse.status === 409 && retryCount < maxRetries) {
-        showToast(`检测到冲突，第 ${retryCount + 1} 次重试...`, 'info');
-        await new Promise(resolve => setTimeout(resolve, 1000)); // 等待1秒
-        return forceSyncToGithub(owner, repo, branch, path, token, encodedContent, forceSync, retryCount + 1, maxRetries);
-      }
-      throw new Error(`同步失败: ${errorData.message || updateResponse.statusText}`);
-    }
-  } catch (error) {
-    console.error('强制同步出错:', error);
-    throw error;
   }
 }
 
@@ -1511,22 +1246,24 @@ function openSyncConfigModal() {
 // 处理同步配置保存
 function handleSyncConfigSave(config: Record<string, unknown>) { // 使用 Record<string, unknown> 代替 any
   console.log('同步配置已保存:', config);
-  showToast('远程仓库配置已保存', 'success');
+  // UPDATE: Use configService to update Github config
+  configService.updateGithubConfig(config as Partial<GithubConfig>);
+  // showToast('远程仓库配置已保存', 'success'); // updateGithubConfig already shows toast
 }
 
 // 获取当前题库信息
 const currentQuizInfo = computed(() => {
-  // 使用QuizStore中的数据
-  const quizData = QuizStore.state.quizData;
-  const lastLoaded = QuizStore.getLastLoaded();
+  // UPDATE: Use configService
+  const quizData = configService.getQuizData();
+  const lastLoaded = configService.getLastLoadedQuiz();
 
   // 检查是否有有效的题库数据
-  const exists = !!quizData && !!lastLoaded.name;
+  const exists = !!quizData || !!lastLoaded?.name; // Adjusted logic slightly
 
   return {
-    name: lastLoaded.name || '',
-    source: lastLoaded.source || '',
-    isLocal: lastLoaded.source === 'local',
+    name: lastLoaded?.name || quizData?.title || '', // Prioritize last loaded name
+    source: lastLoaded?.source || '', // Assuming lastLoaded has source
+    isLocal: lastLoaded?.source === 'local',
     exists: exists
   };
 });
@@ -1535,14 +1272,23 @@ const currentQuizInfo = computed(() => {
 
 // 应用设置
 function applySettings(newSettings: AppSettings) {
-  // 更新configService中的设置
+  // UPDATE: Use configService
   configService.updateSettings(newSettings);
+}
 
-  // 同步本地配置状态
-  // Object.assign(config, configService.getQuizSettings()); // 'config' is no longer used
-  // config.fontFamily = configService.getUiSettings().fontFamily; // 'config' is no longer used
-  // config.animationEnabled = configService.getUiSettings().animationEnabled; // 'config' is no longer used
-  // config.apiConfig = configService.getApiConfig(); // 'config' is no longer used
+// NEW: Function to handle save event from ModalSettings
+function applySettingsFromModal(settings: { uiSettings: UiSettings, quizSettings: QuizSettings, debugEnabled: boolean }) {
+  // Update only the relevant parts using configService methods or updateSettings
+  configService.updateUiSettings(settings.uiSettings, false);
+  configService.updateQuizSettings(settings.quizSettings, false);
+  configService.setDebugEnabled(settings.debugEnabled, false);
+  showToast('通用设置已保存', 'success'); // Show toast after applying changes
+  // Note: updateSettings could also be used if ModalSettings returns AppSettings partial
+  // configService.updateSettings({
+  //   uiSettings: settings.uiSettings,
+  //   quizSettings: settings.quizSettings,
+  //   debugEnabled: settings.debugEnabled,
+  // });
 }
 
 // 打开当前问题的编辑器
@@ -1551,73 +1297,41 @@ function openCurrentQuestionEditor() {
     showToast('当前状态无法编辑题目', 'warning');
     return;
   }
-  questionToEdit.value = currentQuestion.value; // 设置要编辑的问题
+  questionToEdit.value = currentQuestion.value;
   showEditModal.value = true;
 }
 
-// 处理问题保存事件
+// 处理保存问题
 function handleSaveQuestion(updatedQuestionData: Partial<Question>) {
   if (!questionToEdit.value || !questionToEdit.value.id) return;
 
   // 获取需要更新的题目ID
-  const questionId = questionToEdit.value.id.toString();
-  const quizData = QuizStore.state.quizData;
-  if (!quizData || !quizData.chapters) {
-    showToast('无法保存，题库数据不完整', 'error');
-    return;
-  }
+  const questionId = questionToEdit.value.id; // Keep original type if possible
 
-  let questionUpdatedInStore = false;
-  // 在章节中寻找并更新问题 (更新 Store)
-  for (let i = 0; i < quizData.chapters.length; i++) {
-    const chapter = quizData.chapters[i];
-    const questionIndex = chapter.questions.findIndex(q => String(q.id) === questionId);
+  // UPDATE: Call configService.updateQuestion (to be implemented)
+  const success = configService.updateQuestion(questionId, updatedQuestionData);
+  // const success = true; // Placeholder until updateQuestion is implemented
+  // console.warn("configService.updateQuestion is not implemented yet. Skipping actual update.")
 
-    if (questionIndex !== -1) {
-      // 找到题目，更新它
-      const originalQuestion = chapter.questions[questionIndex];
-      const updatedQuestionInStore = { ...originalQuestion };
-
-      // 更新题目属性
-      Object.keys(updatedQuestionData).forEach(key => {
-        const typedKey = key as keyof Question;
-        if (updatedQuestionData[typedKey] !== undefined) {
-          (updatedQuestionInStore as Record<string, unknown>)[typedKey] = updatedQuestionData[typedKey];
-        }
-      });
-
-      // 更新题库中的题目
-      chapter.questions[questionIndex] = updatedQuestionInStore;
-      questionUpdatedInStore = true;
-      break; // 假设ID是唯一的
+  if (success) {
+    // Update local question list immediately for UI responsiveness
+    const localQuestionIndex = localQuestions.value.findIndex(q => q.id === questionId);
+    if (localQuestionIndex !== -1) {
+      // Create a new object to ensure reactivity
+      localQuestions.value[localQuestionIndex] = {
+        ...localQuestions.value[localQuestionIndex],
+        ...updatedQuestionData
+      };
     }
-  }
-
-  // 更新 localQuestions.value 以立即反映 UI
-  const localQuestionIndex = localQuestions.value.findIndex(q => String(q.id) === questionId);
-  if (localQuestionIndex !== -1) {
-    const updatedLocalQuestion = { ...localQuestions.value[localQuestionIndex] };
-    Object.keys(updatedQuestionData).forEach(key => {
-      const typedKey = key as keyof Question;
-      if (updatedQuestionData[typedKey] !== undefined) {
-        (updatedLocalQuestion as Record<string, unknown>)[typedKey] = updatedQuestionData[typedKey];
-      }
-    });
-    localQuestions.value[localQuestionIndex] = updatedLocalQuestion;
-
-    // 如果当前显示的是这个题目，确保 currentQuestion 也更新
-    if (currentQuestion.value && currentQuestion.value.id === questionId) {
-      // currentQuestion 是计算属性，它会从 localQuestions.value 自动更新
-    }
-  }
-
-
-  if (questionUpdatedInStore) {
     showToast('题目已更新', 'success');
-    QuizStore.saveToStorage(); // 保存到本地存储
   } else {
-    showToast('未找到要更新的题目', 'error');
+    showToast('更新题目失败', 'error');
   }
+
+
+  // REMOVE: Manual update logic for QuizStore and local list
+  // const quizData = QuizStore.state.quizData;
+  // ... (removed code block) ...
 }
 
 // 更新QuizStore源数据的函数
@@ -1630,7 +1344,7 @@ function updateQuizStoreSourceData(updatedQuestionData: Partial<Question>) {
   const questionId = String(updatedQuestionData.id); // 确保ID为字符串类型
 
   // 获取QuizStore中的题库数据
-  const quizData = QuizStore.getQuizData();
+  const quizData = configService.getQuizData();
   if (!quizData || !quizData.chapters) {
     console.error("无法更新题目：未找到题库数据");
     return;
@@ -1664,9 +1378,9 @@ function updateQuizStoreSourceData(updatedQuestionData: Partial<Question>) {
 
   if (found) {
     // 更新QuizStore中的数据
-    QuizStore.setQuizData(quizData);
+    configService.setQuizData(quizData);
     // 保存到存储
-    QuizStore.saveToStorage();
+    configService.saveQuizState();
     console.log("已更新QuizStore中的题目数据，ID:", updatedQuestionData.id);
   } else {
     console.warn("在QuizStore中未找到要更新的题目，ID:", updatedQuestionData.id);
@@ -1675,42 +1389,9 @@ function updateQuizStoreSourceData(updatedQuestionData: Partial<Question>) {
 
 // 存储相关方法
 
-// 保存当前答案状态到localStorage
-function saveCurrentAnswerState() {
-  if (!currentQuestion.value) return;
-  const question = currentQuestion.value;
-  const isCorrect = selectedAnswer.value === question.answer;
-
-  try {
-    const userAnswers = localStorage.getItem('userAnswers') || '{}';
-    const answersData: UserAnswersMap = JSON.parse(userAnswers);
-
-    answersData[String(question.id)] = {
-      answer: selectedAnswer.value || '',
-      isCorrect: isCorrect,
-      timestamp: Date.now()
-    };
-
-    localStorage.setItem('userAnswers', JSON.stringify(answersData));
-  } catch (err) {
-    console.error('保存答题状态失败:', err);
-  }
-}
-
-// 保存所有笔记到localStorage
-function saveNotesToLocalStorage() {
-  try {
-    // 使用QuizStore保存题库状态
-    QuizStore.saveToStorage();
-    console.log('笔记已保存到本地存储');
-  } catch (err) {
-    console.error('批量保存笔记失败:', err);
-  }
-}
-
-// 触发状态变化
+// 触发状态变更
 function emitStateChange() {
-  console.log("State change triggered internally for index:", currentIndex.value);
+  console.log("内部触发状态变更，索引:", currentIndex.value);
 }
 
 // --- 生命周期钩子 ---
@@ -1718,8 +1399,8 @@ onMounted(() => {
   try {
     mermaid.initialize({ startOnLoad: true });
 
-    // 初始化题库数据并根据章节过滤
-    loadQuizDataAndFilter(); // 调用新的函数
+    // UPDATE: Load initial quiz data
+    loadQuizDataAndFilter();
 
     // 设置键盘事件监听
     document.addEventListener('keydown', handleKeyPress);
@@ -1734,9 +1415,8 @@ onMounted(() => {
   }
 });
 
-// 初始化定时器函数
+// 初始化定时器
 function initTimer() {
-  // 实现定时器初始化逻辑
   console.log('定时器已初始化');
 }
 
@@ -1790,49 +1470,55 @@ function getOptionClass(optionKey: string): string {
 }
 
 // 判断选项是否为正确答案
-function isCorrectAnswerOption(answer: string | number | number[], optionKey: string): boolean {
-  // 如果answer是字符串类型
-  if (typeof answer === 'string') {
-    // 单选答案(一个字母)
-    if (/^[A-Z]$/.test(answer)) {
-      return answer === optionKey;
-    }
-    // 多选答案(多个字母)
-    if (/^[A-Z]+$/.test(answer)) {
-      return answer.includes(optionKey);
-    }
-    // 数字字符串
-    if (/^\d+$/.test(answer)) {
-      // 尝试两种可能的索引转换 (0-based或1-based)
-      const indexZeroBased = parseInt(answer);
-      const indexOneBased = parseInt(answer) - 1;
+function isCorrectAnswerOption(answer: string | number | number[] | undefined, optionKey: string): boolean {
+  if (answer === undefined || answer === null) return false;
 
-      // 选择合适的索引转换为字母
-      return String.fromCharCode(65 + indexZeroBased) === optionKey ||
-        String.fromCharCode(65 + indexOneBased) === optionKey;
-    }
-  }
+  // 计算选项的索引 ('A' -> 0, 'B' -> 1)
+  const optionIndex = optionKey.charCodeAt(0) - 65;
 
-  // 如果answer是数字
   if (typeof answer === 'number') {
-    return String.fromCharCode(65 + answer) === optionKey;
+    // 数字类型答案，比较索引
+    return answer === optionIndex;
+  } else if (typeof answer === 'string') {
+    // 字符串类型答案，直接比较
+    return answer === optionKey;
+  } else if (Array.isArray(answer)) {
+    if (answer.length === 0) return false;
+
+    // 处理答案为数组的情况
+    for (const item of answer) {
+      if (typeof item === 'number') {
+        if (item === optionIndex) {
+          return true;
+        }
+      } else if (typeof item === 'string') {
+        if (item === optionKey) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
-
+  console.warn("无法识别的答案格式:", answer, "对比值:", optionKey);
   return false;
+}
+
+// 比较选择的答案与正确答案
+function compareAnswers(selected: string | null, correct: string | number | number[] | undefined): boolean {
+  if (selected === null || correct === undefined) return false;
+  return isCorrectAnswerOption(correct, selected);
 }
 
 // 获取选项 Key 的 CSS 类 (主要用于对错标记)
 function getOptionKeyClass(optionKey: string): string {
   const question = currentQuestion.value;
-  if (!question || (!isCurrentAnswered.value && !quizSettings.value.reviewMode)) return ''; // 使用 quizSettings
+  if (!question || (!isCurrentAnswered.value && !quizSettings.value.reviewMode)) return '';
 
   const isCorrectAnswer = question.answer === optionKey;
   const isUserWrongAnswer = question.userAnswer === optionKey && question.userAnswer !== question.answer;
 
-  // 显示正确答案和错误选择的标记
-  // 正确答案只有在回顾模式或启用立即显示正确答案时才显示
-  if (isCorrectAnswer && (quizSettings.value.reviewMode || quizSettings.value.showCorrectAnswerImmediately)) { // 使用 quizSettings
+  if (isCorrectAnswer && (quizSettings.value.reviewMode || quizSettings.value.showCorrectAnswerImmediately)) {
     return 'page-quiz__option-number--correct';
   } else if (isUserWrongAnswer) {
     return 'page-quiz__option-number--incorrect';
@@ -1844,20 +1530,20 @@ function getOptionKeyClass(optionKey: string): string {
 let touchStartX = 0;
 let touchStartY = 0;
 
+// 处理触摸开始事件
 function handleTouchStart(e: TouchEvent) {
-  // 使用 configService 获取 swipeGestureEnabled
   if (!quizSettings.value.swipeGestureEnabled) return;
   touchStartX = e.touches[0].clientX;
   touchStartY = e.touches[0].clientY; // 记录Y轴起始位置
 }
 
+// 处理触摸结束事件
 function handleTouchEnd(e: TouchEvent) {
-  // 使用 configService 获取 swipeGestureEnabled
   if (!quizSettings.value.swipeGestureEnabled) return;
   const touchEndX = e.changedTouches[0].clientX;
-  const touchEndY = e.changedTouches[0].clientY; // 记录Y轴结束位置
+  const touchEndY = e.changedTouches[0].clientY;
   const diffX = touchStartX - touchEndX;
-  const diffY = touchStartY - touchEndY; // 计算Y轴差值
+  const diffY = touchStartY - touchEndY;
 
   // 获取屏幕尺寸，计算阈值
   const screenWidth = window.innerWidth;
@@ -1868,12 +1554,10 @@ function handleTouchEnd(e: TouchEvent) {
   // 检查滑动是否主要为水平方向，且超过阈值
   if (Math.abs(diffX) > horizontalThreshold && Math.abs(diffY) < verticalThreshold) {
     if (diffX > 0) { // 左滑 -> 下一题
-      // 使用 canGoNext 计算属性判断
       if (canGoNext.value) {
         nextQuestion();
       }
     } else { // 右滑 -> 上一题
-      // 使用 canGoPrev 计算属性判断
       if (canGoPrev.value) {
         previousQuestion();
       }
@@ -1881,6 +1565,7 @@ function handleTouchEnd(e: TouchEvent) {
   }
 }
 
+// 处理键盘按键事件
 function handleKeyPress(e: KeyboardEvent) {
   // 忽略输入框/文本域内的按键
   const activeElement = document.activeElement;
@@ -1892,7 +1577,7 @@ function handleKeyPress(e: KeyboardEvent) {
   const activeModal = document.querySelector('.modal.modal--active');
   if (activeModal) {
     if (e.key === 'Escape') {
-      // 手动关闭所有可能的模态框
+      // 关闭所有可能的模态框
       showOverviewModal.value = false;
       showModalStatistics.value = false;
       showModalSettings.value = false;
@@ -1914,7 +1599,7 @@ function handleKeyPress(e: KeyboardEvent) {
   // 空格键 提交/下一题
   else if (e.key === ' ') {
     e.preventDefault(); // 防页面滚动
-    if (canSubmit.value) { // 使用 canSubmit
+    if (canSubmit.value) {
       submitAnswer();
     } else if (canGoNext.value) {
       nextQuestion();
@@ -1934,10 +1619,12 @@ function handleKeyPress(e: KeyboardEvent) {
   }
 }
 
+// 设置键盘事件监听
 function setupKeyboardListeners() {
   document.addEventListener('keydown', handleKeyPress);
 }
 
+// 移除键盘事件监听
 function removeKeyboardListeners() {
   document.removeEventListener('keydown', handleKeyPress);
 }
@@ -1962,7 +1649,6 @@ async function initMermaid() {
 // 处理Mermaid图表渲染的统一函数
 function renderMermaidDiagrams(container?: HTMLElement) {
   try {
-    // 如果提供了容器，只处理容器内的图表
     const targets = container
       ? container.querySelectorAll('pre code.language-mermaid')
       : document.querySelectorAll('.mermaid');
@@ -1975,7 +1661,6 @@ function renderMermaidDiagrams(container?: HTMLElement) {
           const id = `mermaid-diagram-${Date.now()}-${index}`;
           el.id = id;
 
-          // 使用正确的类型处理mermaid.render回调 (移除第四个参数)
           mermaid.render(
             id,
             el.textContent || ''
@@ -1996,7 +1681,7 @@ function renderMermaidDiagrams(container?: HTMLElement) {
   }
 }
 
-// 渲染笔记中的特定容器内的Mermaid图表
+// 渲染笔记中特定容器内的Mermaid图表
 function renderMermaidInContainer(container: HTMLElement) {
   if (!container) return;
 
@@ -2006,7 +1691,6 @@ function renderMermaidInContainer(container: HTMLElement) {
       const id = `mermaid-diagram-${Date.now()}-${index}`;
       el.id = id;
 
-      // 修复类型问题 (移除第四个参数)
       mermaid.render(
         id,
         el.textContent || ''
@@ -2059,115 +1743,24 @@ function compareQuestionIds(a: Question, b: Question): number {
   return idA.localeCompare(idB);
 }
 
-// 新增：根据章节过滤题目
-function filterQuestionsByChapter(chapterTitle: string) {
-  const fullQuizData = QuizStore.getQuizData();
-  if (!fullQuizData || !fullQuizData.chapters) {
-    localQuestions.value = [];
-    error.value = '无法加载题库数据';
-    loading.value = false;
-    return;
-  }
-
-  let filteredQuestions: Question[] = [];
-  const userAnswers: UserAnswersMap = JSON.parse(localStorage.getItem('userAnswers') || '{}');
-
-  if (chapterTitle === 'all') {
-    // 加载所有章节题目
-    fullQuizData.chapters.forEach((chapter) => { // 移除 chapterIndex
-      if (!chapter.questions) return;
-
-      // 1. 复制并按 ID 排序当前章节的问题
-      const sortedQuestions = [...chapter.questions].sort(compareQuestionIds);
-
-      // 2. 遍历排序后的问题，编号并添加到 filteredQuestions
-      sortedQuestions.forEach((q, sortedIndex) => {
-        // 使用题目自身的 ID 或生成一个唯一 ID
-        const questionId = q.id || `q-${chapter.title}-${sortedIndex}`; // 使用章节标题和排序索引生成ID
-        const userAnswerRecord = userAnswers[questionId];
-        filteredQuestions.push({
-          ...q,
-          id: questionId, // 确保使用原始或生成的 ID
-          title: q.title || '',
-          options: q.options || [],
-          answer: typeof q.answer === 'string' ? q.answer : String(q.answer ?? ''),
-          question: q.question || q.title || '',
-          chapterTitle: chapter.title,
-          // number: q.number || (questionIndex + 1), // 移除旧逻辑
-          number: sortedIndex + 1, // 使用排序后的索引生成编号 (从1开始)
-          userAnswer: userAnswerRecord ? userAnswerRecord.answer : null
-        });
-      });
-    });
-  } else {
-    // 加载指定章节题目
-    const targetChapter = fullQuizData.chapters.find(c => c.title === chapterTitle);
-    if (targetChapter && targetChapter.questions) {
-      // 1. 复制并按 ID 排序当前章节的问题
-      const sortedQuestions = [...targetChapter.questions].sort(compareQuestionIds);
-
-      // 2. 遍历排序后的问题，编号并映射到 filteredQuestions
-      filteredQuestions = sortedQuestions.map((q, sortedIndex) => {
-        const questionId = q.id || `q-${chapterTitle}-${sortedIndex}`;
-        const userAnswerRecord = userAnswers[questionId];
-        return {
-          ...q,
-          id: questionId, // 确保使用原始或生成的 ID
-          title: q.title || '',
-          options: q.options || [],
-          answer: typeof q.answer === 'string' ? q.answer : String(q.answer ?? ''),
-          question: q.question || q.title || '',
-          chapterTitle: chapterTitle,
-          // number: q.number || (index + 1), // 移除旧逻辑
-          number: sortedIndex + 1, // 使用排序后的索引生成编号 (从1开始)
-          userAnswer: userAnswerRecord ? userAnswerRecord.answer : null
-        };
-      });
-    }
-  }
-
-  // 根据 quizSettings.randomMode 决定是否打乱 (保留此逻辑)
-  if (quizSettings.value.randomMode) {
-    // Fisher-Yates shuffle algorithm
-    for (let i = filteredQuestions.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [filteredQuestions[i], filteredQuestions[j]] = [filteredQuestions[j], filteredQuestions[i]];
-    }
-  }
-  // 移除原来的全局排序逻辑 (else 分支)
-  // else {
-  //   // 按 ID 排序 (简单字符串比较) - 已在章节内排序，此处移除
-  // }
-
-
-  localQuestions.value = filteredQuestions;
-  error.value = filteredQuestions.length === 0 ? '该章节下没有题目' : null;
-
-  // 更新错题记录 (基于新的题目列表)
-  wrongQuestionIds.value = filteredQuestions
-    .filter(q => q.userAnswer !== null && q.userAnswer !== undefined && q.userAnswer !== q.answer)
-    .map(q => String(q.id));
-}
-
 // 监听章节选择变化
 watch(selectedChapter, (newChapter) => {
   console.log(`章节切换到: ${newChapter}`);
-  loading.value = true; // 开始加载
+  loading.value = true;
   filterQuestionsByChapter(newChapter);
+
   // 重置状态
   currentIndex.value = 0;
   selectedAnswer.value = null;
   isQuizSubmitted.value = false;
-  // wrongQuestionIds 已经在 filterQuestionsByChapter 中更新
   isReviewingWrong.value = false;
 
   if (localQuestions.value.length > 0) {
-    loadQuestion(0); // 加载新题目集的第一题
+    loadQuestion(0);
   } else {
-    // 处理没有题目的情况，例如显示提示信息
     console.warn('切换章节后没有题目可加载');
   }
-  loading.value = false; // 加载完成
+  loading.value = false;
 });
 
 // 格式化题目文本，将选项字母后的顿号替换为空格
@@ -2180,7 +1773,460 @@ function formatQuestionText(text: string | undefined): string {
 // 新增：格式化题目文本，移除开头的题号
 function formatQuestionTitle(title: string | undefined): string {
   if (!title) return '';
-  // 移除开头的数字和点号 (e.g., "1. ", "02. ")
-  return title.replace(/^\d+\.\s*/, '');
+  // 修复正则表达式，移除反斜杠，正确匹配开头的数字和点号
+  return title.replace(/^\s*\d+\s*\.\s*/, '');
+}
+// NEW: Unified function to request note generation
+function requestNoteGeneration(targetIndex: number, isManual: boolean) {
+  console.debug(`[DEBUG] 请求生成笔记: 目标索引=${targetIndex}, 手动=${isManual}, 当前索引=${currentIndex.value}, activeGenIndex=${activeGenerationIndex.value}, isGenerating=${isGenerating.value}`);
+
+  const questionToGenerate = localQuestions.value[targetIndex];
+
+  // 基本检查
+  if (!questionToGenerate || isQuizSubmitted.value) {
+    console.warn(`忽略索引 ${targetIndex} 的生成请求：无问题或测验已提交`);
+    return;
+  }
+
+  // 已有笔记且不是手动请求时跳过
+  if (!isManual && questionToGenerate.notes && questionToGenerate.notes.trim() !== '') {
+    console.log(`跳过索引 ${targetIndex} 的生成，已存在笔记`);
+    // 如果是自动生成跳过，也需要检查下一个
+    if (!isManual) {
+      checkAndTriggerAutoGeneration();
+    }
+    return;
+  }
+
+  // 检查是否已有生成任务正在进行
+  if (isGenerating.value || activeGenerationIndex.value !== null) {
+    const currentGenIndex = activeGenerationIndex.value;
+    // 避免对同一题目的重复手动请求提示过多
+    if (!(isManual && currentGenIndex === targetIndex)) {
+      showToast(`已有笔记生成任务进行中 (题目 ${currentGenIndex !== null ? currentGenIndex + 1 : '?'})`, 'info');
+    }
+    console.warn(`忽略索引 ${targetIndex} 的生成请求。当前活跃生成索引: ${currentGenIndex}`);
+    return;
+  }
+
+  // 移除对 isGeneratingNextInBackground 的检查
+
+  // 开始生成
+  console.debug(`[DEBUG] 开始生成笔记: 设置activeGenerationIndex=${targetIndex}, isGenerating=true`);
+  activeGenerationIndex.value = targetIndex;
+  isGenerating.value = true; // 用于UI显示
+  forceShowNotes.value = true;
+  showToast(`开始为题目 ${targetIndex + 1} 生成笔记...`, 'info');
+
+  // 清除此问题之前的笔记
+  questionToGenerate.notes = '';
+
+  // 仅在当前查看的是被清除的问题时立即渲染
+  if (currentIndex.value === targetIndex) {
+    renderNotesForCurrentQuestion();
+  }
+
+  let lastRenderTime = 0;
+  const baseThrottleDelay = 100;
+  let throttleDelay = baseThrottleDelay;
+  let pendingChunks = '';
+  let renderTimeout: number | null = null;
+  let autoSaveTimeout: number | null = null;
+
+  // 自动保存函数
+  const autoSaveNotes = () => {
+    if (activeGenerationIndex.value === targetIndex && questionToGenerate.notes) {
+      configService.saveNoteToQuestion(questionToGenerate.id, questionToGenerate.notes);
+      // 添加：保存整个测验状态，确保笔记持久化
+      configService.saveQuizState();
+      autoSaveTimeout = window.setTimeout(autoSaveNotes, 5000);
+    } else {
+      if (autoSaveTimeout) clearTimeout(autoSaveTimeout);
+      autoSaveTimeout = null;
+    }
+  };
+  autoSaveTimeout = window.setTimeout(autoSaveNotes, 5000); // 开始自动保存
+
+  // 处理流式响应
+  const handleStreamChunk: StreamCallback = (chunk, streamTargetIndex) => {
+    console.debug(`[DEBUG] handleStreamChunk: 接收到 chunk, 目标索引=${streamTargetIndex}, 当前期望索引=${targetIndex}, chunk='${chunk.substring(0, 50)}...'`);
+    // 确保更新对应的问题对象
+    if (streamTargetIndex !== targetIndex) {
+      console.debug(`[DEBUG] handleStreamChunk: 索引不匹配，忽略 chunk (期望=${targetIndex})`);
+      return;
+    }
+
+    console.log(`[LOG] handleStreamChunk: Called for index ${targetIndex} with chunk: ${chunk.substring(0, 50)}...`); // 添加日志
+
+    // 更新问题笔记
+    questionToGenerate.notes = (questionToGenerate.notes || '') + chunk;
+    pendingChunks += chunk;
+    console.log(`[LOG] handleStreamChunk: 更新笔记 for index ${targetIndex}, 新长度 ${questionToGenerate.notes?.length}`); // 添加日志
+
+    // 定期保存 (流式时也保存)
+    if (pendingChunks.length > 100) {
+      console.debug(`[DEBUG] handleStreamChunk: 达到保存阈值，保存笔记 for index ${targetIndex}`);
+      configService.saveNoteToQuestion(questionToGenerate.id, questionToGenerate.notes); // Use configService
+      // 添加：保存整个测验状态，确保笔记持久化
+      configService.saveQuizState();
+    }
+
+    console.debug(`[DEBUG] handleStreamChunk: 检查是否渲染, apiConfig.streamOutput=${apiConfig.value.streamOutput}, currentIndex=${currentIndex.value}, streamTargetIndex=${streamTargetIndex}`);
+    // 仅当当前查看的题目是正在生成的题目时才渲染更新
+    if (apiConfig.value.streamOutput && currentIndex.value === streamTargetIndex) {
+      const now = Date.now();
+      const timeSinceLastRender = now - lastRenderTime;
+      const hasImportantMarkers = /\n|```|\*\*|#|>|-\s|1\.|\<|!\[/.test(pendingChunks);
+
+      if (pendingChunks.length > 100) throttleDelay = baseThrottleDelay * 2;
+      else if (hasImportantMarkers) throttleDelay = 0;
+      else throttleDelay = baseThrottleDelay;
+
+      if (renderTimeout) clearTimeout(renderTimeout);
+
+      if (timeSinceLastRender > throttleDelay || hasImportantMarkers) {
+        console.debug(`[DEBUG] handleStreamChunk: 立即渲染 (节流=${throttleDelay}ms, 间隔=${timeSinceLastRender}ms, 有标记=${hasImportantMarkers})`);
+        renderNotesForCurrentQuestion();
+        lastRenderTime = now;
+        pendingChunks = '';
+        renderTimeout = null;
+      } else {
+        console.debug(`[DEBUG] handleStreamChunk: 延迟渲染 (节流=${throttleDelay}ms, 间隔=${timeSinceLastRender}ms)`);
+        renderTimeout = window.setTimeout(() => {
+          console.debug(`[DEBUG] handleStreamChunk: 执行延迟渲染`);
+          if (pendingChunks.length > 0 && activeGenerationIndex.value === streamTargetIndex && currentIndex.value === streamTargetIndex) {
+            renderNotesForCurrentQuestion();
+            pendingChunks = '';
+          }
+          renderTimeout = null;
+        }, throttleDelay - timeSinceLastRender);
+      }
+    }
+  };
+
+  // 处理完成回调
+  const handleCompletion: CompletionCallback = (finalNote, completedIndex, error) => {
+    console.debug(`[DEBUG] 笔记生成完成回调: 完成索引=${completedIndex}, 当前活跃索引=${activeGenerationIndex.value}, 匹配=${activeGenerationIndex.value === completedIndex}, 目标索引=${targetIndex}`);
+    console.log(`[LOG] handleCompletion: Called for index ${completedIndex}. Final Note Length: ${finalNote?.length || 0}. Error: ${error}`); // 添加日志，打印 finalNote 长度和错误
+
+    // 清理定时器
+    if (renderTimeout) clearTimeout(renderTimeout);
+    if (autoSaveTimeout) clearTimeout(autoSaveTimeout);
+    autoSaveTimeout = null;
+
+    // 仅处理匹配的完成事件 (检查 activeGenerationIndex 和 completedIndex)
+    if (activeGenerationIndex.value !== completedIndex) {
+      console.warn(`[WARN] 忽略索引 ${completedIndex} 的完成回调。当前活跃生成索引为 ${activeGenerationIndex.value}`);
+      return;
+    }
+
+    try {
+      // 处理完成
+      questionToGenerate.notes = finalNote;
+      // UPDATE: Use configService to save final note
+      if (questionToGenerate && questionToGenerate.id) {
+        const finalSaveSuccess = configService.saveNoteToQuestion(questionToGenerate.id, finalNote);
+        if (!finalSaveSuccess) {
+          console.error(`[ERROR] Final save failed for index ${targetIndex}`);
+        } else {
+          // 添加：保存整个测验状态，确保笔记持久化
+          configService.saveQuizState();
+        }
+      } else {
+        console.error(`[ERROR] Cannot perform final save for index ${targetIndex}, missing question or ID`);
+      }
+      console.debug(`[DEBUG] 完成回调: 最终笔记已保存 for index ${completedIndex}`);
+
+      // **重要：渲染当前题目**
+      // 只有当完成的是当前正在查看的题目时，才需要强制重新渲染
+      if (currentIndex.value === completedIndex) {
+        console.debug(`[DEBUG] 完成回调: 完成的是当前题目，准备渲染笔记`);
+        nextTick(() => renderNotesForCurrentQuestion());
+      } else {
+        console.debug(`[DEBUG] 完成回调: 完成的不是当前题目 (${currentIndex.value})，不主动渲染`);
+      }
+
+      if (error) {
+        showToast(`题目 ${completedIndex + 1} 笔记生成失败: ${error}`, 'error');
+        console.error(`[ERROR] 笔记生成失败 for index ${completedIndex}:`, error);
+      } else {
+        showToast(`题目 ${completedIndex + 1} 笔记生成完成`, 'success');
+        console.log(`[LOG] 笔记生成成功 for index ${completedIndex}`);
+        // 检查自动同步 - 仅当完成的是当前问题或当前问题的下一题时才自动同步
+        const currentApiConfig = configService.getApiConfig();
+        if (currentApiConfig.autoSync && !isManual &&
+          (completedIndex === currentIndex.value || completedIndex === currentIndex.value + 1)) {
+          showToast('正在自动同步到远程仓库...', 'info');
+          triggerSync();
+        }
+      }
+    } finally {
+      // **重要：重置状态（必须在 finally 中确保执行）**
+      console.debug(`[DEBUG] 重置生成状态: activeGenerationIndex从${activeGenerationIndex.value}变为null, isGenerating=false`);
+      activeGenerationIndex.value = null;
+      isGenerating.value = false;
+
+      // **重要：在状态重置后检查下一个自动生成**
+      checkAndTriggerAutoGeneration();
+    }
+  };
+
+  // 发起API调用
+  generateAINotes(questionToGenerate, targetIndex, handleCompletion, handleStreamChunk);
+}
+
+// 组件卸载时清理事件监听器
+onUnmounted(() => {
+  document.removeEventListener('keydown', handleKeyPress);
+
+  // 清理定时器
+  if (toastTimer) {
+    clearTimeout(toastTimer);
+    toastTimer = null;
+  }
+});
+
+// 检查下一个自动生成
+function checkAndTriggerAutoGeneration() {
+  // 使用配置服务获取当前API配置
+  const currentApiConfig = configService.getApiConfig();
+
+  // 如果自动生成未启用或测验已提交，直接返回
+  if (!currentApiConfig.enabled || !currentApiConfig.autoGenerate || isQuizSubmitted.value) return;
+
+  // 检查是否有下一个问题可以生成笔记
+  const nextIndex = currentIndex.value + 1;
+  if (nextIndex < localQuestions.value.length) {
+    const nextQuestion = localQuestions.value[nextIndex];
+    // 检查下一题是否存在、是否已有笔记、是否正在生成中
+    if (nextQuestion &&
+      (!nextQuestion.notes || nextQuestion.notes.trim() === '') &&
+      activeGenerationIndex.value !== nextIndex) {
+      // 给下一个问题自动生成笔记
+      console.log(`准备为题目索引 ${nextIndex} 生成笔记`);
+      showToast(`将为题目 ${nextIndex + 1} 生成笔记`, 'info');
+      requestNoteGeneration(nextIndex, false);
+    }
+  }
+}
+
+// 清除答案
+function clearAnswers() {
+  // 清除localStorage中的答案
+  const userAnswers = localStorage.getItem('userAnswers');
+  if (userAnswers) {
+    const answersData = JSON.parse(userAnswers);
+    // 清除该章节题目的答案
+    localQuestions.value.forEach(q => {
+      if (answersData[q.id || '']) {
+        delete answersData[q.id || ''];
+      }
+    });
+    localStorage.setItem('userAnswers', JSON.stringify(answersData));
+  }
+
+  // 清除内存中的答案
+  localQuestions.value.forEach(q => {
+    q.userAnswer = null;
+  });
+
+  // 清除当前视图状态
+  selectedAnswer.value = null;
+  isQuizSubmitted.value = false;
+  isReviewingWrong.value = false;
+  wrongQuestionIds.value = [];
+  showToast('已清除所有答案', 'success');
+}
+
+// --- Mermaid Instance ---
+// 使用Marked实例进行Markdown渲染
+const markedInstance = new Marked({
+  gfm: true,
+  breaks: true
+});
+
+// 预处理函数：在markdown渲染前替换文本
+function processMarkdown(markdown: string): string {
+  // 如果输入为空，直接返回
+  if (!markdown) return '';
+
+  // 处理数字列表：匹配以数字+点+空格开头的行（如"1. ", "2. "等）
+  // 替换为HTML有序列表格式，保留原始数字
+  let processedText = markdown;
+
+
+
+  // 查找连续的数字列表项
+  // 修正：直接使用正则，精确匹配以数字+点+空格开头的行，不包含HTML标签的行
+  const listPattern = /^(\d+)\.\s+(.*?)$/gm;
+  const htmlPattern = /^<\w+.*>.*$/;
+
+  // 使用数组存储最终结果
+  const resultArray = [];
+  let currentListItems = [];
+
+  // 按行处理
+  const lines = processedText.split('\n');
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    // 精确匹配数字列表项（排除以HTML标签开头的行）
+    const isListItem = line.match(/^\d+\.\s+/) && !line.match(/^<\w+/);
+
+    if (isListItem) {
+      // 是列表项，添加到当前列表集合
+      const match = line.match(/^(\d+)\.\s+(.*)/);
+      if (match) {
+        const [, number, content] = match;
+        currentListItems.push({ number, content });
+      }
+    } else {
+      // 不是列表项，先处理当前收集的列表项
+      if (currentListItems.length > 0) {
+        // 创建HTML列表
+        const listHTML = '<ol>' +
+          currentListItems.map(item =>
+            `<li value="${item.number}">${item.content}</li>`
+          ).join('') +
+          '</ol>';
+        resultArray.push(listHTML);
+        currentListItems = []; // 清空列表项
+      }
+
+      // 然后添加当前非列表行
+      resultArray.push(line);
+    }
+  }
+
+  // 处理最后收集的列表项（如果有）
+  if (currentListItems.length > 0) {
+    const listHTML = '<ol>' +
+      currentListItems.map(item =>
+        `<li value="${item.number}">${item.content}</li>`
+      ).join('') +
+      '</ol>';
+    resultArray.push(listHTML);
+  }
+
+  // 合并最终结果
+  processedText = resultArray.join('\n');
+
+  // 处理加粗语法：将**xxx**替换为<strong>xxx</strong>
+  processedText = processedText.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
+  // 处理行末两个空格，替换为<br>标签
+  processedText = processedText.replace(/  \n/g, '<br>\n');
+
+  // 检测连续两个换行符并替换为HTML段落标签
+  processedText = processedText.replace(/\n\n/g, '</p><p>');
+  // 确保文本以段落标签开始和结束
+  processedText = '<p>' + processedText + '</p>';
+
+  return processedText;
+}
+
+// 添加预处理钩子
+markedInstance.use({
+  hooks: {
+    preprocess: processMarkdown
+  }
+});
+
+// --- 辅助方法 ---
+
+// 新增：根据章节过滤题目
+function filterQuestionsByChapter(chapterTitle: string) {
+  // UPDATE: Use configService
+  const fullQuizData = configService.getQuizData();
+  if (!fullQuizData || !fullQuizData.chapters) {
+    localQuestions.value = [];
+    error.value = '无法加载题库数据';
+    loading.value = false;
+    return;
+  }
+
+  let filteredQuestions: Question[] = [];
+  // REMOVE: const userAnswers: UserAnswersMap = getUserAnswers(); - Answers are part of quizData
+
+  if (chapterTitle === 'all') {
+    // 加载所有章节题目
+    fullQuizData.chapters.forEach((chapter) => {
+      if (!chapter.questions) return;
+
+      // 复制并按 ID 排序当前章节的问题
+      const sortedQuestions = [...chapter.questions].sort(compareQuestionIds);
+
+      // 遍历排序后的问题，编号并添加到 filteredQuestions
+      sortedQuestions.forEach((q, sortedIndex) => {
+        // 使用题目自身的 ID 或生成一个唯一 ID
+        const questionId = q.id || `q-${chapter.title}-${sortedIndex}`;
+        // REMOVE: const userAnswerRecord = userAnswers[questionId]; - Get userAnswer from q itself
+        filteredQuestions.push({
+          ...q,
+          id: questionId,
+          title: q.title || '',
+          options: q.options || [],
+          answer: q.answer, // Keep original answer type
+          explanation: q.explanation || '',
+          notes: q.notes || '',
+          question: q.question || q.title || '',
+          chapterTitle: chapter.title,
+          number: sortedIndex + 1, // 使用排序后的索引生成编号
+          // userAnswer is already part of 'q' from configService state
+          // REMOVE: userAnswer: userAnswerRecord ? userAnswerRecord.answer : null
+        });
+      });
+    });
+  } else {
+    // 加载指定章节题目
+    const targetChapter = fullQuizData.chapters.find(c => c.title === chapterTitle);
+    if (targetChapter && targetChapter.questions) {
+      // 复制并按 ID 排序当前章节的问题
+      const sortedQuestions = [...targetChapter.questions].sort(compareQuestionIds);
+
+      // 遍历排序后的问题，编号并映射到 filteredQuestions
+      filteredQuestions = sortedQuestions.map((q, sortedIndex) => {
+        const questionId = q.id || `q-${chapterTitle}-${sortedIndex}`;
+        // REMOVE: const userAnswerRecord = userAnswers[questionId];
+        return {
+          ...q,
+          id: questionId,
+          title: q.title || '',
+          options: q.options || [],
+          answer: q.answer, // Keep original answer type
+          explanation: q.explanation || '',
+          notes: q.notes || '',
+          question: q.question || q.title || '',
+          chapterTitle: chapterTitle,
+          number: sortedIndex + 1,
+          // userAnswer is already part of 'q' from configService state
+          // REMOVE: userAnswer: userAnswerRecord ? userAnswerRecord.answer : null
+        };
+      });
+    }
+  }
+
+  // 根据配置决定是否打乱题目顺序
+  if (quizSettings.value.randomMode) {
+    // Fisher-Yates 洗牌算法
+    for (let i = filteredQuestions.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [filteredQuestions[i], filteredQuestions[j]] = [filteredQuestions[j], filteredQuestions[i]];
+      // 更新打乱后的 number
+      // filteredQuestions[i].number = i + 1;
+      // filteredQuestions[j].number = j + 1;
+    }
+    // Re-number after shuffle
+    filteredQuestions.forEach((q, index) => q.number = index + 1);
+  }
+
+  localQuestions.value = filteredQuestions;
+  error.value = filteredQuestions.length === 0 ? '该章节下没有题目' : null;
+
+  wrongQuestionIds.value = filteredQuestions
+    .filter(q => q.userAnswer !== null && q.userAnswer !== undefined && !compareAnswers(q.userAnswer, q.answer))
+    .map(q => String(q.id));
+
+  configService.setQuizConfig({ chapterIndex: chapterTitle });
 }
 </script>

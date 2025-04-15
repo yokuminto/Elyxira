@@ -122,6 +122,19 @@ export enum QuizCategoryType {
   REMOTE = 'remote', // 远程
 }
 
+// 笔记处理结果接口
+export interface NotesRenderResult {
+  contentHtml: string
+}
+
+// 笔记生成回调接口
+export interface NotesGenerationCallbacks {
+  onStart?: () => void
+  onProgress?: (chunk: string) => void
+  onCompletion?: (note: string) => void
+  onError?: (error: Error) => void
+}
+
 // 测验章节接口
 export interface Chapter {
   title: string
@@ -223,6 +236,7 @@ export interface QuizConfig {
 import { showToast } from '@/utils/toast'
 import { reactive, readonly } from 'vue'
 import { quizParserService } from './service-quiz-parser'
+import { marked, Marked } from 'marked' // Import Marked type
 
 // 配置存储的唯一键名
 const SETTINGS_KEY = 'app_settings'
@@ -303,7 +317,19 @@ const DEFAULT_QUIZ_CONFIG: QuizConfig = {
 
 // Helper function to generate a default preset
 function createDefaultPreset(config: ApiConfig, name = 'Default'): ApiPreset {
-  return { name, ...config }
+  const baseConfig = { ...DEFAULT_API_CONFIG, ...config }
+  return { name, ...baseConfig }
+}
+
+// 定义API请求参数的接口
+interface ApiRequestParams {
+  model: string
+  messages: { role: string; content: string }[]
+  max_tokens: number
+  temperature: number
+  top_p: number
+  stream: boolean
+  user: string
 }
 
 /**
@@ -360,24 +386,6 @@ class ConfigService {
       const storedSettings = localStorage.getItem(SETTINGS_KEY)
       if (storedSettings) {
         const parsed = JSON.parse(storedSettings)
-        // 迁移旧数据结构
-        if (parsed.apiConfig && !parsed.apiPresets) {
-          parsed.apiPresets = [createDefaultPreset(parsed.apiConfig)]
-          parsed.activeApiPresetName = 'Default'
-          delete parsed.apiConfig // 删除旧字段
-        }
-        // 确保至少有一个预设存在
-        if (!parsed.apiPresets || parsed.apiPresets.length === 0) {
-          parsed.apiPresets = [createDefaultPreset(DEFAULT_API_CONFIG)]
-          parsed.activeApiPresetName = 'Default'
-        }
-        // 确保活动预设名称有效
-        if (
-          !parsed.activeApiPresetName ||
-          !parsed.apiPresets.some((p: ApiPreset) => p.name === parsed.activeApiPresetName)
-        ) {
-          parsed.activeApiPresetName = parsed.apiPresets[0].name
-        }
 
         return this.mergeWithDefaults(parsed)
       }
@@ -978,17 +986,7 @@ class ConfigService {
           // 如果导入的活动名称无效，则使用第一个导入的预设名称
           newSettings.activeApiPresetName = newSettings.apiPresets[0].name
         }
-      } else if ('apiSettings' in typedConfig && typedConfig.apiSettings) {
-        // 兼容旧格式：如果只有 apiSettings，将其转换为单个预设
-        console.warn("导入旧版配置格式，将 apiSettings 转换为 'Imported Default' 预设。")
-        // Assuming the structure is compatible with Partial<ApiConfig>
-        const importedApiConfig = typedConfig.apiSettings as Partial<ApiConfig> // Use Partial<ApiConfig> or a more specific type if known
-        newSettings.apiPresets = [
-          createDefaultPreset({ ...DEFAULT_API_CONFIG, ...importedApiConfig }, 'Imported Default'),
-        ]
-        newSettings.activeApiPresetName = 'Imported Default'
       }
-      // 如果两者都没有，保留当前预设或默认值（已经在 newSettings 初始化时处理）
 
       // --- 导入 Repo Settings ---
       if (typedConfig.repoSettings) {
@@ -1238,7 +1236,6 @@ class ConfigService {
 
   /**
    * 获取最后一次加载的题库信息
-   * @returns 题库信息或null
    */
   public getLastLoadedQuiz(): { name: string; source: string } | null {
     if (this.quizState.lastLoaded.name) {
@@ -1246,13 +1243,10 @@ class ConfigService {
     }
 
     const data = localStorage.getItem('lastLoadedQuiz')
-
     if (!data) return null
 
     try {
-      const result = JSON.parse(data)
-      this.quizState.lastLoaded = result
-      return result
+      return JSON.parse(data)
     } catch (e) {
       return null
     }
@@ -1276,9 +1270,6 @@ class ConfigService {
     localStorage.removeItem('lastLoadedQuiz')
     localStorage.removeItem('quizData')
 
-    // 清除旧版本的独立笔记存储
-    localStorage.removeItem('quizNotes')
-
     // 清除状态
     this.quizState.quizData = null
     this.quizState.lastLoaded = { name: '', source: '' }
@@ -1287,16 +1278,6 @@ class ConfigService {
     showToast('已清除所有题库缓存', 'success')
   }
 
-  /**
-   * 清除旧版本的独立笔记存储
-   */
-  public clearLegacyNotes(): void {
-    localStorage.removeItem('quizNotes')
-  }
-
-  /***********************************************
-   * 题库状态管理方法
-   ***********************************************/
   /**
    * 获取题库数据
    */
@@ -1423,36 +1404,20 @@ class ConfigService {
    * 更新答题统计
    */
   public updateQuizStats(
-    param:
-      | boolean
-      | Partial<{
-          totalAnswered: number
-          correctCount: number
-          wrongCount: number
-        }>,
+    param: Partial<{
+      totalAnswered: number
+      correctCount: number
+      wrongCount: number
+    }>,
   ): void {
-    // 处理旧版本参数（单个布尔值表示是否答对）
-    if (typeof param === 'boolean') {
-      this.quizState.stats.totalAnswered++
-
-      if (param) {
-        // isCorrect
-        this.quizState.stats.correctCount++
-      } else {
-        this.quizState.stats.wrongCount++
-      }
+    if (param.totalAnswered !== undefined) {
+      this.quizState.stats.totalAnswered = param.totalAnswered
     }
-    // 处理新版本参数（统计对象）
-    else {
-      if (param.totalAnswered !== undefined) {
-        this.quizState.stats.totalAnswered = param.totalAnswered
-      }
-      if (param.correctCount !== undefined) {
-        this.quizState.stats.correctCount = param.correctCount
-      }
-      if (param.wrongCount !== undefined) {
-        this.quizState.stats.wrongCount = param.wrongCount
-      }
+    if (param.correctCount !== undefined) {
+      this.quizState.stats.correctCount = param.correctCount
+    }
+    if (param.wrongCount !== undefined) {
+      this.quizState.stats.wrongCount = param.wrongCount
     }
 
     // 更新今日活动
@@ -1806,6 +1771,160 @@ class ConfigService {
     showToast('通用设置已保存', 'success')
   }
 
+  /**
+   * 保存题目笔记到当前测验数据
+   * @param questionId 问题ID
+   * @param noteContent 笔记内容
+   * @returns 是否保存成功
+   */
+  public saveNoteToQuestion(
+    questionId: string | number | undefined,
+    noteContent: string | undefined,
+  ): boolean {
+    if (!this.quizState.quizData || !questionId) return false
+
+    const foundQuestion = this.findQuestionById(questionId)
+    if (foundQuestion) {
+      foundQuestion.notes = noteContent
+      this.saveQuizToStorage(this.quizState.quizData.title, this.quizState.quizData)
+      return true
+    }
+    return false
+  }
+
+  /**
+   * 获取题目笔记
+   * @param questionId 问题ID
+   * @returns 笔记内容，如果未找到问题或笔记不存在则返回空字符串
+   */
+  public getNoteByQuestionId(questionId: string | number | undefined): string {
+    if (!questionId) return ''
+
+    const question = this.findQuestionById(questionId)
+    return question?.notes || ''
+  }
+
+  /**
+   * 渲染笔记内容为HTML
+   */
+  public async renderNote(
+    noteContent: string,
+    isGenerating: boolean,
+    marked: Marked,
+  ): Promise<NotesRenderResult> {
+    const mainContent = noteContent || ''
+
+    if (!mainContent && !isGenerating) {
+      return {
+        contentHtml: '<p class="page-quiz__notes-placeholder">这道题目还没有笔记...</p>',
+      }
+    }
+
+    let mainHtmlContent = mainContent ? await marked.parse(mainContent) : ''
+
+    if (!mainHtmlContent) {
+      mainHtmlContent = isGenerating
+        ? '<p class="page-quiz__notes-placeholder">思考中...</p>'
+        : '<p class="page-quiz__notes-placeholder">这道题目还没有笔记...</p>'
+    }
+
+    return {
+      contentHtml: mainHtmlContent,
+    }
+  }
+
+  /**
+   * 通过ID查找问题
+   */
+  private findQuestionById(questionId: string | number | undefined): Question | undefined {
+    if (!this.quizState.quizData || !questionId) return undefined
+
+    for (const chapter of this.quizState.quizData.chapters) {
+      const question = chapter.questions.find((q) => q.id === questionId)
+      if (question) return question
+    }
+    return undefined
+  }
+
+  /**
+   * 格式化生成的笔记内容
+   */
+  public formatNote(content: string): string {
+    return content.trim()
+  }
+
+  /**
+   * 获取生成笔记的API请求参数
+   */
+  public getNotesGenerationRequestParams(question: Question): ApiRequestParams {
+    const apiConfig = this.getApiConfig()
+    const model = apiConfig.model || ''
+    const temperature = apiConfig.temperature || 0.7
+    const maxTokens = apiConfig.maxTokens || 2000
+    const topP = apiConfig.topP || 1
+    const systemPrompt = apiConfig.systemPrompt || ''
+
+    // 生成提示词
+    let prompt = `<question>\n${question.title}\n\n`
+
+    if (question.options && question.options.length > 0) {
+      question.options.forEach((option, index) => {
+        const label = String.fromCharCode(65 + index) // A, B, C, D...
+        prompt += `${label}. ${option}\n`
+      })
+    }
+
+    if (question.answer !== undefined) {
+      let answerText = ''
+      if (Array.isArray(question.answer)) {
+        answerText = question.answer
+          .map((ans) => {
+            if (typeof ans === 'number') {
+              return String.fromCharCode(65 + ans)
+            }
+            return ans
+          })
+          .join(', ')
+      } else if (typeof question.answer === 'number') {
+        answerText = String.fromCharCode(65 + question.answer)
+      } else {
+        answerText = question.answer
+      }
+      prompt += `\n正确答案: ${answerText}`
+    }
+
+    if (question.explanation) {
+      prompt += `\n解析: ${question.explanation}`
+    }
+
+    prompt += '\n</question>\n请严格根据提示词生成本题的笔记内容。'
+
+    // 构建消息数组
+    const messages = [
+      {
+        role: 'system',
+        content: systemPrompt,
+      },
+      {
+        role: 'user',
+        content: prompt,
+      },
+    ]
+
+    // 返回符合OpenRouter格式的请求参数
+    const requestParams: ApiRequestParams = {
+      model,
+      messages,
+      max_tokens: maxTokens,
+      temperature,
+      top_p: topP,
+      stream: apiConfig.streamOutput ?? false,
+      user: 'elyxira-quiz-user',
+    }
+
+    return requestParams
+  }
+
   /***********************************************
    * 题库处理工具方法
    ***********************************************/
@@ -1877,21 +1996,17 @@ class ConfigService {
   }
 
   /**
-   * 增强版题库数据验证函数，提高兼容性
-   * 验证题库数据是否符合要求的结构
+   * 验证题库数据结构
    */
   public enhancedValidQuizData(data: Record<string, unknown> | QuizData): boolean {
     try {
-      // 使用题库解析器服务进行解析和验证
       const parsedData = quizParserService.parse(data)
 
-      // 解析成功后基本检查，确保有章节和问题
       if (!parsedData || !Array.isArray(parsedData.chapters) || parsedData.chapters.length === 0) {
         console.error('验证失败: 解析后数据缺少有效章节')
         return false
       }
 
-      // 检查是否至少有一个章节包含问题
       const hasQuestions = parsedData.chapters.some(
         (chapter) => Array.isArray(chapter.questions) && chapter.questions.length > 0,
       )
@@ -1939,6 +2054,32 @@ class ConfigService {
       }
       reader.readAsText(file)
     })
+  }
+
+  /**
+   * 更新问题数据
+   */
+  public updateQuestion(
+    questionId: string | number | undefined,
+    updatedData: Partial<Question>,
+  ): boolean {
+    if (!this.quizState.quizData || !questionId) return false
+
+    for (const chapter of this.quizState.quizData.chapters) {
+      const questionIndex = chapter.questions.findIndex((q) => q.id === questionId)
+      if (questionIndex !== -1) {
+        chapter.questions[questionIndex] = {
+          ...chapter.questions[questionIndex],
+          ...updatedData,
+          id: chapter.questions[questionIndex].id || questionId.toString(),
+        }
+        this.saveQuizState()
+        return true
+      }
+    }
+
+    console.warn(`未找到要更新的问题，ID: ${questionId}`)
+    return false
   }
 }
 

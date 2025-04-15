@@ -169,7 +169,7 @@ import { ref, reactive, watch, onBeforeUnmount, onMounted } from 'vue';
 import BaseModal from './modal-base.vue';
 import { showToast } from '../utils/toast';
 import configService from '../services/config-service';
-import type { AppSettings } from '@/services/config-service';
+import type { AppSettings, UiSettings, QuizSettings } from '@/services/config-service';
 
 // 字体列表
 const availableFonts = [
@@ -189,6 +189,9 @@ const availableFonts = [
 
 const props = defineProps<{
   show: boolean;
+  'ui-settings'?: UiSettings;
+  'quiz-settings'?: QuizSettings;
+  'debug-enabled'?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -228,7 +231,22 @@ onBeforeUnmount(() => {
 watch(() => props.show, (newVal) => {
   if (newVal) {
     // 从配置服务获取最新设置
-    Object.assign(localSettings, JSON.parse(JSON.stringify(configService.getSettings())));
+    const settings = JSON.parse(JSON.stringify(configService.getSettings()));
+
+    // 如果props中传入了这些属性，则使用props中的值覆盖从服务获取的值
+    if (props['ui-settings']) {
+      settings.uiSettings = { ...settings.uiSettings, ...props['ui-settings'] };
+    }
+
+    if (props['quiz-settings']) {
+      settings.quizSettings = { ...settings.quizSettings, ...props['quiz-settings'] };
+    }
+
+    if (props['debug-enabled'] !== undefined) {
+      settings.debugEnabled = props['debug-enabled'];
+    }
+
+    Object.assign(localSettings, settings);
   }
 }, { immediate: true });
 

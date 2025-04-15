@@ -80,6 +80,12 @@
 
       <div class="modal__form-group">
         <label for="system-prompt" class="modal__form-label">系统提示词</label>
+        <div class="modal__prompt-controls">
+          <button class="modal__button modal__button--small modal__button--reset" @click="showPromptPresets"
+            title="加载提示词预设">
+            <i class="fas fa-list"></i>
+          </button>
+        </div>
         <textarea id="system-prompt" v-model="localConfig.systemPrompt" class="modal__form-control" rows="3"
           placeholder="输入系统提示词"></textarea>
       </div>
@@ -102,6 +108,27 @@
         <div class="modal__form-input-group">
           <input type="range" id="top-p" v-model.number="localConfig.topP" min="0" max="1" step="0.1">
           <span>{{ localConfig.topP?.toFixed(1) }}</span>
+        </div>
+      </div>
+
+      <!-- 提示词预设弹出框，移到这里，确保不被遮挡 -->
+      <div v-if="showingPromptPresets" class="modal__prompt-presets-container">
+        <div class="modal__prompt-presets">
+          <div class="modal__prompt-presets-header">选择提示词预设</div>
+          <div v-if="promptPresets.length > 0" class="modal__prompt-presets-list">
+            <div v-for="preset in promptPresets" :key="preset.name" class="modal__prompt-preset-item"
+              @click="loadPromptPreset(preset)">
+              <div class="modal__prompt-preset-name">{{ preset.name }}</div>
+              <div class="modal__prompt-preset-desc">{{ preset.description }}</div>
+            </div>
+          </div>
+          <div v-else class="modal__prompt-presets-empty">
+            未找到提示词预设
+          </div>
+          <div class="modal__prompt-presets-actions">
+            <button class="modal__button modal__button--small" @click="clearSystemPrompt">清空提示词</button>
+            <button class="modal__button modal__button--small" @click="closePromptPresets">关闭</button>
+          </div>
         </div>
       </div>
 
@@ -141,8 +168,12 @@ const localConfig = ref<ApiConfig>({
   systemPrompt: '',
   temperature: 0.7,
   maxTokens: 2000,
-  topP: 1
+  topP: 1,
 });
+
+// 提示词预设相关
+const promptPresets = ref<{ name: string, description: string, path: string }[]>([]);
+const showingPromptPresets = ref(false);
 
 // --- 数据加载与同步 ---
 
@@ -162,6 +193,7 @@ const updateLocalConfigFromPreset = (presetName: string) => {
     // 仅复制 ApiConfig 的属性，排除 name
     const { name, ...config } = preset;
     localConfig.value = { ...config };
+    // 确保新字段也被正确加载
     // console.log('Local config updated from preset:', presetName, localConfig.value);
   } else {
     console.warn(`Preset "${presetName}" not found when updating local config.`);
@@ -282,7 +314,85 @@ const deletePreset = () => {
 // 保存当前活动预设的配置
 function saveConfig() {
   configService.updateApiConfig(localConfig.value); // updateApiConfig 现在保存的是当前活动预设
-  // emit('save', localConfig.value); // 不再需要发送 save 事件
   emit('close');
 }
+
+// 显示提示词预设选择框
+const showPromptPresets = async () => {
+  // 如果已经显示，则关闭
+  if (showingPromptPresets.value) {
+    showingPromptPresets.value = false;
+    return;
+  }
+
+  // 加载提示词预设列表
+  try {
+    const response = await fetch('/prompts/index.json');
+    if (response.ok) {
+      promptPresets.value = await response.json();
+      showingPromptPresets.value = true;
+
+      // 点击外部区域关闭预设框
+      nextTick(() => {
+        const clickOutsideHandler = (event: MouseEvent) => {
+          const presetElement = document.querySelector('.modal__prompt-presets');
+          const buttonElement = document.querySelector('.modal__button--reset');
+
+          if (presetElement && buttonElement &&
+            !presetElement.contains(event.target as Node) &&
+            !buttonElement.contains(event.target as Node)) {
+            showingPromptPresets.value = false;
+            document.removeEventListener('click', clickOutsideHandler);
+          }
+        };
+
+        // 延迟添加事件监听器，避免立即触发
+        setTimeout(() => {
+          document.addEventListener('click', clickOutsideHandler);
+        }, 100);
+      });
+    } else {
+      showToast('加载提示词预设列表失败', 'error');
+    }
+  } catch (error) {
+    console.error('加载提示词预设列表出错:', error);
+    showToast('加载提示词预设列表出错', 'error');
+  }
+};
+
+// 清空系统提示词
+const clearSystemPrompt = () => {
+  localConfig.value.systemPrompt = '';
+};
+
+// 关闭提示词预设选择框
+const closePromptPresets = () => {
+  showingPromptPresets.value = false;
+};
+
+// 加载提示词预设
+const loadPromptPreset = async (preset: { name: string, description: string, path: string }) => {
+  try {
+    const response = await fetch(`/prompts/${preset.path}`);
+    if (response.ok) {
+      const data = await response.json();
+      if (data.system_prompt) {
+        localConfig.value.systemPrompt = data.system_prompt;
+        // 同时应用其他配置如温度、top_p等
+        if (data.temperature !== undefined) localConfig.value.temperature = data.temperature;
+        if (data.top_p !== undefined) localConfig.value.topP = data.top_p;
+        showToast(`已加载"${preset.name}"提示词预设`, 'success');
+      } else {
+        showToast('提示词预设格式无效', 'warning');
+      }
+    } else {
+      showToast(`加载"${preset.name}"提示词预设失败`, 'error');
+    }
+  } catch (error) {
+    console.error(`加载"${preset.name}"提示词预设出错:`, error);
+    showToast(`加载"${preset.name}"提示词预设出错`, 'error');
+  } finally {
+    showingPromptPresets.value = false;
+  }
+};
 </script>

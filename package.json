@@ -18,6 +18,7 @@
   },
   "dependencies": {
     "marked": "^15.0.8",
+    "marked-xhtml": "^1.0.12",
     "mermaid": "^11.6.0",
     "pinia": "^3.0.2",
     "vue": "^3.5.13",

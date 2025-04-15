@@ -917,6 +917,7 @@ textarea.modal__form-control {
 /* 编辑题目模态框 */
 .modal__form-group {
   margin-bottom: 16px;
+  position: relative;
 }
 
 .modal__form-label {
@@ -1072,4 +1073,113 @@ textarea.modal__form-control {
 
 .modal__info-value {
   color: var(--text-main);
+}
+
+/* 重置按钮样式 */
+.modal__button--small {
+  padding: 2px 8px;
+  font-size: 12px;
+}
+
+.modal__button--reset {
+  position: absolute;
+  right: 10px;
+  top: 0;
+  padding: 2px 8px;
+  font-size: 12px;
+  background-color: transparent;
+  border: none;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  border-radius: 3px;
+}
+
+.modal__button--reset:hover {
+  color: var(--color-primary);
+  background-color: var(--color-bg-hover);
+}
+
+/* 提示词预设弹出框样式 */
+.modal__prompt-controls {
+  position: absolute;
+  right: 10px;
+  top: 0;
+}
+
+.modal__prompt-presets-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000;
+  background-color: rgba(0, 0, 0, 0.3);
+}
+
+.modal__prompt-presets {
+  position: relative;
+  width: 350px;
+  max-width: 90%;
+  background-color: var(--card, #fff);
+  border: 1px solid var(--border, #9ca3af);
+  border-radius: var(--radius, 8px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.modal__prompt-presets-header {
+  padding: 12px 15px;
+  font-weight: 600;
+  border-bottom: 1px solid var(--border, #9ca3af);
+  background-color: var(--bg-light, #f3f4f6);
+  border-radius: var(--radius, 8px) var(--radius, 8px) 0 0;
+}
+
+.modal__prompt-presets-list {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.modal__prompt-preset-item {
+  padding: 12px 15px;
+  border-bottom: 1px solid var(--border-light, #e5e7eb);
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.modal__prompt-preset-item:hover {
+  background-color: var(--bg-hover, #f8fafc);
+}
+
+.modal__prompt-preset-item:last-child {
+  border-bottom: none;
+}
+
+.modal__prompt-preset-name {
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.modal__prompt-preset-desc {
+  font-size: 0.85rem;
+  color: var(--text-secondary, #6b7280);
+}
+
+.modal__prompt-presets-empty {
+  padding: 30px 15px;
+  text-align: center;
+  color: var(--text-secondary, #6b7280);
+  font-style: italic;
+}
+
+.modal__prompt-presets-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 15px;
+  border-top: 1px solid var(--border-light, #e5e7eb);
+  background-color: var(--bg-light, #f3f4f6);
+  border-radius: 0 0 var(--radius, 8px) var(--radius, 8px);
 }

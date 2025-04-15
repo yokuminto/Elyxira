@@ -687,6 +687,9 @@
 }
 
 .page-quiz__notes {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
   background-color: var(--card);
   border-radius: var(--radius);
   margin-top: 1rem;
@@ -774,6 +777,9 @@
 }
 
 .page-quiz__notes-editor {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
 }
 
 .page-quiz__notes-editor--hidden {
@@ -812,8 +818,7 @@
 }
 
 .page-quiz__notes-textarea {
-  width: 100%;
-  min-height: 150px;
+  flex-grow: 1;
   height: auto;
   padding: 15px;
   border: 1px solid var(--border);
@@ -822,7 +827,7 @@
   color: var(--text-main);
   line-height: 1.6;
   resize: vertical;
-  margin-bottom: 15px;
+  margin: 0 0 1rem 0;
   font-family: inherit;
   font-size: 0.9rem;
   transition: all 0.3s ease;
@@ -839,8 +844,7 @@
 }
 
 .markdown-body {
-  display: inline-flex;
-  flex-direction: column;
+  flex-grow: 1;
   margin: 1rem 0.5rem 2rem 0.5rem;
   background-color: var(--note-bg);
   color: var(--note-text);
@@ -855,21 +859,18 @@
 .markdown-body h4,
 .markdown-body h5,
 .markdown-body h6 {
-  margin-top: 1.5em;
-  margin-bottom: 0.6em;
-  font-weight: 600;
-  line-height: 1.3;
+  margin-top: 0;
+  margin-bottom: 1rem;
+  line-height: 1.25;
 }
 
 .markdown-body h1 {
   font-size: 1.8em;
   border-bottom: 1px solid var(--note-border, var(--border-light));
-  padding-bottom: 0.3em;
 }
 .markdown-body h2 {
   font-size: 1.5em;
   border-bottom: 1px solid var(--note-border, var(--border-light));
-  padding-bottom: 0.3em;
 }
 .markdown-body h3 {
   font-size: 1.3em;
@@ -884,7 +885,6 @@
 .markdown-body h6 {
   font-size: 1em;
   color: var(--text-secondary);
-  font-weight: 500;
 }
 
 .markdown-body hr {
@@ -907,21 +907,26 @@
 }
 
 .markdown-body p {
+  margin: 0 0 0.5rem 0;
   overflow-wrap: break-word;
 }
 
 .markdown-body ul,
 .markdown-body ol,
 .markdown-body blockquote,
-.markdown-body pre,
-.markdown-body table {
+.markdown-body pre {
   margin-bottom: 0.5rem;
+}
+
+.markdown-body div {
+  margin: 0 0 0.5rem 0 !important;
+  padding: 0.5rem !important;
 }
 
 .markdown-body code {
   background-color: var(--note-code-bg);
   color: var(--note-code-text);
-  padding: 0.2em 0.4em;
+  padding: 0.2em 0.25rem;
   margin: 0 0.1em;
   border-radius: 4px;
   font-size: 0.9em;
@@ -954,7 +959,6 @@
   max-width: 100%;
   overflow-x: auto;
   font-family: 'JetBrains Mono', monospace;
-  vertical-align: initial;
 }
 
 .markdown-body pre[class*='language-']::before {
@@ -978,9 +982,9 @@
 .markdown-body blockquote {
   border-left: 4px solid var(--note-quote-border);
   background-color: var(--note-quote-bg);
-  padding: 0.8em 1.2em;
+  padding: 0.5rem;
   color: var(--note-text);
-  margin: 0 0 1.2em 0;
+  margin: 0 0 1rem 0;
 }
 
 .markdown-body blockquote p:last-child {
@@ -989,22 +993,16 @@
 
 .markdown-body ul,
 .markdown-body ol {
-  padding-left: 1.8em;
-  margin-left: 0;
+  padding-left: 1rem;
 }
 
-.markdown-body li,
 .markdown-body ol,
 .markdown-body ul {
-  margin-bottom: 0.5rem;
+  margin: 0 0 0 0;
 }
 
 .markdown-body li {
-  margin-bottom: 0.4em;
-}
-
-.markdown-body li > p {
-  margin-bottom: 0.4em;
+  margin-bottom: 0 0 0.25rem 0;
 }
 
 .markdown-body strong {
@@ -1269,6 +1267,7 @@ input:checked + .slider:before {
   border: 1.5px solid var(--note-table-border);
   border-radius: var(--radius);
   overflow: hidden;
+  margin: 0 0 1rem 0;
 }
 
 .markdown-body th,
@@ -1340,16 +1339,6 @@ input:checked + .slider:before {
   border-radius: 50%;
   border-top-color: var(--c-blue);
   animation: spin 1s linear infinite;
-}
-
-.typing-cursor {
-  display: inline-block;
-  width: 1.5px;
-  height: 1.2em;
-  background-color: currentColor;
-  margin-left: 2px;
-  vertical-align: middle;
-  animation: cursor-blink 0.8s infinite;
 }
 
 @keyframes cursor-blink {
@@ -1459,6 +1448,7 @@ input:checked + .slider:before {
   }
 
   .markdown-body {
+    position: relative;
     padding: 0.5rem;
     margin: 1rem 0.5rem 2rem 0.5rem;
     background-color: var(--note-bg);
@@ -1466,7 +1456,6 @@ input:checked + .slider:before {
     line-height: 1.25;
     font-size: 0.95rem;
     box-shadow: var(--shadow);
-    font-weight: 300;
   }
 
   .markdown-body table {
@@ -1477,4 +1466,204 @@ input:checked + .slider:before {
   .markdown-body td {
     padding: 0.25em 0.375rem;
   }
+}
+
+/* 后台加载状态的按钮样式 */
+.page-quiz__ai-button.button--loading-background {
+  background-color: var(--color-warning); /* 或其他你喜欢的颜色 */
+  color: var(--color-text-on-primary);
+  cursor: not-allowed;
+  opacity: 0.8;
+}
+
+/* 推理过程相关样式 */
+.reasoning-section {
+  margin-top: 1.5rem;
+  padding: 0.8rem 1rem;
+}
+
+.reasoning-title {
+  color: var(--c-blue);
+  font-size: 1.05rem;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.reasoning-separator {
+  border: none;
+  height: 1px;
+  background-color: rgba(0, 0, 0, 0.1);
+  margin: 1rem 0;
+}
+
+.dark-mode .reasoning-section {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* 让时钟图标旋转 (可选) */
+.page-quiz__ai-button .loading-clock {
+  animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* 确保原有加载状态样式存在 */
+.page-quiz__ai-button.button--loading {
+  /* 你原有的加载样式 */
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.page-quiz__ai-button .loading-spinner {
+  /* 你原有的 spinner 样式 */
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-right: 0.5em;
+  vertical-align: middle;
+}
+
+.notes-generation-status {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.8rem;
+  font-weight: normal;
+  color: var(--text-secondary);
+  margin-left: 10px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  background-color: var(--bg-light);
+  border: 1px solid var(--border);
+  animation: pulse 1.5s infinite ease-in-out;
+  vertical-align: middle;
+}
+
+.notes-generation-status.current {
+  color: var(--c-blue);
+  background-color: var(--bg-blue);
+  border-color: var(--c-blue);
+}
+
+.notes-generation-status.background {
+  color: var(--text-light);
+  background-color: var(--bg-mute);
+  border-color: var(--border-light);
+}
+
+.notes-generation-status .loading-spinner.small {
+  width: 10px;
+  height: 10px;
+  margin-right: 6px;
+  border-width: 1.5px;
+}
+
+.notes-generation-status .loading-clock {
+  margin-right: 6px;
+  animation: spin 2s linear infinite;
+}
+
+.page-quiz__ai-button.icon-only {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+}
+
+.page-quiz__button--icon {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius);
+  background-color: var(--bg-white);
+  color: var(--text-main);
+  border: 1px solid var(--border);
+}
+
+/* 新的分离式推理区域样式 */
+.page-quiz__notes-reasoning {
+  margin-top: 1rem;
+  border-radius: var(--radius);
+  background-color: var(--bg-light);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  transition: all 0.3s ease;
+}
+
+.page-quiz__notes-reasoning--hidden {
+  display: none;
+}
+
+.reasoning-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.6rem 1rem;
+  background-color: var(--bg-blue-light);
+  border-bottom: 1px solid var(--border-blue);
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.reasoning-header:hover {
+  background-color: var(--bg-blue);
+}
+
+.reasoning-title {
+  color: var(--c-blue);
+  font-size: 1rem;
+  margin: 0;
+}
+
+.reasoning-toggle {
+  background: none;
+  border: none;
+  color: var(--c-blue);
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.reasoning-content {
+  padding: 1rem;
+  max-height: 500px;
+  overflow-y: auto;
+  background-color: var(--bg-white);
+}
+
+.dark-mode .reasoning-content {
+  background-color: var(--bg-dark);
+}
+
+.dark-mode .reasoning-header {
+  background-color: var(--bg-blue-dark);
+}
+
+.reasoning-separator {
+  border: none;
+  height: 1px;
+  background-color: rgba(0, 0, 0, 0.1);
+  margin: 1rem 0;
+}
+
+.dark-mode .reasoning-section {
+  background-color: rgba(255, 255, 255, 0.05);
 }

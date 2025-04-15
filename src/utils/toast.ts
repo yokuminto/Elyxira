@@ -64,8 +64,7 @@ export function showToast(
 
 /**
  * 注入 toast 样式
- * 由于使用了 vue-toastification 库，该函数保留是为了接口兼容
- * 现在添加自定义样式使其更紧凑
+ * 添加自定义样式使其更紧凑
  */
 export function injectToastStyles(): void {
   // 添加自定义样式
@@ -127,9 +126,4 @@ export const customToastStyle = `
 .Vue-Toastification__toast {
   opacity: 0.95 !important;
 }
-`
-
-// 保留原始样式定义，但实际已不再使用 (由 vue-toastification 提供样式)
-export const toastStyle = `
-/* 由 vue-toastification 提供样式，此处保留仅为接口兼容 */
 `
