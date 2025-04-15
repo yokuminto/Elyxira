@@ -1448,14 +1448,8 @@ input:checked + .slider:before {
   }
 
   .markdown-body {
-    position: relative;
     padding: 0.5rem;
     margin: 1rem 0.5rem 2rem 0.5rem;
-    background-color: var(--note-bg);
-    color: var(--note-text);
-    line-height: 1.25;
-    font-size: 0.95rem;
-    box-shadow: var(--shadow);
   }
 
   .markdown-body table {
