@@ -12,8 +12,8 @@ import 'vue-toastification/dist/index.css'
 import './styles/variables.css'
 import './styles/modal.css'
 
-// 初始化全局错误处理器
-ErrorHandler.init(router)
+// 初始化全局错误处理器 - 移动到 app 创建和 router 使用之后
+// ErrorHandler.init(router)
 
 const app = createApp(App)
 
@@ -26,6 +26,10 @@ app.config.errorHandler = (err, instance, info) => {
 
 app.use(createPinia())
 app.use(router)
+
+// 在 router 插件使用后初始化 ErrorHandler
+ErrorHandler.init(router)
+
 // 注册 Toast 插件
 app.use(Toast, {
   // 默认配置
