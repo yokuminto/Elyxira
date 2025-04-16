@@ -1518,24 +1518,19 @@ function getOptionKeyClass(optionKey: string): string {
 function isCorrectAnswerOption(correctAnswer: Question['answer'], optionKey: string): boolean {
   if (correctAnswer === undefined || correctAnswer === null || optionKey === '') return false;
 
-  // Convert 'A', 'B', etc. to 0, 1 index if the correct answer is numeric/array of numbers
+  // 将 'A', 'B' 等转换为 0, 1 索引，用于数字类型答案比较
   const optionIndex = optionKey.charCodeAt(0) - 65;
 
   if (Array.isArray(correctAnswer)) {
-    // Explicitly check the type of each element in the array
+    // 检查数组中的每个元素
     return correctAnswer.some(ans => {
-      if (typeof ans === 'number') {
-        return ans === optionIndex;
-      } else if (typeof ans === 'string') {
-        // Explicit check ensures correct type inference
-        return ans.toUpperCase() === optionKey.toUpperCase();
-      }
-      return false;
+      // 数组中只包含数字类型
+      return ans === optionIndex;
     });
   } else if (typeof correctAnswer === 'number') {
     return correctAnswer === optionIndex;
   } else if (typeof correctAnswer === 'string') {
-    // Case-insensitive comparison for single string answer
+    // 不区分大小写比较字符串答案
     return correctAnswer.toUpperCase() === optionKey.toUpperCase();
   }
 
@@ -1564,7 +1559,7 @@ let touchStartY = 0;
  */
 function handleTouchStart(e: TouchEvent) {
   if (!quizSettings.value.swipeGestureEnabled) return;
-  // Only track starting point if it's the primary touch
+  // 仅在主要触摸时记录起始点
   if (e.touches.length === 1) {
     touchStartX = e.touches[0].clientX;
     touchStartY = e.touches[0].clientY;
@@ -1575,30 +1570,30 @@ function handleTouchStart(e: TouchEvent) {
  * 处理触摸结束事件
  */
 function handleTouchEnd(e: TouchEvent) {
-  if (!quizSettings.value.swipeGestureEnabled || touchStartX === 0) return; // Ensure start was tracked
+  if (!quizSettings.value.swipeGestureEnabled || touchStartX === 0) return; // 确保起始点已记录
 
-  // Use changedTouches as touches array will be empty on touchend
+  // 使用 changedTouches，因为 touchend 时 touches 数组将为空
   if (e.changedTouches.length === 1) {
     const touchEndX = e.changedTouches[0].clientX;
     const touchEndY = e.changedTouches[0].clientY;
     const diffX = touchStartX - touchEndX;
     const diffY = touchStartY - touchEndY;
 
-    // Define thresholds based on viewport size for better responsiveness
-    const horizontalThreshold = window.innerWidth * 0.15; // 15% of width
-    const verticalThreshold = window.innerHeight * 0.1;  // 10% of height
+    // 基于视口大小定义阈值，以提高响应性
+    const horizontalThreshold = window.innerWidth * 0.15; // 宽度的15%
+    const verticalThreshold = window.innerHeight * 0.1;  // 高度的10%
 
-    // Check for significant horizontal swipe with minimal vertical movement
+    // 检查是否有明显的水平滑动，且垂直移动很小
     if (Math.abs(diffX) > horizontalThreshold && Math.abs(diffY) < verticalThreshold) {
-      if (diffX > 0) { // Swipe Left -> Next Question
+      if (diffX > 0) { // 向左滑动 -> 下一题
         if (canGoNext.value) nextQuestion();
-      } else { // Swipe Right -> Previous Question
+      } else { // 向右滑动 -> 上一题
         if (canGoPrev.value) previousQuestion();
       }
     }
   }
 
-  // Reset start coordinates after processing
+  // 处理后重置起始坐标
   touchStartX = 0;
   touchStartY = 0;
 }
@@ -1610,56 +1605,56 @@ function handleTouchEnd(e: TouchEvent) {
 function handleKeyPress(e: KeyboardEvent) {
   const activeElement = document.activeElement;
   const isInputActive = activeElement && (activeElement.tagName === 'TEXTAREA' || activeElement.tagName === 'INPUT' || (activeElement as HTMLElement).isContentEditable);
-  const isModalActive = !!document.querySelector('.modal.modal--active'); // Check if any modal managed by this component is active
+  const isModalActive = !!document.querySelector('.modal.modal--active'); // 检查是否有由该组件管理的模态框处于激活状态
 
-  // --- Escape Key: Close Modals ---
+  // --- Escape键: 关闭模态框 ---
   if (e.key === 'Escape' && isModalActive) {
-    e.preventDefault(); // Prevent default browser behavior (like stopping page load)
+    e.preventDefault(); // 阻止默认浏览器行为（如停止页面加载）
     showOverviewModal.value = false;
     showModalStatistics.value = false;
     showModalSettings.value = false;
-    closeEditModal(); // Use dedicated function to close edit modal
+    closeEditModal(); // 使用专用函数关闭编辑模态框
     showSyncConfigModal.value = false;
     showApiConfigModal.value = false;
-    return; // Don't process other keys if a modal was closed
+    return; // 如果模态框被关闭，不处理其他按键
   }
 
-  // --- Ignore keys if input/textarea is focused or a modal is active (except Escape) ---
+  // --- 如果输入框/文本区域被聚焦或模态框处于激活状态（除Escape外），忽略按键 ---
   if (isInputActive || isModalActive) {
     return;
   }
 
-  // --- Option Selection (1-7) ---
+  // --- 选项选择（1-7） ---
   if (e.key >= '1' && e.key <= '7') {
     const optionIndex = parseInt(e.key) - 1;
     if (currentQuestion.value && optionIndex < currentQuestion.value.options.length) {
       const key = getOptionKey(currentQuestion.value.options[optionIndex], optionIndex);
       handleOptionClick(key);
-      e.preventDefault(); // Prevent default behavior (e.g., browser shortcuts)
+      e.preventDefault(); // 阻止默认行为（如浏览器快捷键）
     }
   }
-  // --- Spacebar: Submit or Next ---
+  // --- 空格键: 提交或下一题 ---
   else if (e.key === ' ') {
-    e.preventDefault(); // Prevent page scrolling
+    e.preventDefault(); // 防止页面滚动
     if (canSubmit.value) {
       submitAnswer();
-    } else if (canGoNext.value && isCurrentAnswered.value) { // Only allow space for next if answered
+    } else if (canGoNext.value && isCurrentAnswered.value) { // 仅在已回答时允许空格键进入下一题
       nextQuestion();
     }
   }
-  // --- Arrow Keys: Previous/Next ---
+  // --- 方向键: 上一题/下一题 ---
   else if (e.key === 'ArrowLeft') {
     if (canGoPrev.value) {
       previousQuestion();
       e.preventDefault();
     }
   } else if (e.key === 'ArrowRight') {
-    if (canGoNext.value) { // Allow arrow right always if possible
+    if (canGoNext.value) { // 如果可能，始终允许右箭头
       nextQuestion();
       e.preventDefault();
     }
   }
-  // --- Enter Key: Submit (alternative to space) ---
+  // --- 回车键: 提交（空格的替代方式） ---
   else if (e.key === 'Enter') {
     if (canSubmit.value) {
       submitAnswer();
@@ -1684,25 +1679,25 @@ function removeKeyboardListeners() {
 }
 
 
-// --- Mermaid Initialization ---
+// --- Mermaid 初始化 ---
 
 /**
  * 初始化 Mermaid 图表库
  */
 async function initMermaid() {
   try {
-    // Ensure Mermaid is loaded (it might be loaded asynchronously)
+    // 确保 Mermaid 已加载（它可能是异步加载的）
     if (typeof mermaid !== 'undefined' && mermaid.initialize) {
       mermaid.initialize({
-        startOnLoad: false, // We manually trigger rendering
+        startOnLoad: false, // 我们手动触发渲染
         theme: isDarkMode.value ? 'dark' : 'default',
-        securityLevel: 'loose', // Consider implications if using untrusted input
+        securityLevel: 'loose', // 如果使用不可信输入，请考虑其影响
         flowchart: { useMaxWidth: true },
-        // Potentially configure other diagram types if needed
+        // 如果需要，可以配置其他图表类型
       });
-      console.log("Mermaid initialized with theme:", isDarkMode.value ? 'dark' : 'default');
+      console.log("Mermaid 已初始化，主题:", isDarkMode.value ? 'dark' : 'default');
     } else {
-      console.warn("Mermaid library not fully loaded or initialized yet.");
+      console.warn("Mermaid 库尚未完全加载或初始化。");
     }
 
   } catch (error) {
@@ -1711,7 +1706,7 @@ async function initMermaid() {
 }
 
 
-// --- UI Helpers ---
+// --- UI 辅助函数 ---
 
 /**
  * 切换主题方法

@@ -143,13 +143,31 @@ const forceSync = ref(true);
 const syncQuizName = ref('');
 const createRemoteRepo = ref(false);
 
+// --- Helper to get quiz-specific storage key ---
+function getSyncNameStorageKey(quizName: string): string | null {
+  return quizName ? `syncName_${quizName}` : null;
+}
+
 // 配置变更监听器
 const configChangeListener = () => {
   const githubConfig = configService.getGithubConfig();
-  config.value = { ...githubConfig };
+  config.value = { ...githubConfig }; // Load general GitHub config
   forceSync.value = !!githubConfig.forceSync;
-  syncQuizName.value = githubConfig.syncQuizName || '';
   createRemoteRepo.value = !!githubConfig.createRemoteRepo;
+
+  // Load quiz-specific sync name if quiz exists
+  if (props.currentQuiz?.exists && props.currentQuiz.name) {
+    const storageKey = getSyncNameStorageKey(props.currentQuiz.name);
+    if (storageKey) {
+      syncQuizName.value = localStorage.getItem(storageKey) || props.currentQuiz.name || githubConfig.syncQuizName || '';
+    } else {
+      // Fallback to current quiz name or global default if storage key is null
+      syncQuizName.value = props.currentQuiz.name || githubConfig.syncQuizName || '';
+    }
+  } else {
+    // Fallback to global default if no quiz loaded
+    syncQuizName.value = githubConfig.syncQuizName || '';
+  }
 };
 
 // 初始化：从配置服务加载配置
@@ -165,10 +183,16 @@ onBeforeUnmount(() => {
   configService.removeListener('github', configChangeListener);
 });
 
-// 初始化同步题库名称
+// 更新同步名称基于当前题库
 watch(() => props.currentQuiz, (quiz) => {
-  if (quiz?.exists && quiz.name && !syncQuizName.value) {
-    syncQuizName.value = quiz.name;
+  if (quiz?.exists && quiz.name) {
+    const storageKey = getSyncNameStorageKey(quiz.name);
+    const storedName = storageKey ? localStorage.getItem(storageKey) : null;
+    // Prioritize stored name, then quiz name, then global default from configService
+    syncQuizName.value = storedName || quiz.name || configService.getGithubConfig().syncQuizName || '';
+  } else {
+    // Fallback if no quiz exists
+    syncQuizName.value = configService.getGithubConfig().syncQuizName || '';
   }
 }, { immediate: true, deep: true });
 
@@ -193,8 +217,16 @@ function loadConfig() {
   const githubConfig = configService.getGithubConfig();
   config.value = { ...githubConfig };
   forceSync.value = !!githubConfig.forceSync;
-  syncQuizName.value = githubConfig.syncQuizName || '';
   createRemoteRepo.value = !!githubConfig.createRemoteRepo;
+
+  // Load quiz-specific sync name
+  if (props.currentQuiz?.exists && props.currentQuiz.name) {
+    const storageKey = getSyncNameStorageKey(props.currentQuiz.name);
+    const storedName = storageKey ? localStorage.getItem(storageKey) : null;
+    syncQuizName.value = storedName || props.currentQuiz.name || githubConfig.syncQuizName || '';
+  } else {
+    syncQuizName.value = githubConfig.syncQuizName || '';
+  }
 }
 
 // 测试连接
@@ -245,15 +277,26 @@ function handleSave() {
 function saveConfig() {
   if (!isValid.value) return;
 
-  // 使用配置服务保存GitHub仓库配置
+  // 1. Save quiz-specific sync name to localStorage
+  if (props.currentQuiz?.exists && props.currentQuiz.name) {
+    const storageKey = getSyncNameStorageKey(props.currentQuiz.name);
+    if (storageKey && syncQuizName.value) {
+      localStorage.setItem(storageKey, syncQuizName.value);
+    } else if (storageKey) {
+      // If syncQuizName is empty, remove the specific storage item
+      localStorage.removeItem(storageKey);
+    }
+  }
+
+  // 2. Save general GitHub config (including the *last used* syncQuizName as a fallback)
   const configToSave: GithubConfig = {
     ...config.value,
     forceSync: forceSync.value,
-    syncQuizName: syncQuizName.value,
+    syncQuizName: syncQuizName.value, // Save the current value as the global fallback/last used
     createRemoteRepo: createRemoteRepo.value
   };
-
   configService.updateGithubConfig(configToSave);
+
   emit('save', configToSave);
 }
 
