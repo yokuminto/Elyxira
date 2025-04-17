@@ -1562,24 +1562,61 @@ class ConfigService {
         return null
       }
 
+      // 提取不带扩展名的文件名作为题库名称
+      const actualQuizName = targetFile.name.replace(/\.(json|txt)$/, '')
+
       const contentText = await contentResponse.text()
       let quizData: QuizData
 
       try {
-        quizData = JSON.parse(contentText)
+        // 从JSON字符串解析数据
+        const parsedJson = JSON.parse(contentText)
+        // 使用quizParserService处理数据，确保格式正确，传入实际文件名作为source
+        quizData = quizParserService.parse(parsedJson, actualQuizName)
       } catch (error) {
         showToast('解析题库数据失败：无效的JSON格式', 'error')
         return null
       }
 
-      // 验证题库数据格式
-      if (!this.validateQuizData(quizData)) {
+      // 使用增强的验证方法
+      if (!this.enhancedValidQuizData(quizData)) {
         showToast('无效的题库数据格式', 'error')
         return null
       }
 
-      // 提取不带扩展名的文件名作为题库名称
-      const actualQuizName = targetFile.name.replace(/\.(json|txt)$/, '')
+      // 检查是否已有本地题库，如果有则合并笔记和用户答案
+      const existingQuizData = this.loadQuizFromStorage(actualQuizName)
+      if (existingQuizData) {
+        console.log(`合并本地题库笔记: ${actualQuizName}`)
+
+        // 遍历本地题库中的所有问题
+        existingQuizData.chapters.forEach((chapter) => {
+          chapter.questions.forEach((question) => {
+            if (question.id && (question.notes || question.userAnswer !== undefined)) {
+              // 在新拉取的题库中查找相同ID的问题，并保留笔记和用户答案
+              quizData.chapters.forEach((targetChapter) => {
+                const targetQuestion = targetChapter.questions.find((q) => q.id === question.id)
+                if (targetQuestion) {
+                  // 只在远程题库没有笔记或本地有笔记的情况下保留本地笔记
+                  if (
+                    question.notes &&
+                    (!targetQuestion.notes || targetQuestion.notes.trim() === '')
+                  ) {
+                    console.log(
+                      `保留本地笔记: 题目ID=${question.id}, 笔记长度=${question.notes.length}`,
+                    )
+                    targetQuestion.notes = question.notes
+                  }
+                  // 保留用户答案
+                  if (question.userAnswer !== undefined) {
+                    targetQuestion.userAnswer = question.userAnswer
+                  }
+                }
+              })
+            }
+          })
+        })
+      }
 
       // 保存到本地缓存
       this.saveQuizToStorage(actualQuizName, quizData)
@@ -1641,8 +1678,53 @@ class ConfigService {
         return false
       }
 
+      // 确保推送前保留用户所有的笔记和用户答案
+      if (this.quizState.quizData && this.quizState.quizData.title === quizData.title) {
+        // 如果当前加载的就是要推送的题库，需要确保所有最新的用户笔记都被保存
+        const currentQuizData = this.quizState.quizData
+
+        // 遍历当前数据中的所有问题，更新笔记和用户答案
+        currentQuizData.chapters.forEach((chapter) => {
+          chapter.questions.forEach((question) => {
+            if (question.id && (question.notes || question.userAnswer !== undefined)) {
+              // 在quizData中查找相同ID的问题并更新笔记
+              quizData.chapters.forEach((targetChapter) => {
+                const targetQuestion = targetChapter.questions.find((q) => q.id === question.id)
+                if (targetQuestion) {
+                  if (question.notes) {
+                    console.log(
+                      `更新推送题库笔记: 题目ID=${question.id}, 笔记长度=${question.notes.length}`,
+                    )
+                    targetQuestion.notes = question.notes
+                  }
+                  if (question.userAnswer !== undefined)
+                    targetQuestion.userAnswer = question.userAnswer
+                }
+              })
+            }
+          })
+        })
+
+        // 保存更新后的数据到本地存储
+        this.saveQuizToStorage(quizName, quizData)
+      }
+
+      // 确保题库数据格式正确
+      if (!this.enhancedValidQuizData(quizData)) {
+        console.warn('题库数据格式可能有问题，尝试标准化...')
+        // 尝试通过解析器标准化格式
+        try {
+          const standardizedData = quizParserService.parse(quizData, quizName)
+          // 重新保存标准化后的数据
+          this.saveQuizToStorage(quizName, standardizedData)
+        } catch (error) {
+          showToast(`题库数据格式错误: ${(error as Error).message}`, 'error')
+          return false
+        }
+      }
+
       // 构建文件路径
-      const filePath = `quizzes/${quizName}.json`
+      const filePath = `${githubConfig.path || 'quizzes'}/${quizName}.json`
       const fileUrl = `https://api.github.com/repos/${githubConfig.owner}/${githubConfig.repo}/contents/${filePath}`
 
       // 检查文件是否已存在，决定是创建还是更新
@@ -1693,8 +1775,7 @@ class ConfigService {
 
       if (!response.ok) {
         const errorData = await response.json()
-        showToast(`推送题库失败 (${response.status}): ${errorData.message || '未知错误'}`, 'error')
-        return false
+        throw new Error(`GitHub API错误 (${response.status}): ${errorData.message || '未知错误'}`)
       }
 
       // 更新同步时间
@@ -1743,6 +1824,122 @@ class ConfigService {
     }
 
     return true
+  }
+
+  /**
+   * 处理题库同步完成后的操作
+   * @param result 同步结果对象
+   * @returns 包含更新后题库信息的对象或null
+   */
+  public async handleQuizSyncComplete(result: {
+    action: string
+    quiz: string
+    overrideLocal?: boolean
+    success: boolean
+    retainedNotes?: boolean // 新增：标记是否保留了本地笔记
+  }): Promise<{
+    quizName: string
+    source: string
+    wasOverridden: boolean
+    data?: QuizData
+    isNewQuiz?: boolean // 新增：标记是否是新创建的题库
+  } | null> {
+    if (!result.success) return null
+
+    // 如果不是拉取操作，仅刷新数据无需特殊处理
+    if (result.action !== 'pull') return null
+
+    const quizName = result.quiz
+    const data = this.loadQuizFromStorage(quizName)
+    if (!data) {
+      showToast(`找不到拉取的题库数据: ${quizName}`, 'error')
+      return null
+    }
+
+    // 更新本地题库列表，确保分类为"从远程导入"
+    const cachedList = this.loadQuizList()
+
+    // 创建新的本地条目
+    const localEntry: LocalQuizCache = {
+      id: `remote-import-${Date.now()}`,
+      name: quizName,
+      path: 'localStorage',
+      source: QuizSourceType.REMOTE_IMPORT,
+      info: `从远程导入: ${quizName}`,
+      title: data.title || quizName,
+      lastModified: Date.now(),
+      data: data,
+    }
+
+    // 查找是否存在同名题库
+    const existingIndex = cachedList.findIndex(
+      (q) =>
+        q.name === quizName &&
+        (q.source === QuizSourceType.LOCAL ||
+          q.source === QuizSourceType.REMOTE_IMPORT ||
+          q.source === QuizSourceType.ONLINE_IMPORT),
+    )
+
+    // 标记是否是全新创建的题库
+    const isNewQuiz = existingIndex < 0
+
+    // 根据覆盖选项决定是否替换已存在的题库
+    let wasOverridden = false
+    if (existingIndex >= 0 && result.overrideLocal) {
+      cachedList[existingIndex] = localEntry
+      wasOverridden = true
+    } else if (existingIndex < 0) {
+      cachedList.push(localEntry)
+      wasOverridden = true // 对于全新题库也标记为覆盖，这样可以自动加载
+    }
+
+    // 保存更新后的题库列表
+    this.saveQuizList(cachedList)
+
+    // 如果是新题库或需要覆盖，则设置为当前题库
+    if ((isNewQuiz || wasOverridden) && result.overrideLocal) {
+      // 设置为当前数据
+      this.setQuizData(data)
+
+      // 更新最近加载记录
+      this.saveLastLoadedQuiz(quizName, QuizSourceType.REMOTE_IMPORT)
+
+      // 设置默认的测验配置
+      this.setQuizConfig({
+        chapterIndex: 'all',
+        mode: QuizMode.NORMAL,
+        rangeStart: 1,
+        rangeEnd: this.calculateTotalQuestions(data),
+        randomize: false,
+        wrongOnly: false,
+      })
+
+      // 保存状态
+      this.saveQuizState()
+    }
+
+    return {
+      quizName,
+      source: QuizSourceType.REMOTE_IMPORT,
+      wasOverridden,
+      isNewQuiz,
+      data,
+    }
+  }
+
+  /**
+   * 计算题库总题数
+   */
+  private calculateTotalQuestions(data: QuizData): number {
+    let total = 0
+    if (data && data.chapters) {
+      data.chapters.forEach((chapter) => {
+        if (chapter.questions && Array.isArray(chapter.questions)) {
+          total += chapter.questions.length
+        }
+      })
+    }
+    return total > 0 ? total : 100 // 默认100题
   }
 
   /***********************************************

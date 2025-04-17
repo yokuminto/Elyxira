@@ -299,7 +299,7 @@
     <ModalQuestionEdit :show="showEditModal" :question="questionToEdit as any" @close="closeEditModal"
       @save="handleSaveQuestion" />
     <ModalQuizSync :show="showSyncConfigModal" @close="showSyncConfigModal = false" @save="handleSyncConfigSave"
-      :current-quiz="currentQuizInfo" />
+      :current-quiz="currentQuizInfo" @sync-complete="handleSyncComplete" />
     <ModalApiConfig :show="showApiConfigModal" @close="showApiConfigModal = false"
       :current-config="getCompleteApiConfig()" />
   </div>
@@ -355,7 +355,7 @@ const selectedAnswer = ref<string | null>(null);
 const isQuizSubmitted = ref(false);
 const wrongQuestionIds = ref<string[]>([]);
 const isReviewingWrong = ref(false);
-const syncStatus = ref<'idle' | 'pending' | 'success' | 'error'>('idle'); // More specific type
+const syncStatus = ref<'idle' | 'pending' | 'success' | 'error'>('idle'); // 更具体的类型
 const activeGenerationIndex = ref<number | null>(null);
 const selectedChapter = ref('all');
 const chapters = ref<string[]>([]);
@@ -565,13 +565,13 @@ function loadQuizDataAndFilter() {
 
   chapters.value = configService.getQuizChapters();
   const savedConfig = configService.getQuizConfig();
-  selectedChapter.value = savedConfig.chapterIndex || 'all'; // Set selectedChapter before filtering
+  selectedChapter.value = savedConfig.chapterIndex || 'all'; // 设置selectedChapter再过滤
 
-  filterQuestionsByChapter(selectedChapter.value); // Now filter based on the correct chapter
+  filterQuestionsByChapter(selectedChapter.value); // 基于正确的章节过滤
 
   if (localQuestions.value.length > 0) {
     nextTick(() => {
-      loadQuestion(0); // Start from the first question of the selected chapter/all
+      loadQuestion(0); // 从所选章节/全部的第一个问题开始
     });
   } else {
     error.value = `当前章节 "${selectedChapter.value}" 没有题目`;
@@ -586,24 +586,24 @@ function loadQuizDataAndFilter() {
 async function loadQuestion(index: number) {
   if (index < 0 || index >= localQuestions.value.length) {
     console.warn("无效的问题索引:", index);
-    if (!isQuizSubmitted.value && localQuestions.value.length > 0) { // Only submit if there were questions
+    if (!isQuizSubmitted.value && localQuestions.value.length > 0) { // 仅当有问题时提交
       submitQuiz();
     }
     return;
   }
 
   currentIndex.value = index;
-  selectedAnswer.value = currentQuestion.value?.userAnswer ?? null; // Load saved answer
-  isEditingNotes.value = false; // Close editor when changing questions
+  selectedAnswer.value = currentQuestion.value?.userAnswer ?? null; // 加载已保存的答案
+  isEditingNotes.value = false; // 更改问题时关闭编辑器
 
   await renderNotesForCurrentQuestion();
 
-  // Scroll question area to top
+  // 将问题区域滚动到顶部
   if (questionAreaRef.value) {
     questionAreaRef.value.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  // Check and trigger auto-generation for the *next* question
+  // 检查并触发下一个问题的自动生成
   nextTick(() => {
     checkAndTriggerAutoGeneration();
   });
@@ -654,15 +654,7 @@ function updateUserAnswer(answerKey: string) {
   } else if (isCorrect && wasWrong) {
     wrongQuestionIds.value.splice(wasWrongIndex, 1);
   }
-
-  // 如果答案是从错误变正确或从未答变正确，可能需要更新整体统计数据
-  // 注意：configService.updateQuizStats 在 submitAnswer 中处理初次提交
-  // 这里只处理答案修改的情况
-  if (previousAnswer !== answerKey) {
-    // configService.saveQuizState(); // updateQuestion already saves state implicitly
-  }
 }
-
 
 /**
  * 提交当前问题的答案
@@ -677,19 +669,19 @@ function submitAnswer() {
 
   // 只有在用户答案改变时才更新统计和状态
   if (question.userAnswer !== selectedAnswer.value) {
-    question.userAnswer = selectedAnswer.value; // Update local view first
+    question.userAnswer = selectedAnswer.value; // 首先更新本地视图
 
-    // Use configService to update the persistent state and stats
+    // 使用configService更新持久状态和统计
     const updateSuccess = configService.updateQuestion(question.id, { userAnswer: selectedAnswer.value });
 
     if (updateSuccess) {
       configService.updateQuizStats({
-        totalAnswered: 1, // Increment answered count
-        correctCount: isCorrect ? 1 : 0, // Increment correct count if applicable
-        wrongCount: isCorrect ? 0 : 1   // Increment wrong count if applicable
+        totalAnswered: 1, // 增加已回答计数
+        correctCount: isCorrect ? 1 : 0, // 如果适用，增加正确计数
+        wrongCount: isCorrect ? 0 : 1   // 如果适用，增加错误计数
       });
 
-      // Update wrong question ID list based on correctness
+      // 根据正确性更新错题ID列表
       const questionIdStr = String(question.id);
       const wasWrongIndex = wrongQuestionIds.value.indexOf(questionIdStr);
 
@@ -698,21 +690,19 @@ function submitAnswer() {
       } else if (isCorrect && wasWrongIndex !== -1) {
         wrongQuestionIds.value.splice(wasWrongIndex, 1);
       }
-      configService.saveQuizState(); // Persist the changes including stats
+      configService.saveQuizState(); // 持久化包括统计在内的更改
 
     } else {
       console.error("Failed to save user answer via configService for question:", question.id);
-      // Optionally revert local userAnswer or show an error
-      // question.userAnswer = previousAnswer; // Revert if save failed?
       showToast("保存答案失败", "error");
-      return; // Stop further processing like auto-next if save failed
+      return; // 如果保存失败，停止进一步处理（如自动下一题）
     }
   }
 
 
   // 渲染笔记（如果设置了答后显示）
   if (quizSettings.value.showNotesAfterAnswer) {
-    forceShowNotes.value = true; // Ensure notes are visible
+    forceShowNotes.value = true; // 确保笔记可见
     renderNotesForCurrentQuestion();
   }
 
@@ -740,8 +730,6 @@ function nextQuestion() {
     loadQuestion(currentIndex.value + 1);
   } else if (!isQuizSubmitted.value) {
     showToast('已经是最后一题了', 'info');
-    // Consider submitting the quiz automatically if autoSubmit is enabled or showing stats
-    // submitQuiz();
   }
 }
 
@@ -761,14 +749,12 @@ function submitQuiz() {
   if (isQuizSubmitted.value) return;
   isQuizSubmitted.value = true;
   showModalStatistics.value = true;
-  // 保存本次测验统计快照 (可选)
+  // 保存本次测验统计快照
   localStorage.setItem('lastQuizStats', JSON.stringify({
-    ...quizStats.value, // Use computed session stats
+    ...quizStats.value,
     timestamp: Date.now(),
     quizTitle: quizTitle.value
   }));
-  // 可以考虑保存累积统计数据
-  // configService.saveQuizStatsToStorage();
 }
 
 /**
@@ -780,7 +766,7 @@ function redoQuiz() {
     isQuizSubmitted.value = false;
     wrongQuestionIds.value = [];
     selectedAnswer.value = null;
-    isReviewingWrong.value = false; // Exit wrong review mode if active
+    isReviewingWrong.value = false; // 退出错题回顾模式（如果活动）
 
     // 清除 configService 中的答案和统计
     const quizData = configService.getQuizData();
@@ -793,13 +779,11 @@ function redoQuiz() {
           }
         });
       });
-      configService.setQuizData(quizData); // Update internal state
-      // Reset stats related to this quiz session if needed
-      // configService.resetQuizStats(); // Assuming such a method exists
-      configService.saveQuizState(); // Persist cleared answers and potentially reset stats
+      configService.setQuizData(quizData); // 更新内部状态
+      configService.saveQuizState(); // 保存已清除的答案和可能重置的统计
     }
 
-    // Reload questions based on the original filter (selectedChapter)
+    // 基于原始过滤（selectedChapter）重新加载问题
     filterQuestionsByChapter(selectedChapter.value);
 
     // 回到第一题
@@ -822,19 +806,15 @@ function viewWrongQuestions() {
   }
   showModalStatistics.value = false;
 
-  // 筛选出错题 (从原始数据源或当前 localQuestions 筛选)
+  // 筛选出错题
   const allQuestions = configService.getQuizData()?.chapters.flatMap(c => c.questions) || [];
   const wrongQs = allQuestions.filter(q => wrongQuestionIds.value.includes(String(q.id)));
-  // const wrongQs = localQuestions.value.filter(q => wrongQuestionIds.value.includes(String(q.id)));
-
 
   if (wrongQs.length > 0) {
     localQuestions.value = wrongQs.map(q => ({ ...q, userAnswer: null })); // 重置错题答案
     isQuizSubmitted.value = false; // 允许在错题模式下答题
     isReviewingWrong.value = true; // 标记为错题回顾模式
-    // wrongQuestionIds.value = []; // Optionally clear for this specific review session
     currentIndex.value = 0;
-    // configService.setQuizConfig({ mode: QuizMode.WRONG }); // Update mode if tracked
     loadQuestion(0);
     showToast(`已切换到错题回顾 (${wrongQs.length}题)`, 'info');
   } else {
@@ -855,12 +835,9 @@ function toggleNotesEditor() {
     nextTick(() => {
       if (notesTextareaRef.value) {
         notesTextareaRef.value.focus();
-        autoResizeTextarea(); // Adjust height after focusing
+        autoResizeTextarea(); // 调整聚焦后的高度
       }
     });
-  } else {
-    // Optionally save changes when switching back? Or rely on explicit save button?
-    // saveNotes();
   }
 }
 
@@ -882,8 +859,8 @@ function saveNotes() {
       localQuestions.value[localQIndex].notes = updatedNotes;
     }
 
-    isEditingNotes.value = false; // Exit edit mode
-    nextTick(renderNotesForCurrentQuestion); // Re-render the saved notes
+    isEditingNotes.value = false; // 退出编辑模式
+    nextTick(renderNotesForCurrentQuestion); // 重新渲染保存的笔记
     showToast('笔记已保存', 'success');
   } else {
     showToast('保存笔记失败', 'error');
@@ -902,7 +879,7 @@ async function renderNotesForCurrentQuestion() {
   }
 
   const noteContent = question.notes || '';
-  const generating = isGeneratingCurrent.value && activeGenerationIndex.value === currentIndex.value; // Check if *this* question is generating
+  const generating = isGeneratingCurrent.value && activeGenerationIndex.value === currentIndex.value; // 检查是否正在为当前题目生成笔记
 
   if (!noteContent && !generating) {
     renderedNotesHtml.value = '<p class="page-quiz__notes-placeholder">这道题目还没有笔记...</p>';
@@ -910,13 +887,13 @@ async function renderNotesForCurrentQuestion() {
   }
 
   try {
-    // Render markdown content
+    // 渲染markdown内容
     let htmlContent = '';
     if (noteContent) {
       htmlContent = mdInstance.render(noteContent);
     }
 
-    // Add placeholder if generating
+    // 如果正在生成则添加占位符
     if (generating && !htmlContent) {
       htmlContent = '<p class="page-quiz__notes-placeholder">思考中...</p>';
     } else if (!htmlContent) {
@@ -925,21 +902,25 @@ async function renderNotesForCurrentQuestion() {
 
     renderedNotesHtml.value = htmlContent;
 
-    // Process Mermaid diagrams after rendering HTML
-    await nextTick(); // Wait for DOM update
+    // 渲染HTML后处理Mermaid图表
+    await nextTick(); // 等待DOM更新
 
-    const notesElement = notesDisplayRef.value;
-    if (!notesElement) return;
+    // **** START MODIFICATION ****
+    // Skip Mermaid rendering if notes are currently being generated via stream
+    if (!notesDisplayRef.value || (isGeneratingCurrent.value && activeGenerationIndex.value === currentIndex.value)) {
+      console.log('[Mermaid] Skipping rendering during note generation.');
+      return;
+    }
+    // **** END MODIFICATION ****
 
     try {
-      await initMermaid(); // Ensure mermaid is initialized
+      await initMermaid(); // 确保mermaid已初始化
 
-      // 1. Find and replace pre>code blocks if markdown-it doesn't handle it correctly
-      // (Some Markdown renderers might wrap mermaid code differently)
-      const mermaidCodeBlocks = notesElement.querySelectorAll('pre code.language-mermaid');
+      // 处理pre>code块
+      const mermaidCodeBlocks = notesDisplayRef.value.querySelectorAll('pre code.language-mermaid');
       mermaidCodeBlocks.forEach(block => {
         const preElement = block.closest('pre');
-        // Avoid reprocessing if we already converted it to a div.mermaid
+        // 避免重新处理已转换为div.mermaid的元素
         if (!preElement || preElement.classList.contains('mermaid-processed')) return;
 
         const code = block.textContent || '';
@@ -952,27 +933,25 @@ async function renderNotesForCurrentQuestion() {
         if (preElement.parentNode) {
           preElement.parentNode.replaceChild(mermaidDiv, preElement);
         }
-        // Mark the original pre element so we don't try to replace it again
+        // 标记原始pre元素，避免重复替换
         preElement.classList.add('mermaid-processed');
       });
 
-      // 2. Find all elements designated for mermaid rendering
-      const mermaidElementsToRender = notesElement.querySelectorAll<HTMLElement>('.mermaid');
+      // 查找所有指定用于mermaid渲染的元素
+      const mermaidElementsToRender = notesDisplayRef.value.querySelectorAll<HTMLElement>('.mermaid');
 
       if (mermaidElementsToRender.length > 0) {
         const elementsArray = Array.from(mermaidElementsToRender);
-        console.log(`[Mermaid] Attempting to render ${elementsArray.length} diagrams.`);
+        console.log(`[Mermaid] 尝试渲染 ${elementsArray.length} 个图表。`);
         try {
-          // Let mermaid.run handle rendering idempotently if possible
+          // 让mermaid.run处理幂等渲染
           await mermaid.run({ nodes: elementsArray });
-          console.log(`[Mermaid] Successfully rendered or updated ${elementsArray.length} diagrams.`);
-          // Optional: Add a class to indicate successful rendering if needed for styling
-          // elementsArray.forEach(el => el.classList.add('mermaid-rendered'));
+          console.log(`[Mermaid] 成功渲染或更新了 ${elementsArray.length} 个图表。`);
         } catch (renderError) {
-          console.error('[Mermaid] Rendering error:', renderError);
-          // Add error message inside the div for user feedback
+          console.error('[Mermaid] 渲染错误:', renderError);
+          // 在div内添加错误信息以提供用户反馈
           elementsArray.forEach(el => {
-            // Avoid adding multiple error messages if run fails repeatedly
+            // 避免在run多次失败时添加多个错误信息
             if (!el.querySelector('.mermaid-error-message')) {
               el.classList.add('mermaid-error');
               const errorMessage = document.createElement('div');
@@ -982,19 +961,15 @@ async function renderNotesForCurrentQuestion() {
             }
           });
         }
-      } else {
-        // console.log('[Mermaid] No .mermaid elements found to render.');
       }
 
     } catch (mermaidError) {
-      console.error('Mermaid processing failed:', mermaidError);
-      // Display a general error if mermaid itself fails badly
-      // This part might be redundant if the inner try/catch handles display
+      console.error('Mermaid处理失败:', mermaidError);
     }
 
-    // Scroll to bottom if generating
-    if (generating && notesElement) {
-      notesElement.scrollTop = notesElement.scrollHeight;
+    // 如果正在生成笔记，则滚动到底部
+    if (generating && notesDisplayRef.value) {
+      notesDisplayRef.value.scrollTop = notesDisplayRef.value.scrollHeight;
     }
 
   } catch (error) {
@@ -1003,20 +978,8 @@ async function renderNotesForCurrentQuestion() {
   }
 }
 
-
 /**
- * 处理指定元素内的Mermaid图表
- */
-// This function might become redundant or simplified after the changes above.
-// Keeping it for now in case specific targeted processing is needed elsewhere.
-// async function processMermaidInElement(element: HTMLElement | null, isGenerating: boolean) {
-//   if (!element) return;
-//   // ... (logic moved to renderNotesForCurrentQuestion) ...
-// }
-
-
-/**
- * 在笔记编辑区插入 Markdown 标记
+ * 在笔记编辑区插入Markdown标记
  */
 function insertMarkdown(markup: string) {
   const textarea = notesTextareaRef.value;
@@ -1030,7 +993,7 @@ function insertMarkdown(markup: string) {
   let insertedMarkup = markup;
   let selectionOffset = 0;
 
-  // Basic placeholder replacement
+  // 基本占位符替换
   const placeholders: Record<string, string> = {
     '**粗体**': '粗体',
     '*斜体*': '斜体',
@@ -1043,22 +1006,22 @@ function insertMarkdown(markup: string) {
   for (const key in placeholders) {
     if (markup === key && selectedText) {
       insertedMarkup = markup.replace(placeholders[key], selectedText);
-      // Adjust selection to be *inside* the markup if possible
+      // 调整选择范围到标记内部（如果可能）
       if (key.includes('**') || key.includes('*')) {
         selectionOffset = key.indexOf(placeholders[key]);
       } else if (key.includes('```')) {
-        selectionOffset = key.indexOf('\n') + 1; // Place cursor after first newline
+        selectionOffset = key.indexOf('\n') + 1; // 将光标放在第一个换行符后
       }
       break;
     }
   }
 
 
-  // Insert the text
+  // 插入文本
   textarea.value = text.substring(0, start) + insertedMarkup + text.substring(end);
-  notesEditText.value = textarea.value; // Update v-model binding
+  notesEditText.value = textarea.value; // 更新v-model绑定
 
-  // Set cursor position or selection
+  // 设置光标位置或选择范围
   textarea.focus();
   nextTick(() => {
     if (selectedText && selectionOffset > 0) {
@@ -1078,12 +1041,11 @@ function insertMarkdown(markup: string) {
 function autoResizeTextarea() {
   const textarea = notesTextareaRef.value;
   if (textarea) {
-    textarea.style.height = 'auto'; // Reset height to recalculate
-    nextTick(() => { // Ensure DOM update before measuring scrollHeight
-      if (textarea) { // Check again as it might be gone
+    textarea.style.height = 'auto'; // 重置高度以重新计算
+    nextTick(() => { // 确保DOM更新后再测量scrollHeight
+      if (textarea) { // 再次检查，因为它可能已消失
         const scrollHeight = textarea.scrollHeight;
-        // Add a small buffer for padding/border, or use min-height from CSS
-        const minHeight = 80; // Example min-height from CSS
+        const minHeight = 80; // CSS中的最小高度示例
         textarea.style.height = `${Math.max(scrollHeight, minHeight)}px`;
       }
     });
@@ -1139,25 +1101,24 @@ async function generateAINotes(
       const decoder = new TextDecoder();
       let buffer = '';
       let lastDataReceived = Date.now();
-      const dataTimeout = 30000; // 30 seconds timeout
+      const dataTimeout = 30000; // 30秒超时
 
       const heartbeatInterval = setInterval(() => {
         if (Date.now() - lastDataReceived > dataTimeout) {
           console.warn(`[WARN] 数据流接收超时，可能存在网络问题 (Index: ${generationTargetIndex})`);
           showToast('网络连接不稳定，笔记生成可能中断', 'warning');
           clearInterval(heartbeatInterval);
-          reader.cancel('Timeout').catch(console.error); // Attempt to cancel the stream
-          // Trigger completion with error after timeout cancellation attempt
+          reader.cancel('Timeout').catch(console.error);
           completionCallback(generatedNote, generationTargetIndex, '数据流接收超时');
         }
-      }, 10000); // Check every 10 seconds
+      }, 10000); // 每10秒检查一次
 
 
       try {
 
         while (true) {
           const { done, value } = await reader.read();
-          lastDataReceived = Date.now(); // Update timestamp on receiving data
+          lastDataReceived = Date.now(); // 更新接收数据的时间戳
 
           if (done) {
             console.log(`[LOG] 流读取完成 (done) for index ${generationTargetIndex}`);
@@ -1166,7 +1127,7 @@ async function generateAINotes(
 
           buffer += decoder.decode(value, { stream: true });
 
-          // Process line by line
+          // 逐行处理
           let lineEndIndex;
           while ((lineEndIndex = buffer.indexOf('\n')) >= 0) {
             const line = buffer.slice(0, lineEndIndex).trim();
@@ -1175,25 +1136,26 @@ async function generateAINotes(
             if (line.startsWith('data: ')) {
               const dataStr = line.substring(6);
               if (dataStr === '[DONE]') {
-                console.log(`[LOG] Received [DONE] signal for index ${generationTargetIndex}`);
-                // Break inner loop, outer loop will check reader.read() result 'done'
+                console.log(`[LOG] 收到 [DONE] 信号，索引 ${generationTargetIndex}`);
                 break;
               }
               try {
                 const parsed = JSON.parse(dataStr);
-                // Extract content based on common OpenAI/compatible structures
+                // --- 增加日志 ---
+                console.log(`[DEBUG] Raw dataStr (Index ${generationTargetIndex}):`, dataStr);
+                console.log(`[DEBUG] Parsed data (Index ${generationTargetIndex}):`, parsed);
+                // --- Potential Issue Area ---
                 const content = parsed.choices?.[0]?.delta?.content ||
-                  parsed.choices?.[0]?.message?.content ||
-                  parsed.delta?.content || // Some Anthropic-like structures
-                  '';
+                  parsed.choices?.[0]?.message?.content || // This might be for non-streamed messages
+                  parsed.delta?.content || // Check if this path is used by DeepSeek R1
+                  ''; // Default to empty string
 
                 if (content) {
-                  // console.log(`[LOG] 收到 chunk: '${content.substring(0, 50)}...' (Index: ${generationTargetIndex})`);
                   generatedNote += content;
-                  streamCallback(content, generationTargetIndex); // Pass content chunk and index
+                  streamCallback(content, generationTargetIndex); // 传递内容块和索引
                 }
               } catch (e) {
-                if (dataStr.trim()) { // Avoid logging empty data lines as errors
+                if (dataStr.trim()) { // 避免将空数据行记录为错误
                   console.error('[ERROR] 解析流式 JSON 出错:', e, '原始行:', line, `(Index: ${generationTargetIndex})`);
                 }
               }
@@ -1201,25 +1163,24 @@ async function generateAINotes(
           }
         }
       } catch (streamError) {
-        // Handle potential errors during stream reading (e.g., network issues)
+        // 处理流读取过程中的潜在错误（如网络问题）
         console.error(`[ERROR] 流读取过程中发生错误 (Index: ${generationTargetIndex}):`, streamError);
-        // Trigger completion with existing note content and the error
+        // 触发完成回调，使用现有笔记内容和错误信息
         completionCallback(generatedNote, generationTargetIndex, `流处理错误: ${(streamError as Error).message}`);
-        clearInterval(heartbeatInterval); // Clean up interval
-        return; // Exit the function as the stream failed
+        clearInterval(heartbeatInterval); // 清理定时器
+        return; // 流失败时退出函数
       } finally {
-        clearInterval(heartbeatInterval); // Ensure interval is cleared
-        // reader.releaseLock(); // Not needed with await reader.read() loop
+        clearInterval(heartbeatInterval); // 确保定时器被清理
       }
-      console.log(`[LOG] 流处理完成 for index ${generationTargetIndex}. Final Note Length: ${generatedNote.length}`);
-      completionCallback(generatedNote.trim(), generationTargetIndex); // Call completion after stream ends successfully
+      console.log(`[LOG] 流处理完成，索引 ${generationTargetIndex}. 最终笔记长度: ${generatedNote.length}`);
+      completionCallback(generatedNote.trim(), generationTargetIndex); // 流成功结束后调用完成回调
 
-    } else { // Handle non-streamed response
+    } else { // 处理非流式响应
       const data = await response.json();
-      // Extract content based on common OpenAI/compatible structures
+      // 提取内容，基于常见的OpenAI/兼容结构
       generatedNote = data.choices?.[0]?.message?.content ||
-        data.choices?.[0]?.text || // Older completion API style
-        data.content?.[0]?.text || // Anthropic style
+        data.choices?.[0]?.text ||
+        data.content?.[0]?.text ||
         '';
 
       console.log(`[LOG] 非流式响应笔记 (Index: ${generationTargetIndex}):`, generatedNote.substring(0, 100) + "...");
@@ -1227,8 +1188,8 @@ async function generateAINotes(
     }
 
   } catch (error) {
-    console.error(`[ERROR] 生成笔记失败 for index ${generationTargetIndex}:`, error);
-    // Ensure completion callback is called even on fetch/setup errors
+    console.error(`[ERROR] 生成笔记失败，索引 ${generationTargetIndex}:`, error);
+    // 确保即使在fetch/设置错误时也会调用完成回调
     completionCallback('', generationTargetIndex, `笔记生成失败: ${error instanceof Error ? error.message : '未知错误'}`);
   }
 }
@@ -1238,8 +1199,8 @@ async function generateAINotes(
  */
 function triggerAINotesGeneration() {
   if (!currentQuestion.value || isQuizSubmitted.value) return;
-  forceShowNotes.value = true; // Show notes area immediately
-  requestNoteGeneration(currentIndex.value, true); // Request for the current question, manually triggered
+  forceShowNotes.value = true; // 立即显示笔记区域
+  requestNoteGeneration(currentIndex.value, true); // 请求当前问题的笔记生成，手动触发
 }
 
 /**
@@ -1261,7 +1222,7 @@ async function triggerSync() {
       return;
     }
 
-    // Use configService to push the quiz data
+    // 使用configService推送题库数据
     const success = await configService.pushQuizToGithub(syncQuizName, githubConfig.forceSync);
 
     if (success) {
@@ -1270,17 +1231,15 @@ async function triggerSync() {
       setTimeout(() => syncStatus.value = 'idle', 2000);
     } else {
       syncStatus.value = 'error';
-      // configService.pushQuizToGithub should show specific errors
-      // showToast('同步失败，请检查网络或配置', 'error');
     }
   } catch (err) {
     console.error('同步失败:', err);
     syncStatus.value = 'error';
     showToast(`同步失败: ${err instanceof Error ? err.message : '未知错误'}`, 'error');
   } finally {
-    // Ensure status is reset if still pending after operation attempt
+    // 确保操作尝试后状态仍为pending时重置
     if (syncStatus.value === 'pending') {
-      syncStatus.value = 'idle'; // Or 'error' depending on desired behavior
+      syncStatus.value = 'idle';
     }
   }
 }
@@ -1296,9 +1255,34 @@ function openSyncConfigModal() {
 /**
  * 处理同步配置保存
  */
-function handleSyncConfigSave(config: Partial<GithubConfig>) { // Use Partial<GithubConfig>
+function handleSyncConfigSave(config: Partial<GithubConfig>) {
   console.log('同步配置已保存:', config);
-  configService.updateGithubConfig(config); // Let configService handle validation and saving
+  configService.updateGithubConfig(config); // 让configService处理验证和保存
+}
+
+/**
+ * 处理题库同步完成
+ */
+async function handleSyncComplete(result: { action: string; quiz: string; overrideLocal?: boolean; success: boolean }) {
+  console.log('同步完成', result);
+
+  // 使用configService处理同步结果
+  const syncResult = await configService.handleQuizSyncComplete(result);
+
+  // 如果同步成功且当前有题库加载
+  if (syncResult && syncResult.data && configService.getQuizData()) {
+    // 如果同步的题库与当前加载的题库同名且覆盖了本地题库
+    const lastLoaded = configService.getLastLoadedQuiz();
+    if (lastLoaded && lastLoaded.name === syncResult.quizName && syncResult.wasOverridden) {
+      // 重新加载题库数据
+      configService.setQuizData(syncResult.data);
+
+      // 刷新题目列表
+      initializeQuiz();
+
+      showToast(`已更新当前题库: ${syncResult.quizName}`, 'success');
+    }
+  }
 }
 
 /**
@@ -1312,7 +1296,7 @@ function openApiConfigModal() {
  * 获取完整的当前活动API配置
  */
 function getCompleteApiConfig(): ApiConfig {
-  // Directly return the active config from the service
+  // 直接从服务返回活动配置
   return configService.getApiConfig();
 }
 
@@ -1323,17 +1307,13 @@ function getCompleteApiConfig(): ApiConfig {
  * 应用来自设置模态框的设置
  */
 function applySettingsFromModal(settings: { uiSettings: UiSettings, quizSettings: QuizSettings, debugEnabled: boolean }) {
-  // Use specific update methods for clarity and potential granular notifications
+  // 使用特定的更新方法以提高清晰度和潜在的精细通知
   configService.updateUiSettings(settings.uiSettings, false);
   configService.updateQuizSettings(settings.quizSettings, false);
   configService.setDebugEnabled(settings.debugEnabled, false);
-  // configService.updateSettings({ // Alternative: use single update method
-  //   uiSettings: settings.uiSettings,
-  //   quizSettings: settings.quizSettings,
-  //   debugEnabled: settings.debugEnabled,
-  // }, false);
-  showToast('通用设置已保存', 'success'); // Show toast after all settings are applied
-  configService.saveQuizState(); // Save state if settings might affect it
+
+  showToast('通用设置已保存', 'success'); // 所有设置应用后显示toast
+  configService.saveQuizState(); // 如果设置可能影响状态，则保存状态
 }
 
 /**
@@ -1344,7 +1324,7 @@ function openCurrentQuestionEditor() {
     showToast('当前状态无法编辑题目', 'warning');
     return;
   }
-  // Deep clone the question object for editing to avoid modifying the original directly
+  // 深度克隆问题对象以进行编辑，避免直接修改原始对象
   questionToEdit.value = JSON.parse(JSON.stringify(currentQuestion.value));
   showEditModal.value = true;
 }
@@ -1354,7 +1334,7 @@ function openCurrentQuestionEditor() {
  */
 function closeEditModal() {
   showEditModal.value = false;
-  questionToEdit.value = null; // Clear the editing question
+  questionToEdit.value = null; // 清除正在编辑的问题
 }
 
 
@@ -1370,29 +1350,28 @@ function handleSaveQuestion(updatedQuestionData: Partial<Question>) {
 
   const questionId = questionToEdit.value.id;
 
-  // Call configService to update the question in the central store
+  // 调用configService更新中央存储中的问题
   const success = configService.updateQuestion(questionId, updatedQuestionData);
 
   if (success) {
-    // Update the question in the local list for immediate UI feedback
+    // 更新本地列表中的问题以立即反馈UI
     const localIndex = localQuestions.value.findIndex(q => q.id === questionId);
     if (localIndex !== -1) {
-      // Merge changes into the local question object
+      // 将更改合并到本地问题对象中
       localQuestions.value[localIndex] = { ...localQuestions.value[localIndex], ...updatedQuestionData };
-      // Ensure reactivity if needed, though spread syntax usually handles this
-      // Vue.set(localQuestions.value, localIndex, { ... }); // For Vue 2 reactivity
+      // 如果需要，确保响应性，但展开语法通常会处理这个问题
+      // Vue.set(localQuestions.value, localIndex, { ... }); // Vue 2响应性处理
     }
-    // Also update the currentQuestion computed property if it's the one being edited
+    // 如果当前编辑的问题就是正在查看的问题，也更新currentQuestion计算属性
     if (currentQuestion.value && currentQuestion.value.id === questionId) {
-      // Re-trigger computed property or manually update relevant fields if necessary
-      // This might not be strictly needed if localQuestions update triggers recomputation
+      // 重新触发计算属性或手动更新相关字段（如有必要）
+      // 如果localQuestions更新触发重新计算，这可能不是严格必需的
     }
 
-    // Re-render notes if notes content might have changed
+    // 如果笔记内容可能已更改，重新渲染笔记
     if ('notes' in updatedQuestionData) {
       renderNotesForCurrentQuestion();
     }
-
 
     showToast('题目已更新', 'success');
     closeEditModal(); // Close modal on successful save
@@ -1406,18 +1385,18 @@ function handleSaveQuestion(updatedQuestionData: Partial<Question>) {
 // --- 辅助方法 ---
 
 /**
- * 获取选项的 Key (e.g., 'A')
- * Handles options that might already start with a letter.
+ * 获取选项的Key (如'A')
+ * 处理可能已以字母开头的选项。
  */
 function getOptionKey(optionText: string | unknown, index: number): string {
   if (typeof optionText === 'string') {
-    // Match A., A), A:, A followed by space, or just A at the beginning
+    // 匹配A.、A)、A:、A后跟空格，或仅在开头的A
     const keyMatch = optionText.match(/^([A-Z])([.:)]|\s+|$)/i);
     if (keyMatch) {
       return keyMatch[1].toUpperCase();
     }
   }
-  // Default to generating key based on index if no prefix found or not a string
+  // 如果未找到前缀或不是字符串，则默认基于索引生成键
   return String.fromCharCode(65 + index);
 }
 
@@ -1426,27 +1405,27 @@ function getOptionKey(optionText: string | unknown, index: number): string {
  * 获取选项的内容 (移除可能的字母前缀)
  */
 function getOptionContent(optionText: string | unknown): string {
-  if (typeof optionText !== 'string') return String(optionText); // Return as string if not already
+  if (typeof optionText !== 'string') return String(optionText); // 如果不是字符串则转换为字符串
 
-  // Match A., A), A:, A followed by space
+  // 匹配A.、A)、A:、A后跟空格
   const keyMatch = optionText.match(/^([A-Z])([.:)]|\s+)/i);
   if (keyMatch) {
-    // Return the part after the prefix, trimmed
+    // 返回前缀后的部分，已修整
     return formatQuestionText(optionText.substring(keyMatch[0].length).trim());
   }
-  // If no prefix, return the original text formatted
+  // 如果没有前缀，返回格式化的原始文本
   return formatQuestionText(optionText);
 }
 
 
 /**
- * 获取选项的 CSS 类
+ * 获取选项的CSS类
  */
 function getOptionClass(optionKey: string): string {
   const question = currentQuestion.value;
   if (!question) return '';
 
-  const classes = ['page-quiz__option']; // Base class
+  const classes = ['page-quiz__option']; // 基本类
   const isSelected = selectedAnswer.value === optionKey;
   const isUserAnswer = question.userAnswer === optionKey;
   const isCorrect = isCorrectAnswerOption(question.answer, optionKey);
@@ -1455,28 +1434,28 @@ function getOptionClass(optionKey: string): string {
   const showCorrect = quizSettings.value.showCorrectAnswerImmediately;
   const locked = isAnswerLocked.value;
 
-  // --- Selection state (only if not locked) ---
+  // 选择状态（仅当未锁定时）
   if (isSelected && !locked && !reviewMode) {
     classes.push('page-quiz__option--selected');
   }
 
-  // --- Feedback state (if answered or in review mode) ---
+  // 反馈状态（如果已回答或在复习模式中）
   if (answered || reviewMode) {
     if (isCorrect) {
-      // Always show correct if in review mode or if set to show immediately
+      // 如果在复习模式中或设置为立即显示，则始终显示正确
       if (reviewMode || showCorrect) {
         classes.push('page-quiz__option--correct');
       }
-      // Also highlight if the user's answer was correct (even if not shown immediately)
+      // 如果用户答案正确，也要突出显示（即使不立即显示）
       else if (isUserAnswer) {
-        classes.push('page-quiz__option--correct'); // Or a different class like 'user-correct'
+        classes.push('page-quiz__option--correct');
       }
-    } else if (isUserAnswer) { // Incorrect user answer
+    } else if (isUserAnswer) { // 不正确的用户答案
       classes.push('page-quiz__option--incorrect');
     }
   }
 
-  // --- Locked state ---
+  // 锁定状态
   if (locked || isQuizSubmitted.value) {
     classes.push('page-quiz__option--locked');
   }
@@ -1490,7 +1469,7 @@ function getOptionClass(optionKey: string): string {
  */
 function getOptionKeyClass(optionKey: string): string {
   const question = currentQuestion.value;
-  if (!question) return 'page-quiz__option-number'; // Default class
+  if (!question) return 'page-quiz__option-number'; // 默认类
 
   const isCorrect = isCorrectAnswerOption(question.answer, optionKey);
   const isUserAnswer = question.userAnswer === optionKey;
@@ -1498,7 +1477,7 @@ function getOptionKeyClass(optionKey: string): string {
   const reviewMode = quizSettings.value.reviewMode;
   const showCorrect = quizSettings.value.showCorrectAnswerImmediately;
 
-  const classes = ['page-quiz__option-number']; // Base class
+  const classes = ['page-quiz__option-number']; // 基本类
 
   if (answered || reviewMode) {
     if (isCorrect && (reviewMode || showCorrect)) {
@@ -1545,7 +1524,7 @@ function compareAnswers(selected: string | null | undefined, correctAnswer: Ques
   if (selected === null || selected === undefined || correctAnswer === undefined || correctAnswer === null) {
     return false;
   }
-  // Reuse the detailed checking logic
+  // 重用详细的检查逻辑
   return isCorrectAnswerOption(correctAnswer, selected);
 }
 
@@ -1712,13 +1691,13 @@ async function initMermaid() {
  * 切换主题方法
  */
 function toggleTheme() {
-  configService.toggleDarkMode(); // Service handles state and saving
-  // isDarkMode computed property will update automatically
+  configService.toggleDarkMode(); // 处理状态和保存
+  // isDarkMode计算属性将自动更新
 
-  // Re-initialize or update Mermaid theme after DOM updates
+  // 在DOM更新后重新初始化或更新Mermaid主题
   nextTick(() => {
-    initMermaid(); // Re-initialize to apply the new theme
-    renderNotesForCurrentQuestion(); // Re-render notes which might contain diagrams
+    initMermaid(); // 重新初始化以应用新主题
+    renderNotesForCurrentQuestion(); // 使用可能的新主题重新渲染笔记
   });
 }
 
@@ -1729,16 +1708,16 @@ function compareQuestionIds(a: Question, b: Question): number {
   const idA = String(a.id || '');
   const idB = String(b.id || '');
 
-  // Attempt to extract leading numbers for primary sort
+  // 尝试提取开头的数字作为主要排序依据
   const numA = parseInt(idA.match(/^\d+/)?.[0] || '', 10);
   const numB = parseInt(idB.match(/^\d+/)?.[0] || '', 10);
 
-  // If both have valid leading numbers and they are different, sort numerically
+  // 如果两者都有有效的前导数字且它们不同，则按数字排序
   if (!isNaN(numA) && !isNaN(numB) && numA !== numB) {
     return numA - numB;
   }
 
-  // Otherwise, fall back to locale-aware string comparison for robustness
+  // 否则，回退到区域感知的字符串比较以保证健壮性
   return idA.localeCompare(idB);
 }
 
@@ -1748,7 +1727,7 @@ function compareQuestionIds(a: Question, b: Question): number {
  */
 function formatQuestionText(text: string | undefined): string {
   if (!text) return '';
-  // Remove potential prefixes like "A.", "B)", "C:" or "D "
+  // 移除潜在的前缀，如 "A.", "B)", "C:" 或 "D "
   return text.replace(/^([A-Z])([.:)]|\s)\s*/, '').trim();
 }
 
@@ -1757,7 +1736,7 @@ function formatQuestionText(text: string | undefined): string {
  */
 function formatQuestionTitle(title: string | undefined): string {
   if (!title) return '';
-  // Remove leading number, period, and whitespace
+  // 移除开头的数字、句点和空格
   return title.replace(/^\s*\d+\s*\.\s*/, '').trim();
 }
 
@@ -1782,55 +1761,54 @@ function filterQuestionsByChapter(chapterTitle: string) {
 
   try {
     if (chapterTitle === 'all') {
-      // Combine questions from all chapters
+      // 合并所有章节的问题
       fullQuizData.chapters.forEach((chapter) => {
         if (chapter.questions && Array.isArray(chapter.questions)) {
           const chapterQuestions = chapter.questions.map(q => ({
             ...q,
-            chapterTitle: chapter.title // Ensure chapterTitle is set
+            chapterTitle: chapter.title // 确保设置了chapterTitle
           }));
           filteredQuestions.push(...chapterQuestions);
         }
       });
     } else {
-      // Find the specific chapter
+      // 查找特定章节
       const targetChapter = fullQuizData.chapters.find(c => c.title === chapterTitle);
       if (targetChapter && targetChapter.questions && Array.isArray(targetChapter.questions)) {
         filteredQuestions = targetChapter.questions.map(q => ({
           ...q,
-          chapterTitle: targetChapter.title // Ensure chapterTitle is set
+          chapterTitle: targetChapter.title // 确保设置了chapterTitle
         }));
       }
     }
 
-    // --- Post-filtering processing ---
+    // 过滤后处理
 
-    // 1. Ensure unique IDs and basic structure
+    // 1. 确保唯一ID和基本结构
     const questionNumber = 1;
     filteredQuestions = filteredQuestions.map((q, index) => ({
       ...q,
-      id: q.id || `gen_${chapterTitle}_${index}`, // Generate ID if missing
-      title: q.title || q.question || '', // Ensure title exists
-      question: q.question || q.title || '', // Ensure question exists
+      id: q.id || `gen_${chapterTitle}_${index}`, // 如果缺少ID则生成
+      title: q.title || q.question || '', // 确保存在标题
+      question: q.question || q.title || '', // 确保存在问题
       options: q.options || [],
-      // userAnswer is already loaded from configService, no need to map here
     }));
 
 
-    // 2. Sort questions (always sort before numbering and shuffling)
+    // 2. 排序问题（在编号和洗牌之前始终排序）
     filteredQuestions.sort(compareQuestionIds);
 
 
-    // 3. Apply random mode shuffle if enabled
+    // 3. 如果启用，应用随机模式洗牌
     if (quizSettings.value.randomMode) {
-      // Fisher-Yates shuffle
+      // Fisher-Yates洗牌算法
       for (let i = filteredQuestions.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [filteredQuestions[i], filteredQuestions[j]] = [filteredQuestions[j], filteredQuestions[i]];
       }
     }
 
-    // 4. Assign sequential numbers *after* sorting/shuffling
+    // 4. 排序/洗牌后分配顺序编号
     filteredQuestions.forEach((q, index) => {
       q.number = index + 1;
     });
@@ -1839,22 +1817,20 @@ function filterQuestionsByChapter(chapterTitle: string) {
     localQuestions.value = filteredQuestions;
     error.value = filteredQuestions.length === 0 ? `章节 "${chapterTitle}" 下没有题目` : null;
 
-    // Update wrongQuestionIds based on the newly filtered list
+    // 根据新过滤的列表更新wrongQuestionIds
     wrongQuestionIds.value = filteredQuestions
       .filter(q => q.userAnswer !== null && q.userAnswer !== undefined && !compareAnswers(q.userAnswer, q.answer))
-      .map(q => String(q.id)); // Ensure IDs are strings
+      .map(q => String(q.id)); // 确保ID是字符串
 
-    // Save the selected chapter to config
+    // 保存选定的章节到配置
     configService.setQuizConfig({ chapterIndex: chapterTitle });
-    // Optionally save the entire state if filtering implies a state change to persist
-    // configService.saveQuizState();
 
     console.log(`Filtered ${filteredQuestions.length} questions. Random mode: ${quizSettings.value.randomMode}`);
 
   } catch (err) {
     console.error("Error during question filtering:", err);
     error.value = "过滤题目时发生错误";
-    localQuestions.value = []; // Clear questions on error
+    localQuestions.value = []; // 错误时清除问题
   } finally {
     loading.value = false;
   }
@@ -1875,10 +1851,10 @@ function requestNoteGeneration(targetIndex: number, isManual: boolean) {
     return;
   }
 
-  // Skip auto-generation if notes already exist
+  // 如果自动生成笔记已存在则跳过
   if (!isManual && questionToGenerate.notes && questionToGenerate.notes.trim() !== '') {
     console.log(`[LOG] 跳过自动生成 (Index: ${targetIndex}): 已有笔记`);
-    checkAndTriggerAutoGeneration(); // Check for the *next* one
+    checkAndTriggerAutoGeneration(); // 检查*下一个*问题
     return;
   }
 
@@ -1892,141 +1868,146 @@ function requestNoteGeneration(targetIndex: number, isManual: boolean) {
     return;
   }
 
-  // --- Start Generation ---
+  // --- 开始生成 ---
   activeGenerationIndex.value = targetIndex;
   isGenerating.value = true;
-  forceShowNotes.value = true; // Ensure notes area is visible
+  forceShowNotes.value = true; // 确保笔记区域可见
   showToast(`开始为题目 ${targetIndex + 1} 生成笔记...`, 'info');
 
-  // Clear existing notes for the target question before generating
-  questionToGenerate.notes = '';
-  renderedNotesHtml.value = '<p class="page-quiz__notes-placeholder">思考中...</p>'; // Show placeholder immediately if current
+  // Clear existing notes *first* for the target question
+  if (questionToGenerate) {
+    questionToGenerate.notes = '';
+  }
 
-
-  // If the generation target is the currently viewed question, render the cleared state
+  // If the generation target is the currently viewed question,
+  // immediately render the cleared state and loading indicator.
   if (currentIndex.value === targetIndex) {
+    // Render the cleared state BEFORE the API call
     renderNotesForCurrentQuestion();
   }
 
-  // --- Setup Callbacks ---
+  // --- 设置回调 ---
   let lastRenderTime = 0;
-  const baseThrottleDelay = 150; // Slightly increased delay
-  let throttleDelay = baseThrottleDelay;
-  let pendingChunks = '';
+  const baseThrottleDelay = 150; // 稍微增加的延迟
+  const throttleDelay = baseThrottleDelay;
+  const pendingChunks = '';
   let renderTimeoutId: number | null = null;
   let autoSaveTimeoutId: number | null = null;
 
   // Auto-save function (throttled)
   const autoSaveNotes = () => {
-    if (autoSaveTimeoutId) clearTimeout(autoSaveTimeoutId); // Clear previous timeout
+    if (autoSaveTimeoutId) clearTimeout(autoSaveTimeoutId); // 清除之前的超时
     autoSaveTimeoutId = window.setTimeout(() => {
       if (activeGenerationIndex.value === targetIndex && questionToGenerate.id && questionToGenerate.notes) {
         console.log(`[LOG] Auto-saving notes for index ${targetIndex}`);
         configService.saveNoteToQuestion(questionToGenerate.id, questionToGenerate.notes);
-        // configService.saveQuizState(); // SaveNoteToQuestion should handle this if needed
       }
-    }, 2000); // Save every 2 seconds of inactivity during generation
+    }, 2000); // 在生成过程中每2秒无活动保存一次
   };
 
   // Stream chunk handler
   const handleStreamChunk: StreamCallback = (chunk, streamTargetIndex) => {
-    // console.debug(`[DEBUG] Stream Chunk: Target=${streamTargetIndex}, Expected=${targetIndex}, Chunk='${chunk.substring(0,20)}...'`);
-    if (streamTargetIndex !== targetIndex) return; // Ignore chunks for wrong index
+    if (streamTargetIndex !== targetIndex) return; // 忽略错误索引的块
 
     questionToGenerate.notes = (questionToGenerate.notes || '') + chunk;
-    pendingChunks += chunk;
-    autoSaveNotes(); // Trigger auto-save on new chunk
+    autoSaveNotes(); // 触发新块的自动保存
 
-    // Throttle rendering updates only for the currently viewed question
-    if (apiConfig.value.streamOutput && currentIndex.value === streamTargetIndex) {
+    // **** START MODIFICATION: Simplify throttling and update logic ****
+    // Update UI for the currently viewed question with throttling
+    if (currentIndex.value === streamTargetIndex) {
       const now = Date.now();
-      const timeSinceLastRender = now - lastRenderTime;
-      // Determine if immediate render is needed (significant chunk, important markers, or enough time passed)
-      const hasImportantMarkers = /\n|```|\*\*|#|>|-\s|1\.|\<|!\[/.test(pendingChunks);
-      const bufferSizeTrigger = pendingChunks.length > 100;
-      throttleDelay = bufferSizeTrigger ? baseThrottleDelay * 2 : (hasImportantMarkers ? 50 : baseThrottleDelay); // Adjust delay dynamically
+      const fixedThrottleDelay = 250; // Use a fixed throttle delay (e.g., 250ms)
 
-      if (renderTimeoutId) clearTimeout(renderTimeoutId); // Clear pending render
-
-      if (timeSinceLastRender > throttleDelay || hasImportantMarkers || bufferSizeTrigger) {
-        // console.debug(`[DEBUG] Immediate Render: Throttle=${throttleDelay}ms, Elapsed=${timeSinceLastRender}ms, Markers=${hasImportantMarkers}, Size=${bufferSizeTrigger}`);
-        renderNotesForCurrentQuestion();
-        lastRenderTime = now;
-        pendingChunks = ''; // Reset buffer after render
-      } else {
-        // console.debug(`[DEBUG] Delayed Render: Throttle=${throttleDelay}ms, Elapsed=${timeSinceLastRender}ms`);
+      if (!renderTimeoutId) {
+        // If no timeout is pending, schedule one
         renderTimeoutId = window.setTimeout(() => {
-          if (pendingChunks.length > 0 && activeGenerationIndex.value === streamTargetIndex && currentIndex.value === streamTargetIndex) {
-            // console.debug(`[DEBUG] Executing Delayed Render`);
-            renderNotesForCurrentQuestion();
-            pendingChunks = '';
+          if (activeGenerationIndex.value === streamTargetIndex && currentIndex.value === streamTargetIndex) {
+            // console.debug(`[DEBUG] Executing Throttled Render (Stream)`);
+            renderNotesForCurrentQuestion(); // Render Markdown updates (Mermaid skipped inside)
+            lastRenderTime = Date.now();
           }
           renderTimeoutId = null;
-        }, throttleDelay - timeSinceLastRender);
+        }, fixedThrottleDelay);
+      } else if (now - lastRenderTime > fixedThrottleDelay * 4) {
+        // Force render if it hasn't updated in a while (e.g., 4x delay)
+        clearTimeout(renderTimeoutId);
+        renderTimeoutId = null;
+        if (activeGenerationIndex.value === streamTargetIndex && currentIndex.value === streamTargetIndex) {
+          renderNotesForCurrentQuestion();
+          lastRenderTime = now;
+        }
       }
     }
+    // **** END MODIFICATION ****
   };
 
   // Completion handler
   const handleCompletion: CompletionCallback = (finalNote, completedIndex, error) => {
     console.log(`[LOG] 生成完成: Index=${completedIndex}, Expected=${targetIndex}, Error=${error || 'None'}, Final Length=${finalNote?.length}`);
 
-    // Clear timeouts regardless of index match
     if (renderTimeoutId) clearTimeout(renderTimeoutId);
     if (autoSaveTimeoutId) clearTimeout(autoSaveTimeoutId);
 
-    // --- Critical: Only process completion if it matches the active generation index ---
     if (activeGenerationIndex.value !== completedIndex) {
       console.warn(`[WARN] 忽略过时的完成回调 (Completed: ${completedIndex}, Active: ${activeGenerationIndex.value})`);
       return;
     }
 
     try {
-      // Final save of the note
-      questionToGenerate.notes = finalNote; // Update local object
+      questionToGenerate.notes = finalNote; // Update local object with final note
       if (questionToGenerate.id) {
-        console.log(`[LOG] Final save for index ${completedIndex}`);
+        console.log(`[LOG] 最终保存索引 ${completedIndex} 的笔记`);
         configService.saveNoteToQuestion(questionToGenerate.id, finalNote);
-        configService.saveQuizState(); // Ensure overall state persistence
+        configService.saveQuizState(); // Ensure overall state is persisted
       } else {
-        console.error(`[ERROR] Cannot perform final save for index ${completedIndex}, missing question ID`);
+        console.error(`[ERROR] 无法为索引 ${completedIndex} 执行最终保存，缺少问题ID`);
       }
 
-      // Render the final notes *only* if the completed question is the one currently viewed
+      // **** START MODIFICATION: Final render after completion ****
+      // Reset generation state *before* final render
+      console.log(`[LOG] 重置生成状态: activeGenerationIndex from ${activeGenerationIndex.value} to null`);
+      const previousActiveIndex = activeGenerationIndex.value;
+      activeGenerationIndex.value = null;
+      isGenerating.value = false;
+
+      // If the completed question is the currently viewed question, render the final note *including* Mermaid.
       if (currentIndex.value === completedIndex) {
-        console.log(`[LOG] Rendering final notes for currently viewed index ${completedIndex}`);
-        nextTick(renderNotesForCurrentQuestion);
+        console.log(`[LOG] 为当前查看的索引 ${completedIndex} 渲染最终笔记 (包含Mermaid)`);
+        nextTick(renderNotesForCurrentQuestion); // Now Mermaid will be rendered
       }
+      // **** END MODIFICATION ****
 
-      // Show appropriate toast message
+      // 显示适当的提示消息
       if (error) {
         showToast(`题目 ${completedIndex + 1} 笔记生成失败: ${error}`, 'error');
       } else {
         showToast(`题目 ${completedIndex + 1} 笔记生成完成`, 'success');
       }
 
-      // Trigger auto-sync if enabled and generation was successful
+      // 如果启用自动同步且生成成功，则触发同步
       if (!error && apiConfig.value.autoSync && !isManual) {
         showToast('正在自动同步到远程仓库...', 'info');
         triggerSync();
       }
 
     } catch (completionError) {
-      console.error(`[ERROR] Error in completion handler for index ${completedIndex}:`, completionError);
+      console.error(`[ERROR] 处理索引 ${completedIndex} 的完成回调时出错:`, completionError);
       showToast('处理笔记生成结果时出错', 'error');
     } finally {
-      // --- CRITICAL: Reset generation state ---
-      console.log(`[LOG] 重置生成状态: activeGenerationIndex from ${activeGenerationIndex.value} to null`);
-      activeGenerationIndex.value = null;
-      isGenerating.value = false;
+      // Reset state (already done before final render)
+      // if (activeGenerationIndex.value === completedIndex) { // Ensure state reset only if it was the active one
+      //   console.log(`[LOG] 重置生成状态 (finally block): activeGenerationIndex from ${activeGenerationIndex.value} to null`);
+      //   activeGenerationIndex.value = null;
+      //   isGenerating.value = false;
+      // }
 
-      // --- CRITICAL: Check for next auto-generation AFTER resetting state ---
-      console.log("[LOG] Completion finished, checking for next auto-generation.");
+      // --- 关键: 在重置状态后检查下一个自动生成 --- (moved from inside try)
+      console.log("[LOG] 完成处理结束，检查下一个自动生成。");
       checkAndTriggerAutoGeneration();
     }
   };
 
-  // --- Initiate API Call ---
+  // --- 发起API调用 ---
   generateAINotes(questionToGenerate, targetIndex, handleCompletion, handleStreamChunk);
 }
 
@@ -2035,76 +2016,76 @@ function requestNoteGeneration(targetIndex: number, isManual: boolean) {
  * 检查并触发下一个问题的自动笔记生成
  */
 function checkAndTriggerAutoGeneration() {
-  console.log("[LOG] checkAndTriggerAutoGeneration called.");
+  console.log("[LOG] 自动生成检查被调用。");
   if (!apiConfig.value.enabled || !apiConfig.value.autoGenerate || isQuizSubmitted.value || isGenerating.value || activeGenerationIndex.value !== null) {
-    console.log(`[LOG] Auto-gen check skipped: Enabled=${apiConfig.value.enabled}, AutoGen=${apiConfig.value.autoGenerate}, Submitted=${isQuizSubmitted.value}, Generating=${isGenerating.value}, ActiveIndex=${activeGenerationIndex.value}`);
+    console.log(`[LOG] 自动生成检查跳过: 启用=${apiConfig.value.enabled}, 自动生成=${apiConfig.value.autoGenerate}, 已提交=${isQuizSubmitted.value}, 生成中=${isGenerating.value}, 活动索引=${activeGenerationIndex.value}`);
     return;
   }
 
   const nextIndex = currentIndex.value + 1;
-  console.log(`[LOG] Checking auto-gen for next index: ${nextIndex}`);
+  console.log(`[LOG] 检查下一索引的自动生成: ${nextIndex}`);
 
   if (nextIndex < localQuestions.value.length) {
     const nextQuestion = localQuestions.value[nextIndex];
-    // Check if next question exists and doesn't have notes already
+    // 检查下一个问题是否存在且没有笔记
     if (nextQuestion && (!nextQuestion.notes || nextQuestion.notes.trim() === '')) {
-      console.log(`[LOG] Triggering auto-generation for index ${nextIndex}`);
+      console.log(`[LOG] 触发索引 ${nextIndex} 的自动生成`);
       // showToast(`将为下一题 (${nextIndex + 1}) 自动生成笔记`, 'info');
-      requestNoteGeneration(nextIndex, false); // false indicates automatic trigger
+      requestNoteGeneration(nextIndex, false); // false表示自动触发
     } else {
-      console.log(`[LOG] Auto-gen skipped for index ${nextIndex}: Question has notes or does not exist.`);
-      // If the next one is skipped, should we check index+2? Maybe not, keep it simple.
+      console.log(`[LOG] 跳过索引 ${nextIndex} 的自动生成: 问题已有笔记或不存在。`);
+      // 如果跳过了下一个，我们是否应该检查index+2？可能不需要，保持简单
     }
   } else {
-    console.log("[LOG] No more questions for auto-generation.");
+    console.log("[LOG] 没有更多问题可自动生成。");
   }
 }
 
 
-// --- Lifecycle Hooks ---
+// --- 生命周期钩子 ---
 onMounted(() => {
-  initializeQuiz(); // Load data, set up listeners, etc.
-  window.addEventListener('resize', autoResizeTextarea); // Adjust textarea on resize
+  initializeQuiz(); // 加载数据，设置监听器等
+  window.addEventListener('resize', autoResizeTextarea); // 调整文本区的大小
 });
 
 onUnmounted(() => {
-  removeKeyboardListeners(); // Clean up global listener
+  removeKeyboardListeners(); // 清理全局监听器
   window.removeEventListener('resize', autoResizeTextarea);
-  // Clean up timers
+  // 清理定时器
   if (toastTimer) clearTimeout(toastTimer);
 });
 
-// --- Watchers ---
+// --- 监听器 ---
 watch(selectedChapter, (newChapter, oldChapter) => {
   if (newChapter !== oldChapter) {
     console.log(`章节切换到: ${newChapter}`);
-    currentIndex.value = 0; // Reset index
+    currentIndex.value = 0; // 重置索引
     selectedAnswer.value = null;
     isQuizSubmitted.value = false;
-    isReviewingWrong.value = false; // Exit review mode on chapter change
-    filterQuestionsByChapter(newChapter); // Filter questions first
+    isReviewingWrong.value = false; // 退出错题复习模式
+    filterQuestionsByChapter(newChapter); // 首先过滤问题
     if (localQuestions.value.length > 0) {
-      loadQuestion(0); // Then load the first question of the new set
+      loadQuestion(0); // 然后加载新集合的第一个问题
     } else {
-      // Handle case where the new chapter has no questions
-      renderedNotesHtml.value = ''; // Clear notes display
+      // 处理新章节没有问题的情况
+      renderedNotesHtml.value = ''; // 清除笔记显示
       error.value = `章节 "${newChapter}" 下没有题目`;
     }
   }
 });
 
-// Watch for notes text changes to resize textarea
+// 监听笔记文本变化以调整文本区大小
 watch(notesEditText, () => {
   if (isEditingNotes.value) {
     autoResizeTextarea();
   }
 });
 
-// Watch dark mode changes to re-initialize Mermaid
+// 监听暗黑模式变化以重新初始化Mermaid
 watch(isDarkMode, () => {
   nextTick(() => {
     initMermaid();
-    renderNotesForCurrentQuestion(); // Re-render notes with potentially new theme
+    renderNotesForCurrentQuestion(); // 使用可能的新主题重新渲染笔记
   });
 });
 

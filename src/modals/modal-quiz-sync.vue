@@ -18,23 +18,48 @@
       </div>
     </div>
 
-    <!-- 同步设置 -->
-    <div v-if="currentQuiz?.exists" class="modal__section">
+    <!-- 题库同步功能 -->
+    <div class="modal__separator"></div>
+    <div class="modal__section">
+      <h3 class="modal__section-title">题库同步</h3>
+
       <div class="modal__form-group">
         <label for="syncQuizName" class="modal__form-label">同步题库名称</label>
-        <div class="modal__form-description">推送到远程仓库时使用的文件名</div>
+        <div class="modal__form-description">与GitHub仓库进行同步操作时使用的文件名</div>
         <input type="text" id="syncQuizName" v-model="syncQuizName" placeholder="例如: my-quiz"
           class="modal__form-control" />
       </div>
 
-      <div v-if="currentQuiz.isLocal" class="modal__form-group modal__form-group--switch">
-        <label class="modal__form-label">创建远程仓库版本</label>
+      <div class="modal__form-group modal__form-group--switch" v-if="currentQuiz?.isLocal">
+        <label class="modal__form-label">创建远程版本</label>
         <label class="modal__toggle-switch">
           <input type="checkbox" v-model="createRemoteRepo" />
           <span class="modal__toggle-slider"></span>
         </label>
       </div>
-      <div v-if="currentQuiz.isLocal" class="modal__form-description">将本地题库推送到远程仓库，创建线上副本</div>
+      <div v-if="currentQuiz?.isLocal" class="modal__form-description">推送时若远程不存在，则创建新文件</div>
+
+      <div class="modal__form-group modal__form-group--switch">
+        <label class="modal__form-label">覆盖同名题库</label>
+        <label class="modal__toggle-switch">
+          <input type="checkbox" v-model="overrideQuiz" />
+          <span class="modal__toggle-slider"></span>
+        </label>
+      </div>
+      <div class="modal__form-description">同步时覆盖已存在的题库（推送时覆盖远程，拉取时覆盖本地）</div>
+
+      <div class="modal__form-actions">
+        <button class="modal__button modal__button--primary" @click="pullFromGithub"
+          :disabled="loading || !syncQuizName">
+          <BaseIcon name="download" size="16" />
+          {{ loading && syncAction === 'pull' ? '拉取中...' : '从GitHub拉取' }}
+        </button>
+        <button v-if="currentQuiz?.exists" class="modal__button modal__button--success" @click="pushToGithub"
+          :disabled="loading || !isValid || !syncQuizName">
+          <BaseIcon name="upload" size="16" />
+          {{ loading && syncAction === 'push' ? '推送中...' : '推送到GitHub' }}
+        </button>
+      </div>
     </div>
 
     <!-- 仓库配置 -->
@@ -70,22 +95,9 @@
         class="modal__form-control" />
     </div>
 
-    <div class="modal__form-group modal__form-group--switch">
-      <label class="modal__form-label">强制同步 (覆盖远程)</label>
-      <label class="modal__toggle-switch">
-        <input type="checkbox" v-model="forceSync" />
-        <span class="modal__toggle-slider"></span>
-      </label>
-    </div>
-    <div class="modal__form-description">同步时不检查冲突，直接覆盖远程仓库内容</div>
-
     <div class="modal__form-actions">
       <button class="modal__button modal__button--primary" @click="testConnection" :disabled="loading">
-        {{ loading ? '测试中...' : '测试连接' }}
-      </button>
-      <button v-if="currentQuiz?.exists" class="modal__button modal__button--success" @click="pushToGithub"
-        :disabled="loading || !isValid">
-        {{ loading ? '推送中...' : '推送到GitHub' }}
+        {{ loading && syncAction === 'test' ? '测试中...' : '测试连接' }}
       </button>
     </div>
 
@@ -101,6 +113,7 @@ import { ref, computed, onMounted, watch, onBeforeUnmount } from 'vue';
 import { showToast } from '../utils/toast';
 import configService from '@/services/config-service';
 import BaseModal from './modal-base.vue';
+import BaseIcon from '../components/icon.vue';
 import type { GithubConfig } from '@/services/config-service';
 
 const emit = defineEmits(['close', 'sync-complete', 'save']);
@@ -139,9 +152,10 @@ const config = ref<GithubConfig>({
 });
 
 const loading = ref(false);
-const forceSync = ref(true);
+const syncAction = ref<'push' | 'pull' | 'test' | ''>('');
 const syncQuizName = ref('');
 const createRemoteRepo = ref(false);
+const overrideQuiz = ref(true);
 
 // --- Helper to get quiz-specific storage key ---
 function getSyncNameStorageKey(quizName: string): string | null {
@@ -152,7 +166,7 @@ function getSyncNameStorageKey(quizName: string): string | null {
 const configChangeListener = () => {
   const githubConfig = configService.getGithubConfig();
   config.value = { ...githubConfig }; // Load general GitHub config
-  forceSync.value = !!githubConfig.forceSync;
+  overrideQuiz.value = !!githubConfig.forceSync;
   createRemoteRepo.value = !!githubConfig.createRemoteRepo;
 
   // Load quiz-specific sync name if quiz exists
@@ -216,7 +230,7 @@ function getSourceTypeName(source: string): string {
 function loadConfig() {
   const githubConfig = configService.getGithubConfig();
   config.value = { ...githubConfig };
-  forceSync.value = !!githubConfig.forceSync;
+  overrideQuiz.value = !!githubConfig.forceSync;
   createRemoteRepo.value = !!githubConfig.createRemoteRepo;
 
   // Load quiz-specific sync name
@@ -237,6 +251,7 @@ async function testConnection() {
   }
 
   loading.value = true;
+  syncAction.value = 'test';
 
   try {
     const { owner, repo, branch, path, token } = config.value;
@@ -264,6 +279,7 @@ async function testConnection() {
     showToast(`连接失败: ${(error as Error).message}`, 'error');
   } finally {
     loading.value = false;
+    syncAction.value = '';
   }
 }
 
@@ -291,7 +307,7 @@ function saveConfig() {
   // 2. Save general GitHub config (including the *last used* syncQuizName as a fallback)
   const configToSave: GithubConfig = {
     ...config.value,
-    forceSync: forceSync.value,
+    forceSync: overrideQuiz.value,
     syncQuizName: syncQuizName.value, // Save the current value as the global fallback/last used
     createRemoteRepo: createRemoteRepo.value
   };
@@ -313,13 +329,14 @@ async function pushToGithub() {
   }
 
   loading.value = true;
+  syncAction.value = 'push';
 
   try {
     // 先保存当前配置（不关闭模态框）
     saveConfig();
 
-    // 推送题库，将强制同步选项传递给服务
-    const result = await configService.pushQuizToGithub(syncQuizName.value, forceSync.value);
+    // 推送题库，将覆盖选项传递给服务
+    const result = await configService.pushQuizToGithub(syncQuizName.value, overrideQuiz.value);
 
     if (result) {
       showToast(`成功推送题库: ${syncQuizName.value}`, 'success');
@@ -335,6 +352,60 @@ async function pushToGithub() {
     showToast(`推送题库失败: ${(error as Error).message}`, 'error');
   } finally {
     loading.value = false;
+    syncAction.value = '';
+  }
+}
+
+// 从GitHub拉取题库
+async function pullFromGithub() {
+  if (!isValid.value) {
+    showToast('请填写必要的配置信息', 'error');
+    return;
+  }
+
+  if (!syncQuizName.value) {
+    showToast('请填写同步题库名称', 'error');
+    return;
+  }
+
+  loading.value = true;
+  syncAction.value = 'pull';
+
+  try {
+    // 先保存当前配置（不关闭模态框）
+    saveConfig();
+
+    // 拉取题库
+    const quizData = await configService.syncQuizFromGithub(syncQuizName.value);
+
+    if (quizData) {
+      // 不管是否自动覆盖，都保存题库数据到本地存储
+      // 确保即使未选择覆盖选项，也能将拉取的题库保存到本地
+      configService.saveQuizToStorage(syncQuizName.value, quizData);
+
+      showToast(`成功拉取题库: ${syncQuizName.value}`, 'success');
+
+      // 通知上层组件可能的笔记更新，以确保正确刷新显示
+      emit('sync-complete', {
+        action: 'pull',
+        quiz: syncQuizName.value,
+        overrideLocal: true, // 确保总是覆盖本地以便正确加载
+        success: true,
+        retainedNotes: true  // 添加标记表示保留了本地笔记
+      });
+
+      // 关闭模态框以便用户可以立即查看拉取的题库
+      setTimeout(() => {
+        emit('close');
+      }, 1500);
+    } else {
+      showToast(`拉取题库失败`, 'error');
+    }
+  } catch (error) {
+    showToast(`拉取题库失败: ${(error as Error).message}`, 'error');
+  } finally {
+    loading.value = false;
+    syncAction.value = '';
   }
 }
 </script>

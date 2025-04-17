@@ -358,7 +358,7 @@
 
       <!-- 题库同步与仓库配置模态框 -->
       <QuizSyncModal :show="showlibrarySyncConfigModal" @close="showlibrarySyncConfigModal = false"
-        @sync-complete="loadQuizList" @save="handleRepoConfigSave" />
+        @sync-complete="handleSyncComplete" @save="handleRepoConfigSave" />
 
 
       <!-- 通用设置模态框 -->
@@ -414,6 +414,30 @@
                 删除中...
               </span>
               <span v-else>确认删除</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 通用确认对话框 -->
+      <div class="modal-overlay" :class="{ active: showConfirmModal }" @click.self="showConfirmModal = false">
+        <div class="page-library__modal">
+          <div class="page-library__modal-header">
+            <h3 class="page-library__modal-title">{{ confirmModalContent.title }}</h3>
+            <button class="page-library__modal-close" @click="showConfirmModal = false">&times;</button>
+          </div>
+          <div class="page-library__modal-body">
+            <p class="delete-confirm-message">
+              <BaseIcon name="warning" size="24" />
+              {{ confirmModalContent.message }}
+            </p>
+          </div>
+          <div class="page-library__modal-footer">
+            <button class="page-library__filter-button" @click="confirmModalContent.onCancel">
+              {{ confirmModalContent.cancelText || '取消' }}
+            </button>
+            <button class="page-library__card-action" @click="confirmModalContent.onConfirm">
+              {{ confirmModalContent.confirmText || '确定' }}
             </button>
           </div>
         </div>
@@ -498,9 +522,28 @@ const showlibraryDataModal = ref(false)
 const showlibrarySyncConfigModal = ref(false)
 const showRenameModal = ref(false)
 const showQuizModeModal = ref(false)
+const showDeleteConfirmModal = ref(false)
+const showConfirmModal = ref(false)
 const newQuizName = ref('')
 const selectedQuiz = ref<{ source: QuizSourceType; quiz: QuizItem } | null>(null)
 const isDarkMode = ref(configService.getUiSettings().darkMode)
+const deleteTargetName = ref('')
+const deleteTargetSource = ref('')
+const isDeleting = ref(false)
+
+// 通用确认对话框内容
+const confirmModalContent = ref({
+  title: '',
+  message: '',
+  confirmText: '确定',
+  cancelText: '取消',
+  onConfirm: () => {
+    showConfirmModal.value = false;
+  },
+  onCancel: () => {
+    showConfirmModal.value = false;
+  }
+});
 
 // 计算属性
 const totalQuestionsValue = computed(() => {
@@ -511,12 +554,6 @@ const totalQuestionsValue = computed(() => {
     }, 0);
   }
 
-  // 如果上面没有数据，则尝试从 quizData.value 获取数据
-  if (quizData.value && quizData.value.chapters) {
-    return quizData.value.chapters.reduce((acc: number, chapter: { questions?: Array<unknown> }) => {
-      return acc + (chapter.questions?.length || 0);
-    }, 0);
-  }
 
   return 0;
 });
@@ -1351,6 +1388,36 @@ function selectQuiz(quiz: QuizItemExtended) {
   // 记录选中的题库
   selectedQuizItem.value = quiz;
   loadingQuizItem.value = quiz;
+
+  // 检查是否为远程题库且是否存在同名本地题库
+  if (quiz.source === QuizSourceType.REMOTE) {
+    const localQuiz = localQuizList.value.find(
+      q => q.name === quiz.name && (q.source === QuizSourceType.LOCAL || q.source === QuizSourceType.REMOTE_IMPORT)
+    );
+
+    if (localQuiz) {
+      // 如果存在同名本地题库，显示确认对话框
+      showConfirmModal.value = true;
+      confirmModalContent.value = {
+        title: '覆盖本地题库',
+        message: `发现同名本地题库"${quiz.name}"，加载远程版本将覆盖本地版本，是否继续？`,
+        confirmText: '覆盖加载',
+        cancelText: '取消',
+        onConfirm: () => {
+          showConfirmModal.value = false;
+          showToast(`正在加载题库: ${quiz.name}`, 'info');
+          loadQuizAndOverrideLocal(quiz);
+        },
+        onCancel: () => {
+          showConfirmModal.value = false;
+          selectedQuizItem.value = null;
+          loadingQuizItem.value = null;
+        }
+      };
+      return;
+    }
+  }
+
   showToast(`正在加载题库: ${quiz.name}`, 'info');
 
   // 自动加载题库
@@ -1363,6 +1430,68 @@ function selectQuiz(quiz: QuizItemExtended) {
   }).finally(() => {
     loadingQuizItem.value = null;
   });
+}
+
+// 加载远程题库并覆盖本地题库
+async function loadQuizAndOverrideLocal(quiz: QuizItemExtended) {
+  try {
+    // 从远程获取数据
+    const data = await fetchQuizData(quiz);
+
+    if (data) {
+      // 强制覆盖本地题库
+      configService.saveQuizToStorage(quiz.name, data);
+
+      // 更新本地题库列表
+      const existingIndex = localQuizList.value.findIndex(
+        q => q.name === quiz.name && (
+          q.source === QuizSourceType.LOCAL ||
+          q.source === QuizSourceType.REMOTE_IMPORT ||
+          q.source === QuizSourceType.ONLINE_IMPORT
+        )
+      );
+
+      const localEntry = {
+        id: `${QuizSourceType.REMOTE_IMPORT}-${Date.now()}`,
+        name: quiz.name,
+        path: 'localStorage',
+        source: QuizSourceType.REMOTE_IMPORT,
+        info: getSourceDescription(QuizSourceType.REMOTE_IMPORT),
+        title: quiz.name,
+        lastModified: Date.now()
+      };
+
+      if (existingIndex >= 0) {
+        localQuizList.value[existingIndex] = localEntry;
+      } else {
+        localQuizList.value.push(localEntry);
+      }
+
+      // 保存更新后的题库列表
+      configService.saveQuizList(localQuizList.value);
+
+      // 设置题库数据
+      setupQuizData(quiz, data);
+
+      // 更新选中题库为导入类型
+      selectedQuizItem.value = {
+        ...quiz,
+        source: QuizSourceType.REMOTE_IMPORT as QuizSourceType,
+        id: localEntry.id
+      };
+
+      // 设置为已应用的题库
+      appliedQuizItem.value = selectedQuizItem.value;
+
+      showToast(`已覆盖并加载题库: ${quiz.name}`, 'success');
+    } else {
+      throw new Error(`无法加载远程题库: ${quiz.name}`);
+    }
+  } catch (err) {
+    showToast(`加载题库失败: ${(err as Error).message}`, 'error');
+  } finally {
+    loadingQuizItem.value = null;
+  }
 }
 
 // 加载选中的题库 - 优化版
@@ -1811,12 +1940,6 @@ const handleToggleTheme = () => {
   }
 }
 
-// 删除相关状态
-const showDeleteConfirmModal = ref(false)
-const deleteTargetName = ref('')
-const deleteTargetSource = ref('')
-const isDeleting = ref(false)
-
 // 打开GitHub同步设置模态框
 function handleOpenSyncConfig() {
   if (!selectedQuizItem.value) {
@@ -1825,46 +1948,61 @@ function handleOpenSyncConfig() {
   }
   showlibrarySyncConfigModal.value = true;
 }
+
+// 处理同步完成事件
+async function handleSyncComplete(result: { action: string; quiz: string; overrideLocal?: boolean; success: boolean; retainedNotes?: boolean }) {
+  console.log('同步完成', result);
+
+  // 刷新题库列表
+  await loadQuizList();
+
+  // 使用configService统一处理同步完成后的操作
+  const syncResult = await configService.handleQuizSyncComplete(result);
+
+  // 如果有同步结果并成功处理了导入
+  if (syncResult) {
+    // 如果是新题库或覆盖了本地题库，则需要加载这个题库
+    if ((syncResult.isNewQuiz || syncResult.wasOverridden) && syncResult.data) {
+      // 创建扩展的题库对象用于加载
+      const extendedQuiz: QuizItemExtended = {
+        id: `${syncResult.source}-${Date.now()}`,
+        name: syncResult.quizName,
+        source: QuizSourceType.REMOTE_IMPORT,
+        path: 'localStorage',
+        info: getSourceDescription(QuizSourceType.REMOTE_IMPORT),
+        data: syncResult.data,
+        title: syncResult.data.title || syncResult.quizName
+      };
+
+      // 设置为选中状态
+      selectedQuizItem.value = extendedQuiz;
+
+      // 设置题库数据
+      setupQuizData(extendedQuiz, syncResult.data);
+
+      // 设置为已应用的题库
+      appliedQuizItem.value = selectedQuizItem.value;
+
+      // 如果是从拉取操作来的，直接跳转到刷题页面
+      if (result.action === 'pull') {
+        showToast(`题库已加载，正在跳转到刷题页面...`, 'success');
+        // 延迟一下再跳转，给用户一个体验过渡的时间
+        setTimeout(() => {
+          startQuiz();
+        }, 1000);
+      } else {
+        showToast(`已加载题库: ${syncResult.quizName}`, 'success');
+      }
+    }
+
+    // 再次刷新列表以确保UI更新
+    await loadQuizList();
+  }
+}
 </script>
 
 <style>
 @import './page-library.css';
 @import '../../styles/variables.css';
 @import 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css';
-
-/* 添加删除确认框样式 */
-.delete-confirm-message {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 12px;
-  font-size: 16px;
-}
-
-.delete-confirm-warning {
-  color: var(--error-color, #f44336);
-  background-color: rgba(244, 67, 54, 0.08);
-  padding: 12px;
-  border-radius: 4px;
-  margin-top: 16px;
-  font-size: 14px;
-}
-
-.page-library__card-action--danger {
-  background-color: var(--error-color, #f44336) !important;
-}
-
-.icon-spin {
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-
-  100% {
-    transform: rotate(360deg);
-  }
-}
 </style>
