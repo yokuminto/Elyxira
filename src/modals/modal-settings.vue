@@ -252,12 +252,33 @@ watch(() => props.show, (newVal) => {
 
 // 保存设置
 function saveSettings() {
-  // 使用配置服务更新所有设置
-  configService.updateSettings(JSON.parse(JSON.stringify(localSettings)));
+  try {
+    // 首先分别保存各个子设置
+    configService.updateUiSettings(localSettings.uiSettings, false);
+    configService.updateQuizSettings(localSettings.quizSettings, false);
+    configService.setDebugEnabled(localSettings.debugEnabled, false);
 
-  // 触发父组件的保存事件
-  emit('save', JSON.parse(JSON.stringify(localSettings)));
-  emit('close');
+    // 最后使用 saveGeneralSettings 统一更新并触发必要的刷新
+    configService.saveGeneralSettings({
+      uiSettings: localSettings.uiSettings,
+      quizSettings: localSettings.quizSettings,
+      debugEnabled: localSettings.debugEnabled
+    });
+
+    // 如果当前有正在加载的题库，确保设置立即生效
+    const quizData = configService.getQuizData();
+    if (quizData) {
+      // 重新应用当前的 Quiz 配置
+      configService.setQuizConfig(configService.getQuizConfig());
+    }
+
+    // 触发父组件的保存事件
+    emit('save', localSettings);
+    emit('close');
+  } catch (error) {
+    console.error('保存设置失败:', error);
+    showToast('保存设置失败，请重试', 'error');
+  }
 }
 
 // 显示导入配置模态框

@@ -603,6 +603,31 @@ class ConfigService {
   public updateQuizSettings(quizSettings: Partial<QuizSettings>, notify: boolean = true): void {
     this.settings.quizSettings = { ...this.settings.quizSettings, ...quizSettings }
     this.saveSettings()
+
+    // 更新当前活动的 quiz 配置
+    if (quizSettings.randomMode !== undefined) {
+      this.quizState.config.randomize = quizSettings.randomMode
+    }
+
+    // 如果是随机模式或复习模式发生变化，需要更新 mode
+    if (quizSettings.randomMode !== undefined || quizSettings.reviewMode !== undefined) {
+      // 优先判断复习模式
+      if (quizSettings.reviewMode) {
+        this.quizState.config.mode = QuizMode.REVIEW
+      }
+      // 然后判断随机模式
+      else if (quizSettings.randomMode) {
+        this.quizState.config.mode = QuizMode.RANDOM
+      }
+      // 两者都不是则使用普通模式
+      else {
+        this.quizState.config.mode = QuizMode.NORMAL
+      }
+
+      // 保存到本地存储
+      this.saveQuizConfigToStorage()
+    }
+
     this.notifyListeners('quiz')
     if (notify) {
       showToast('测验设置已保存', 'success')
@@ -1961,6 +1986,21 @@ class ConfigService {
 
     // 更新调试模式
     this.setDebugEnabled(settings.debugEnabled, false)
+
+    // 更新当前活动的 quiz 配置模式
+    const { randomMode, reviewMode } = settings.quizSettings
+    if (reviewMode) {
+      this.quizState.config.mode = QuizMode.REVIEW
+    } else if (randomMode) {
+      this.quizState.config.mode = QuizMode.RANDOM
+    } else {
+      this.quizState.config.mode = QuizMode.NORMAL
+    }
+    this.quizState.config.randomize = randomMode
+
+    // 保存测验配置到本地存储
+    this.saveQuizConfigToStorage()
+    this.saveQuizState()
 
     // 通知 'settings' 监听器，因为通用设置已更改
     this.notifyListeners('settings')

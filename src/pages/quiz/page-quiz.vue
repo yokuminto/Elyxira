@@ -325,6 +325,7 @@ import ModalApiConfig from '@/modals/modal-api-config.vue'
 // 引入样式
 import './page-quiz.css'
 import '../../styles/variables.css'
+import '../../styles/quiz-medical.css'  // 添加医学专家模式的样式
 
 // --- 类型定义 ---
 interface UserAnswerRecord {
