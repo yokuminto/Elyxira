@@ -141,7 +141,7 @@
   height: 100%;
   background-color: var(--c-blue);
   border-radius: 9999px;
-  transition: width 0.8s cubic-bezier(0.65, 0, 0.35, 1);
+  transition: width 0.1s cubic-bezier(0.65, 0, 0.35, 1);
 }
 
 .page-quiz__header {
@@ -164,7 +164,7 @@
   border: none;
   cursor: pointer;
   color: var(--text-primary);
-  transition: background-color 0.2s;
+  transition: background-color 0.1s;
 }
 
 .page-quiz__back-button:hover {
@@ -193,7 +193,7 @@
   border-radius: 50%;
   cursor: pointer;
   background-color: transparent;
-  transition: background-color 0.2s;
+  transition: background-color 0.1s;
 }
 
 .page-quiz__theme-toggle:hover {
@@ -227,7 +227,7 @@
   background-color: transparent;
   cursor: pointer;
   color: var(--text-primary);
-  transition: background-color 0.2s;
+  transition: background-color 0.1s;
 }
 
 .page-quiz__settings-button:hover {
@@ -288,7 +288,7 @@
   font-size: 0.9rem;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.1s;
   white-space: nowrap;
   min-width: 0;
   flex: 0 0 auto;
@@ -357,14 +357,21 @@
   border-radius: var(--radius);
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.1s ease-out;
+  will-change: transform, box-shadow, background-color, border-color, opacity;
   white-space: nowrap;
   border: none;
 }
 
-.page-quiz__button:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+.page-quiz__button:not(:disabled):hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+}
+
+.page-quiz__button:not(:disabled):active {
+  transform: translateY(-1px) scale(0.98);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  transition-duration: 0.05s;
 }
 
 .page-quiz__submit-button {
@@ -431,7 +438,7 @@
 .page-quiz__button.sync-status {
   position: relative;
   overflow: hidden;
-  transition: all 0.3s ease;
+  transition: all 0.1s ease;
 }
 
 .page-quiz__button.sync-status.offline {
@@ -484,7 +491,7 @@
   background-position: right 10px center;
   background-size: 16px;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.1s ease;
   min-width: 120px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
@@ -533,7 +540,8 @@
   background-color: var(--bg-white);
   padding: 16px;
   cursor: pointer;
-  transition: all 0.25s cubic-bezier(0.25, 0.8, 0.25, 1);
+  transition: all 0.1s ease-out;
+  will-change: transform, background-color, border-color;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -542,10 +550,16 @@
   overflow: hidden;
 }
 
-.page-quiz__option:hover {
-  background-color: var(--bg-blue);
-  transform: translateY(-3px);
-  border-color: var(--c-blue);
+.page-quiz__option:not(.page-quiz__option--locked):not(.page-quiz__option--correct):not(
+    .page-quiz__option--incorrect
+  ):hover {
+  transform: translateY(-2px);
+}
+
+.page-quiz__option:not(.page-quiz__option--locked):active {
+  transform: translateY(0px) scale(0.99);
+  transition-duration: 0.05s;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
 .page-quiz__option--selected {
@@ -667,7 +681,7 @@
   height: 100%;
   background-color: var(--color-primary);
   border-radius: 8px;
-  transition: width 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transition: width 0.1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   background-image: linear-gradient(
     45deg,
     rgba(255, 255, 255, 0.15) 25%,
@@ -694,7 +708,7 @@
   border-radius: var(--radius);
   margin-top: 1rem;
   padding: 0.5rem;
-  transition: all 0.3s ease;
+  transition: all 0.1s ease;
 }
 
 .page-quiz__notes--hidden {
@@ -737,7 +751,7 @@
   background-color: var(--bg-white);
   color: var(--text-main);
   border: 1px solid var(--border);
-  transition: all 0.3s ease;
+  transition: all 0.1s ease;
 }
 
 .page-quiz__notes-actions .page-quiz__button:hover {
@@ -754,7 +768,7 @@
   padding: 1rem;
   margin-bottom: 1rem;
   background-color: var(--bg-white);
-  transition: all 0.3s ease;
+  transition: all 0.1s ease;
 }
 
 .page-quiz__notes-placeholder {
@@ -805,7 +819,7 @@
   height: auto;
   border-radius: 4px;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.1s ease;
 }
 
 .page-quiz__markdown-toolbar button:hover {
@@ -828,7 +842,7 @@
   margin: 0 0 1rem 0;
   font-family: inherit;
   font-size: 0.9rem;
-  transition: all 0.3s ease;
+  transition: all 0.1s ease;
 }
 
 .page-quiz__notes-textarea:focus {
@@ -1117,7 +1131,7 @@
   cursor: pointer;
   inset: 0;
   background-color: var(--bg-mute);
-  transition: 0.3s;
+  transition: 0.1s;
   border-radius: 20px;
 }
 
@@ -1129,7 +1143,7 @@
   left: 2px;
   bottom: 2px;
   background-color: white;
-  transition: 0.3s;
+  transition: 0.1s;
   border-radius: 50%;
 }
 
@@ -1158,9 +1172,9 @@ input:checked + .slider:before {
   text-align: center;
   visibility: hidden;
   transition:
-    transform 0.3s,
-    opacity 0.3s,
-    visibility 0.3s,
+    transform 0.1s,
+    opacity 0.1s,
+    visibility 0.1s,
     bottom 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
@@ -1310,7 +1324,7 @@ input:checked + .slider:before {
   border: 1px solid var(--c-blue);
   padding: 6px 12px;
   font-weight: 500;
-  transition: all 0.2s ease;
+  transition: all 0.1s ease;
 }
 
 .page-quiz__ai-button:hover:not(:disabled) {
@@ -1595,7 +1609,7 @@ input:checked + .slider:before {
   background-color: var(--bg-light);
   overflow: hidden;
   border: 1px solid var(--border);
-  transition: all 0.3s ease;
+  transition: all 0.1s ease;
 }
 
 .page-quiz__notes-reasoning--hidden {
@@ -1610,7 +1624,7 @@ input:checked + .slider:before {
   background-color: var(--bg-blue-light);
   border-bottom: 1px solid var(--border-blue);
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  transition: background-color 0.1s ease;
 }
 
 .reasoning-header:hover {
@@ -1658,4 +1672,27 @@ input:checked + .slider:before {
 
 .dark-mode .reasoning-section {
   background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* 添加新的 transition 类 */
+.question-fade-slide-enter-active,
+.question-fade-slide-leave-active {
+  transition: all 0.1s ease-out; /* 调整时长和缓动函数 */
+}
+
+.question-fade-slide-enter-from {
+  opacity: 0;
+  transform: translateY(15px); /* 稍微减小距离 */
+}
+
+.question-fade-slide-leave-to {
+  opacity: 0;
+  transform: translateY(-15px);
+}
+
+/* 问题内容包裹器，用于过渡 */
+.page-quiz__question-content-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem; /* 与 page-quiz__container 的 gap 保持一致或按需调整 */
 }

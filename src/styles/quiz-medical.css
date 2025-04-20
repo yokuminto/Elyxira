@@ -135,4 +135,42 @@
   background-color: var(--c-orange);
 }
 
-/* 添加更多角色对应的颜色... */
+.comment-author[data-character='白面鸮']::before {
+  background-color: var(--c-indigo);
+}
+
+.comment-author[data-character='塞雷娅']::before {
+  background-color: var(--c-sky);
+}
+
+.comment-author[data-character='赫默']::before {
+  background-color: var(--c-pink);
+}
+
+.comment-author[data-character='凯尔希']::before {
+  background-color: var(--c-green);
+}
+
+.comment-author[data-character='阿米娅']::before {
+  background-color: var(--c-gray);
+}
+
+.comment-author[data-character='安赛尔']::before {
+  background-color: var(--c-yellow);
+}
+
+.comment-author[data-character='微风']::before {
+  background-color: var(--color-cyan-light);
+}
+
+.comment-author[data-character='嵯峨']::before {
+  background-color: var(--color-purple-dark);
+}
+
+.comment-author[data-character='苏苏洛']::before {
+  background-color: var(--color-blue-light);
+}
+
+.comment-author[data-character='明椒']::before {
+  background-color: var(--color-blue-very-dark);
+}

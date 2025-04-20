@@ -189,14 +189,11 @@ const availableFonts = [
 
 const props = defineProps<{
   show: boolean;
-  'ui-settings'?: UiSettings;
-  'quiz-settings'?: QuizSettings;
-  'debug-enabled'?: boolean;
 }>();
 
 const emit = defineEmits<{
   (e: 'close'): void;
-  (e: 'save', settings: AppSettings): void;
+  (e: 'save', settings: { uiSettings: UiSettings, quizSettings: QuizSettings, debugEnabled: boolean }): void;
 }>();
 
 // 活动标签
@@ -207,14 +204,23 @@ const isImportModalVisible = ref(false);
 const isExportSuccessModalVisible = ref(false);
 const exportTimestamp = ref('');
 
-// 本地设置
-const localSettings = reactive<AppSettings>(
-  JSON.parse(JSON.stringify(configService.getSettings()))
-);
+// 本地设置 - 初始化为空或默认值，等待加载
+const localSettings = reactive<{
+  uiSettings: UiSettings;
+  quizSettings: QuizSettings;
+  debugEnabled: boolean;
+}>({
+  uiSettings: { ...configService.getUiSettings() }, // Use service for initial values
+  quizSettings: { ...configService.getQuizSettings() },
+  debugEnabled: configService.isDebugEnabled(),
+});
 
-// 设置变更监听器
+// 设置变更监听器 - 保持不变
 const settingsChangeListener = () => {
-  Object.assign(localSettings, JSON.parse(JSON.stringify(configService.getSettings())));
+  console.log("Settings changed externally, updating local state in modal.");
+  Object.assign(localSettings.uiSettings, configService.getUiSettings());
+  Object.assign(localSettings.quizSettings, configService.getQuizSettings());
+  localSettings.debugEnabled = configService.isDebugEnabled();
 };
 
 onMounted(() => {
@@ -230,50 +236,31 @@ onBeforeUnmount(() => {
 // 监听属性变化更新本地状态
 watch(() => props.show, (newVal) => {
   if (newVal) {
-    // 从配置服务获取最新设置
-    const settings = JSON.parse(JSON.stringify(configService.getSettings()));
-
-    // 如果props中传入了这些属性，则使用props中的值覆盖从服务获取的值
-    if (props['ui-settings']) {
-      settings.uiSettings = { ...settings.uiSettings, ...props['ui-settings'] };
-    }
-
-    if (props['quiz-settings']) {
-      settings.quizSettings = { ...settings.quizSettings, ...props['quiz-settings'] };
-    }
-
-    if (props['debug-enabled'] !== undefined) {
-      settings.debugEnabled = props['debug-enabled'];
-    }
-
-    Object.assign(localSettings, settings);
+    // 当模态框显示时，从 configService 获取最新的设置
+    console.log("Settings modal opened, loading fresh settings from service.");
+    const currentSettings = configService.getSettings(); // 获取完整的 AppSettings
+    Object.assign(localSettings.uiSettings, currentSettings.uiSettings);
+    Object.assign(localSettings.quizSettings, currentSettings.quizSettings);
+    localSettings.debugEnabled = currentSettings.debugEnabled;
   }
-}, { immediate: true });
+}, { immediate: false }); // 不再需要 immediate: true
 
-// 保存设置
+// 保存设置 - 简化
 function saveSettings() {
   try {
-    // 首先分别保存各个子设置
-    configService.updateUiSettings(localSettings.uiSettings, false);
-    configService.updateQuizSettings(localSettings.quizSettings, false);
-    configService.setDebugEnabled(localSettings.debugEnabled, false);
-
-    // 最后使用 saveGeneralSettings 统一更新并触发必要的刷新
+    // 使用 saveGeneralSettings 统一保存
     configService.saveGeneralSettings({
       uiSettings: localSettings.uiSettings,
       quizSettings: localSettings.quizSettings,
       debugEnabled: localSettings.debugEnabled
     });
 
-    // 如果当前有正在加载的题库，确保设置立即生效
-    const quizData = configService.getQuizData();
-    if (quizData) {
-      // 重新应用当前的 Quiz 配置
-      configService.setQuizConfig(configService.getQuizConfig());
-    }
-
-    // 触发父组件的保存事件
-    emit('save', localSettings);
+    // 触发父组件的保存事件 (参数保持不变，仍然传递包含所有设置的对象)
+    emit('save', {
+      uiSettings: { ...localSettings.uiSettings },
+      quizSettings: { ...localSettings.quizSettings },
+      debugEnabled: localSettings.debugEnabled
+    });
     emit('close');
   } catch (error) {
     console.error('保存设置失败:', error);

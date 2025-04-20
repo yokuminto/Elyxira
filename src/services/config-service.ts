@@ -373,7 +373,8 @@ class ConfigService {
   public state = readonly(this.quizState)
 
   constructor() {
-    this.settings = this.loadSettings()
+    const loadedSettings = this.loadSettings()
+    this.settings = reactive(loadedSettings)
     this.applyTheme()
     this.initQuizFromStorage()
   }
@@ -518,44 +519,13 @@ class ConfigService {
   }
 
   /**
-   * 更新设置
-   */
-  public updateSettings(newSettings: Partial<AppSettings>, notify: boolean = true): void {
-    // 合并新旧设置，特别处理预设列表和活动名称
-    const mergedSettings = { ...this.settings, ...newSettings }
-
-    // 确保 apiPresets 仍然是一个数组
-    if (!Array.isArray(mergedSettings.apiPresets)) {
-      mergedSettings.apiPresets = [...this.settings.apiPresets] // 恢复之前的状态或默认
-      if (mergedSettings.apiPresets.length === 0) {
-        mergedSettings.apiPresets = [createDefaultPreset(DEFAULT_API_CONFIG)]
-      }
-    }
-    // 确保 activeApiPresetName 仍然有效
-    if (
-      !mergedSettings.activeApiPresetName ||
-      !mergedSettings.apiPresets.some((p) => p.name === mergedSettings.activeApiPresetName)
-    ) {
-      mergedSettings.activeApiPresetName = mergedSettings.apiPresets[0]?.name || 'Default'
-    }
-
-    this.settings = mergedSettings
-    this.saveSettings()
-    this.applyTheme() // applyTheme 通常不依赖API设置，保留
-    if (notify) {
-      showToast('设置已保存', 'success')
-    }
-    this.notifyListeners('settings') // 确保通知设置变更
-    this.notifyListeners('api') // 如果API相关设置改变也通知
-  }
-
-  /***********************************************
-   * UI设置方法
-   ***********************************************/
-  /**
    * 获取UI设置
+   * Return a plain object copy to prevent direct mutation from outside,
+   * but reactivity relies on the service's internal reactive settings object.
    */
   public getUiSettings(): UiSettings {
+    // Returning a copy is fine, the computed property in the component
+    // depends on the reactive this.settings object within the service.
     return { ...this.settings.uiSettings }
   }
 
@@ -563,11 +533,13 @@ class ConfigService {
    * 更新UI设置
    */
   public updateUiSettings(uiSettings: Partial<UiSettings>, notify: boolean = true): void {
-    this.settings.uiSettings = { ...this.settings.uiSettings, ...uiSettings }
-    this.saveSettings()
+    // Directly modify the reactive settings object
+    Object.assign(this.settings.uiSettings, uiSettings)
     this.applyTheme()
-    this.notifyListeners('ui')
+
     if (notify) {
+      this.saveSettings() // Persist changes
+      this.notifyListeners('ui')
       showToast('界面设置已保存', 'success')
     }
   }
@@ -587,9 +559,6 @@ class ConfigService {
     this.updateUiSettings({ fontSize })
   }
 
-  /***********************************************
-   * 测验设置方法
-   ***********************************************/
   /**
    * 获取测验设置
    */
@@ -601,42 +570,31 @@ class ConfigService {
    * 更新测验设置
    */
   public updateQuizSettings(quizSettings: Partial<QuizSettings>, notify: boolean = true): void {
-    this.settings.quizSettings = { ...this.settings.quizSettings, ...quizSettings }
-    this.saveSettings()
+    // Directly modify the reactive settings object
+    Object.assign(this.settings.quizSettings, quizSettings)
 
-    // 更新当前活动的 quiz 配置
+    // Update related quizState.config
     if (quizSettings.randomMode !== undefined) {
       this.quizState.config.randomize = quizSettings.randomMode
     }
-
-    // 如果是随机模式或复习模式发生变化，需要更新 mode
     if (quizSettings.randomMode !== undefined || quizSettings.reviewMode !== undefined) {
-      // 优先判断复习模式
       if (quizSettings.reviewMode) {
         this.quizState.config.mode = QuizMode.REVIEW
-      }
-      // 然后判断随机模式
-      else if (quizSettings.randomMode) {
+      } else if (quizSettings.randomMode) {
         this.quizState.config.mode = QuizMode.RANDOM
-      }
-      // 两者都不是则使用普通模式
-      else {
+      } else {
         this.quizState.config.mode = QuizMode.NORMAL
       }
-
-      // 保存到本地存储
       this.saveQuizConfigToStorage()
     }
 
-    this.notifyListeners('quiz')
     if (notify) {
+      this.saveSettings() // Persist changes
+      this.notifyListeners('quiz')
       showToast('测验设置已保存', 'success')
     }
   }
 
-  /***********************************************
-   * API配置方法
-   ***********************************************/
   /**
    * 获取当前活动的API配置
    */
@@ -644,16 +602,16 @@ class ConfigService {
     const activePreset = this.settings.apiPresets.find(
       (p) => p.name === this.settings.activeApiPresetName,
     )
-    // 如果找不到活动预设（理论上不应发生），返回第一个预设或默认值
+    // If not found (shouldn't happen with validation), return default or first
     if (!activePreset) {
-      console.warn(`活动预设 "${this.settings.activeApiPresetName}" 未找到，返回第一个预设。`)
-      return this.settings.apiPresets[0]
-        ? { ...this.settings.apiPresets[0] }
-        : { ...DEFAULT_API_CONFIG }
+      console.warn(`活动预设 "${this.settings.activeApiPresetName}" 未找到，返回第一个预设或默认。`)
+      const fallbackPreset = this.settings.apiPresets[0] || createDefaultPreset(DEFAULT_API_CONFIG)
+      const { name, ...config } = fallbackPreset
+      return config
     }
-    // 返回活动预设的配置部分，不包含 name
+    // Return the config part of the reactive preset
     const { name, ...config } = activePreset
-    return config
+    return config // This will be a reactive object if the preset itself is part of the reactive settings
   }
 
   /**
@@ -824,9 +782,6 @@ class ConfigService {
     return true
   }
 
-  /***********************************************
-   * GitHub配置方法
-   ***********************************************/
   /**
    * 获取GitHub配置
    */
@@ -875,9 +830,6 @@ class ConfigService {
     this.saveSettings()
   }
 
-  /***********************************************
-   * 调试设置方法
-   ***********************************************/
   /**
    * 获取调试模式状态
    */
@@ -889,16 +841,59 @@ class ConfigService {
    * 更新调试模式
    */
   public setDebugEnabled(enabled: boolean, notify: boolean = true): void {
+    // Directly modify the reactive settings object
     this.settings.debugEnabled = enabled
-    this.saveSettings()
+
     if (notify) {
+      this.saveSettings() // Persist changes
+      this.notifyListeners('settings')
       showToast(enabled ? '调试模式已启用' : '调试模式已禁用', 'info')
     }
   }
 
-  /***********************************************
-   * 导入导出方法
-   ***********************************************/
+  /**
+   * 保存通用设置 (Refactored)
+   * This function now primarily orchestrates direct modifications and saving.
+   */
+  public saveGeneralSettings(settings: {
+    uiSettings: UiSettings
+    quizSettings: QuizSettings
+    debugEnabled: boolean
+  }): void {
+    // 1. Directly update the reactive settings object
+    Object.assign(this.settings.uiSettings, settings.uiSettings)
+    Object.assign(this.settings.quizSettings, settings.quizSettings)
+    this.settings.debugEnabled = settings.debugEnabled
+
+    // 2. Update the reactive quizState.config
+    const { randomMode, reviewMode } = settings.quizSettings
+    if (reviewMode) {
+      this.quizState.config.mode = QuizMode.REVIEW
+    } else if (randomMode) {
+      this.quizState.config.mode = QuizMode.RANDOM
+    } else {
+      this.quizState.config.mode = QuizMode.NORMAL
+    }
+    this.quizState.config.randomize = randomMode
+
+    // 3. Save the main settings object once to localStorage
+    this.saveSettings()
+
+    // 4. Save the specific quiz config parts to localStorage
+    this.saveQuizConfigToStorage()
+
+    // 5. Apply theme changes
+    this.applyTheme()
+
+    // 6. Notify relevant listeners
+    this.notifyListeners('settings')
+    this.notifyListeners('ui')
+    this.notifyListeners('quiz')
+
+    // 7. Show toast
+    showToast('通用设置已保存', 'success')
+  }
+
   /**
    * 导出配置
    */
@@ -1978,16 +1973,12 @@ class ConfigService {
     quizSettings: QuizSettings
     debugEnabled: boolean
   }): void {
-    // 更新UI设置
-    this.updateUiSettings(settings.uiSettings, false)
+    // 1. Directly update the reactive settings object
+    Object.assign(this.settings.uiSettings, settings.uiSettings)
+    Object.assign(this.settings.quizSettings, settings.quizSettings)
+    this.settings.debugEnabled = settings.debugEnabled
 
-    // 更新测验设置
-    this.updateQuizSettings(settings.quizSettings, false)
-
-    // 更新调试模式
-    this.setDebugEnabled(settings.debugEnabled, false)
-
-    // 更新当前活动的 quiz 配置模式
+    // 2. Update the reactive quizState.config
     const { randomMode, reviewMode } = settings.quizSettings
     if (reviewMode) {
       this.quizState.config.mode = QuizMode.REVIEW
@@ -1998,13 +1989,21 @@ class ConfigService {
     }
     this.quizState.config.randomize = randomMode
 
-    // 保存测验配置到本地存储
+    // 3. Save the main settings object once to localStorage
+    this.saveSettings()
+
+    // 4. Save the specific quiz config parts to localStorage
     this.saveQuizConfigToStorage()
-    this.saveQuizState()
 
-    // 通知 'settings' 监听器，因为通用设置已更改
+    // 5. Apply theme changes
+    this.applyTheme()
+
+    // 6. Notify relevant listeners
     this.notifyListeners('settings')
+    this.notifyListeners('ui')
+    this.notifyListeners('quiz')
 
+    // 7. Show toast
     showToast('通用设置已保存', 'success')
   }
 
