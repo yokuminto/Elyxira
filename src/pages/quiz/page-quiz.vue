@@ -1002,7 +1002,9 @@ async function generateAINotes(
   completionCallback: CompletionCallback,
 ) {
   console.log(`[LOG] 请求生成笔记: 目标索引=${generationTargetIndex}, 问题ID=${question?.id ?? 'null'}`);
-  if (!question) {
+  const questionRef = localQuestions.value[generationTargetIndex]; // Get a direct ref if needed
+
+  if (!questionRef) { // Use the ref for checks
     completionCallback('', generationTargetIndex, '无法获取问题信息');
     return;
   }
@@ -1011,12 +1013,143 @@ async function generateAINotes(
   if (!currentApiConfig.enabled || !currentApiConfig.apiUrl || !currentApiConfig.apiKey) {
     showToast('请先启用并配置AI API设置', 'info');
     showApiConfigModal.value = true;
-    completionCallback('', generationTargetIndex, 'API未配置或未启用');
+    // Pass potentially existing notes from questionRef on early exit
+    completionCallback(questionRef.notes ?? '', generationTargetIndex, 'API未配置或未启用');
     return;
   }
 
+  // --- 设置回调 ---
+  let lastRenderTime = 0;
+  const baseThrottleDelay = 150;
+  let renderTimeoutId: number | null = null;
+  let autoSaveTimeoutId: number | null = null;
+
+  // Auto-save function (throttled)
+  const autoSaveNotes = () => {
+    if (autoSaveTimeoutId) clearTimeout(autoSaveTimeoutId);
+    autoSaveTimeoutId = window.setTimeout(() => {
+      // Check activeGenerationIndex and questionRef validity before saving
+      if (activeGenerationIndex.value === generationTargetIndex && questionRef && questionRef.id && questionRef.notes) {
+        console.log(`[LOG] Auto-saving notes for index ${generationTargetIndex}`);
+        configService.saveNoteToQuestion(questionRef.id, questionRef.notes);
+      } else {
+        // console.log(`[LOG] Auto-save skipped for index ${generationTargetIndex}: Conditions not met.`);
+      }
+    }, 2000);
+  };
+
+  // Stream chunk handler - This function updates questionRef.notes
+  const handleStreamChunk: StreamCallback = (chunk, streamTargetIndex) => {
+    if (streamTargetIndex !== generationTargetIndex || !questionRef) return; // Ignore chunks for wrong index or missing ref
+
+    questionRef.notes = (questionRef.notes || '') + chunk; // Append chunk to reactive property
+    autoSaveNotes(); // Trigger auto-save on new chunk
+
+    // Throttled UI update for the currently viewed question
+    if (currentIndex.value === streamTargetIndex) {
+      const now = Date.now();
+      const fixedThrottleDelay = 250;
+
+      if (!renderTimeoutId) {
+        renderTimeoutId = window.setTimeout(() => {
+          // Check again before rendering
+          if (activeGenerationIndex.value === streamTargetIndex && currentIndex.value === streamTargetIndex) {
+            renderNotesForCurrentQuestion();
+            lastRenderTime = Date.now();
+          }
+          renderTimeoutId = null;
+        }, fixedThrottleDelay);
+      } else if (now - lastRenderTime > fixedThrottleDelay * 4) {
+        clearTimeout(renderTimeoutId);
+        renderTimeoutId = null;
+        if (activeGenerationIndex.value === streamTargetIndex && currentIndex.value === streamTargetIndex) {
+          renderNotesForCurrentQuestion();
+          lastRenderTime = now;
+        }
+      }
+    }
+  };
+
+  // Completion handler
+  const handleCompletion: CompletionCallback = async (finalNote, completedIndex, error) => {
+    console.log(`[LOG] 生成完成: Index=${completedIndex}, Expected=${generationTargetIndex}, Error=${error || 'None'}, Final Length=${finalNote?.length}`);
+
+    if (renderTimeoutId) clearTimeout(renderTimeoutId);
+    if (autoSaveTimeoutId) clearTimeout(autoSaveTimeoutId);
+
+    // Re-fetch the question reference for safety inside the completion handler
+    const completedQuestionRef = localQuestions.value[completedIndex];
+
+    // Check if the generation this completion belongs to is still the active one
+    if (activeGenerationIndex.value !== completedIndex) {
+      console.warn(`[WARN] 忽略过时的完成回调 (Completed: ${completedIndex}, Active: ${activeGenerationIndex.value})`);
+      return; // Do not proceed further for stale completions
+    }
+
+    // Reset generation state *before* further processing
+    const previousActiveIndex = activeGenerationIndex.value;
+    activeGenerationIndex.value = null;
+    isGenerating.value = false;
+    console.log(`[LOG] Resetting generation state: activeGenerationIndex from ${previousActiveIndex} to null`);
+
+
+    // Now check if the question object still exists
+    if (!completedQuestionRef) {
+      console.warn(`[WARN] Generation completed for index ${completedIndex}, but the question object no longer exists after state reset.`);
+      // State is reset, but we can't save/render. Check for next auto-gen.
+      checkAndTriggerAutoGeneration();
+      return;
+    }
+
+    try {
+      // Ensure the finalNote (passed to callback) is consistent with the ref's notes
+      // This might be redundant if called correctly, but ensures the latest state is saved.
+      completedQuestionRef.notes = finalNote;
+
+      if (completedQuestionRef.id) {
+        console.log(`[LOG] 最终保存索引 ${completedIndex} 的笔记`);
+        configService.saveNoteToQuestion(completedQuestionRef.id, finalNote); // Save the final consolidated note
+        configService.saveQuizState();
+      } else {
+        console.error(`[ERROR] 无法为索引 ${completedIndex} 执行最终保存，缺少问题ID`);
+      }
+
+
+      // Render final state only if it's the currently viewed question
+      if (currentIndex.value === completedIndex) {
+        console.log(`[LOG] Rendering final Markdown for currently viewed index ${completedIndex}`);
+        await renderNotesForCurrentQuestion(); // Render based on updated completedQuestionRef.notes
+        await nextTick();
+      }
+
+
+      if (error) {
+        showToast(`题目 ${completedIndex + 1} 笔记生成失败: ${error}`, 'error');
+      } else {
+        showToast(`题目 ${completedIndex + 1} 笔记生成完成`, 'success');
+      }
+
+      if (!error && apiConfig.value.autoSync) { // Removed !isManual as it's not passed here
+        showToast('正在自动同步到远程仓库...', 'info');
+        triggerSync();
+      }
+
+    } catch (completionError) {
+      console.error(`[ERROR] 处理索引 ${completedIndex} 的完成回调时出错:`, completionError);
+      showToast('处理笔记生成结果时出错', 'error');
+      // State is already reset above
+    } finally {
+      // State reset moved above the try block.
+      // Ensure check for next generation happens after everything.
+      console.log("[LOG] 完成处理结束，检查下一个自动生成。");
+      checkAndTriggerAutoGeneration();
+    }
+  };
+
+
+  // --- 发起API调用 ---
   try {
-    const requestData = configService.getNotesGenerationRequestParams(question);
+    const requestData = configService.getNotesGenerationRequestParams(questionRef); // Use questionRef
     console.log(`[LOG] 发起 API 请求: 索引=${generationTargetIndex}, URL=${currentApiConfig.apiUrl}, Model=${requestData.model}, Stream=${requestData.stream}`);
 
     const response = await fetch(currentApiConfig.apiUrl, {
@@ -1034,7 +1167,7 @@ async function generateAINotes(
       throw new Error(`API请求失败 (${response.status}): ${response.statusText || errorBody}`);
     }
 
-    let generatedNote = '';
+    // let generatedNote = ''; // No longer needed here
 
     if (requestData.stream && response.body) {
       const reader = response.body.getReader();
@@ -1046,30 +1179,28 @@ async function generateAINotes(
       const heartbeatInterval = setInterval(() => {
         if (Date.now() - lastDataReceived > dataTimeout) {
           console.warn(`[WARN] 数据流接收超时，可能存在网络问题 (Index: ${generationTargetIndex})`);
-          showToast('网络连接不稳定，笔记生成可能中断', 'warning');
+          // showToast('网络连接不稳定，笔记生成可能中断', 'warning'); // Potentially annoying
           clearInterval(heartbeatInterval);
           reader.cancel('Timeout').catch(console.error);
-          completionCallback(generatedNote, generationTargetIndex, '数据流接收超时');
+          // Call completion with currently accumulated notes in the ref
+          handleCompletion(questionRef?.notes?.trim() ?? '', generationTargetIndex, '数据流接收超时');
         }
-      }, 10000); // 每10秒检查一次
-
+      }, 10000);
 
       try {
-
         while (true) {
           const { done, value } = await reader.read();
-          lastDataReceived = Date.now(); // 更新接收数据的时间戳
+          lastDataReceived = Date.now();
 
           if (done) {
             console.log(`[LOG] 流读取完成 (done) for index ${generationTargetIndex}`);
-            break;
+            break; // Exit the while(true) loop
           }
 
           buffer += decoder.decode(value, { stream: true });
 
-          // 逐行处理
           let lineEndIndex;
-          while ((lineEndIndex = buffer.indexOf('\n')) >= 0) {
+          while ((lineEndIndex = buffer.indexOf('\\n')) >= 0) {
             const line = buffer.slice(0, lineEndIndex).trim();
             buffer = buffer.slice(lineEndIndex + 1);
 
@@ -1077,59 +1208,66 @@ async function generateAINotes(
               const dataStr = line.substring(6);
               if (dataStr === '[DONE]') {
                 console.log(`[LOG] 收到 [DONE] 信号，索引 ${generationTargetIndex}`);
-                break;
+                // [DONE] signal means the stream is finished from the server side.
+                // We might have remaining buffer content processed after this.
+                // The outer loop's done flag is the definitive end.
+                // No 'break' needed here, let the reader signal 'done'.
+                continue; // Process next line or wait for more data
               }
               try {
                 const parsed = JSON.parse(dataStr);
-                // --- 增加日志 ---
-                console.log(`[DEBUG] Raw dataStr (Index ${generationTargetIndex}):`, dataStr);
-                console.log(`[DEBUG] Parsed data (Index ${generationTargetIndex}):`, parsed);
-                // --- 潜在问题区域 ---
                 const content = parsed.choices?.[0]?.delta?.content ||
-                  parsed.choices?.[0]?.message?.content || // 这可能是用于非流式消息
-                  parsed.delta?.content || // 检查 DeepSeek R1 是否使用此路径
-                  ''; // 默认为空字符串
+                  parsed.choices?.[0]?.message?.content ||
+                  parsed.delta?.content ||
+                  '';
 
                 if (content) {
-                  generatedNote += content;
+                  // Call handleStreamChunk to update reactive state and UI
+                  handleStreamChunk(content, generationTargetIndex);
+                  // Remove: generatedNote += content;
                 }
               } catch (e) {
-                if (dataStr.trim()) { // 避免将空数据行记录为错误
+                if (dataStr.trim()) {
                   console.error('[ERROR] 解析流式 JSON 出错:', e, '原始行:', line, `(Index: ${generationTargetIndex})`);
                 }
               }
             }
-          }
-        }
+          } // End inner while loop (line processing)
+        } // End outer while loop (reading stream)
       } catch (streamError) {
-        // 处理流读取过程中的潜在错误（如网络问题）
         console.error(`[ERROR] 流读取过程中发生错误 (Index: ${generationTargetIndex}):`, streamError);
-        // 触发完成回调，使用现有笔记内容和错误信息
-        completionCallback(generatedNote, generationTargetIndex, `流处理错误: ${(streamError as Error).message}`);
-        clearInterval(heartbeatInterval); // 清理定时器
-        return; // 流失败时退出函数
+        clearInterval(heartbeatInterval); // Ensure timer is cleared on stream error
+        // Call completion with current notes and error
+        handleCompletion(questionRef?.notes?.trim() ?? '', generationTargetIndex, `流处理错误: ${(streamError as Error).message}`);
+        return; // Exit function after handling stream error
       } finally {
-        clearInterval(heartbeatInterval); // 确保定时器被清理
+        clearInterval(heartbeatInterval); // Ensure timer is always cleared
       }
-      console.log(`[LOG] 流处理完成，索引 ${generationTargetIndex}. 最终笔记长度: ${generatedNote.length}`);
-      completionCallback(generatedNote.trim(), generationTargetIndex); // 流成功结束后调用完成回调
 
-    } else { // 处理非流式响应
+      console.log(`[LOG] 流处理完成，索引 ${generationTargetIndex}. 最终笔记长度: ${questionRef?.notes?.length ?? 0}`);
+      // Call completion callback with the final accumulated notes from the reactive ref
+      handleCompletion(questionRef?.notes?.trim() ?? '', generationTargetIndex);
+
+    } else { // Handle non-streaming response
       const data = await response.json();
-      // 提取内容，基于常见的OpenAI/兼容结构
-      generatedNote = data.choices?.[0]?.message?.content ||
+      const nonStreamedNote = data.choices?.[0]?.message?.content ||
         data.choices?.[0]?.text ||
         data.content?.[0]?.text ||
         '';
 
-      console.log(`[LOG] 非流式响应笔记 (Index: ${generationTargetIndex}):`, generatedNote.substring(0, 100) + "...");
-      completionCallback(generatedNote.trim(), generationTargetIndex);
+      // Update the reactive ref directly
+      if (questionRef) {
+        questionRef.notes = nonStreamedNote;
+      }
+      console.log(`[LOG] 非流式响应笔记 (Index: ${generationTargetIndex}):`, nonStreamedNote.substring(0, 100) + "...");
+      // Call completion with the note from the ref
+      handleCompletion(questionRef?.notes?.trim() ?? '', generationTargetIndex);
     }
 
   } catch (error) {
     console.error(`[ERROR] 生成笔记失败，索引 ${generationTargetIndex}:`, error);
-    // 确保即使在fetch/设置错误时也会调用完成回调
-    completionCallback('', generationTargetIndex, `笔记生成失败: ${error instanceof Error ? error.message : '未知错误'}`);
+    // Call completion with current notes and error message
+    handleCompletion(questionRef?.notes?.trim() ?? '', generationTargetIndex, `笔记生成失败: ${error instanceof Error ? error.message : '未知错误'}`);
   }
 }
 
@@ -1523,7 +1661,7 @@ function handleTouchEnd(e: TouchEvent) {
     const diffY = touchStartY - touchEndY;
 
     // 基于视口大小定义阈值，以提高响应性
-    const horizontalThreshold = window.innerWidth * 0.15; // 宽度的15%
+    const horizontalThreshold = window.innerWidth * 0.25; // 宽度的25%
     const verticalThreshold = window.innerHeight * 0.1;  // 高度的10%
 
     // 检查是否有明显的水平滑动，且垂直移动很小
