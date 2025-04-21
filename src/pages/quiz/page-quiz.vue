@@ -899,6 +899,8 @@ function saveNotes() {
  */
 async function renderNotesForCurrentQuestion() {
   const question = currentQuestion.value;
+
+  // 如果题目不存在，直接返回占位符
   if (!question) {
     renderedNotesHtml.value = '<p class="page-quiz__notes-placeholder">请先加载题目</p>';
     return;
@@ -907,79 +909,64 @@ async function renderNotesForCurrentQuestion() {
   const noteContent = question.notes || '';
   const generating = isGeneratingCurrent.value && activeGenerationIndex.value === currentIndex.value;
 
+  // 如果没有笔记内容且没有在生成笔记，显示提示信息
   if (!noteContent && !generating) {
     renderedNotesHtml.value = '<p class="page-quiz__notes-placeholder">这道题目还没有笔记...</p>';
     return;
   }
 
   try {
-    // Render markdown content. mdInstance now directly outputs <div class="mermaid">...</div>
     let htmlContent = '';
+
+    // 如果有笔记内容，则渲染Markdown
     if (noteContent) {
       htmlContent = mdInstance.render(noteContent);
     }
 
-    // Add placeholder if generating notes
+    // 如果正在生成笔记，显示“思考中”
     if (generating && !htmlContent) {
       htmlContent = '<p class="page-quiz__notes-placeholder">思考中...</p>';
-    } else if (!htmlContent) {
-      htmlContent = '<p class="page-quiz__notes-placeholder">这道题目还没有笔记...</p>';
     }
 
-    renderedNotesHtml.value = htmlContent;
+    renderedNotesHtml.value = htmlContent || '<p class="page-quiz__notes-placeholder">这道题目还没有笔记...</p>';
 
-    await nextTick(); // Wait for Vue to update the DOM
+    await nextTick(); // 等待 DOM 更新
 
-    // Check if the container exists
-    if (!notesDisplayRef.value || !document.body.contains(notesDisplayRef.value)) {
-      console.log('[Mermaid] Skipping rendering: notesDisplayRef not found or detached from DOM.');
-      return;
-    }
+    // 如果容器不存在，则不渲染 Mermaid
+    const container = notesDisplayRef.value;
+    if (!container || !document.body.contains(container)) return;
 
-    // Find all elements with the 'mermaid' class within the notes display area
-    const mermaidElements = notesDisplayRef.value.querySelectorAll('.mermaid');
+    const mermaidElements = container.querySelectorAll('.mermaid');
 
+    // 如果找到 Mermaid 图表，进行渲染
     if (mermaidElements.length > 0) {
-      console.log(`[Mermaid] Found ${mermaidElements.length} diagrams to render.`);
+      console.log(`[Mermaid] 找到 ${mermaidElements.length} 个图表，开始渲染...`);
+
       try {
-        await initMermaid();
-        const attachedElements = Array.from(mermaidElements).filter(el => document.body.contains(el));
+        // 如果 Mermaid 没有初始化，则进行初始化
+        if (typeof mermaid !== 'undefined' && mermaid) {
+          await initMermaid();
 
-        if (attachedElements.length > 0) {
-          await mermaid.run({ nodes: attachedElements as HTMLElement[] }); // Cast here
-          console.log(`[Mermaid] Successfully rendered/updated ${attachedElements.length} graphs.`);
+          // 使用 Array.prototype.slice.call() 转换 NodeList 为 ArrayLike<HTMLElement>
+          const nodes = Array.prototype.slice.call(mermaidElements) as ArrayLike<HTMLElement>;
 
-          attachedElements.forEach(el => {
-            el.classList.remove('mermaid-error');
-            const errorMsg = el.querySelector('.mermaid-error-message');
-            if (errorMsg) errorMsg.remove();
-          });
-
+          // 调用 mermaid.run() 渲染图表
+          await mermaid.run({ nodes });
+          console.log('[Mermaid] 图表渲染成功');
         } else {
-          console.log('[Mermaid] No attached Mermaid elements found within notesDisplayRef to render.');
+          console.warn('[Mermaid] Mermaid 未加载，跳过渲染');
         }
-
-      } catch (renderError) {
-        console.error('[Mermaid] mermaid.run failed:', renderError);
-        mermaidElements.forEach(el => {
-          if (document.body.contains(el) && !el.querySelector('.mermaid-error-message')) {
-            el.classList.add('mermaid-error');
-            const errorMessage = document.createElement('div');
-            errorMessage.className = 'mermaid-error-message';
-            errorMessage.textContent = `图表渲染失败: ${renderError instanceof Error ? renderError.message : '未知错误'}`;
-            el.appendChild(errorMessage);
-          }
-        });
+      } catch (error) {
+        console.error('[Mermaid] 渲染图表失败:', error);
       }
-    } else {
-      console.log('[Mermaid] No elements with class "mermaid" found in the rendered notes.');
     }
 
   } catch (error) {
-    console.error('笔记渲染错误:', error);
+    console.error('笔记渲染失败:', error);
     renderedNotesHtml.value = `<p class="page-quiz__notes-error">笔记内容解析失败: ${error instanceof Error ? error.message : '未知错误'}</p>`;
   }
 }
+
 
 /**
  * 在笔记编辑区插入Markdown标记
