@@ -1988,6 +1988,16 @@ function checkAndTriggerAutoGeneration() {
 onMounted(() => {
   initializeQuiz(); // 加载数据，设置监听器等
   window.addEventListener('resize', autoResizeTextarea); // 调整文本区的大小
+
+  // 添加触摸事件监听器到问题区域
+  const questionAreaElement = questionAreaRef.value;
+  if (questionAreaElement) {
+    questionAreaElement.addEventListener('touchstart', handleTouchStart, { passive: false });
+    questionAreaElement.addEventListener('touchmove', handleTouchMove, { passive: false });
+    questionAreaElement.addEventListener('touchend', handleTouchEnd, { passive: false });
+  } else {
+    console.warn("未能找到问题区域元素来绑定触摸事件。");
+  }
 });
 
 onUnmounted(() => {
@@ -1995,6 +2005,14 @@ onUnmounted(() => {
   window.removeEventListener('resize', autoResizeTextarea);
   // 清理定时器
   if (toastTimer) clearTimeout(toastTimer);
+
+  // 移除触摸事件监听器
+  const questionAreaElement = questionAreaRef.value; // 需要再次获取或保存引用
+  if (questionAreaElement) {
+    questionAreaElement.removeEventListener('touchstart', handleTouchStart);
+    questionAreaElement.removeEventListener('touchmove', handleTouchMove);
+    questionAreaElement.removeEventListener('touchend', handleTouchEnd);
+  }
 });
 
 // --- 监听器 ---
