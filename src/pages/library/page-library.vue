@@ -1276,11 +1276,11 @@ function handleFileSelect(event: Event) {
 const appSettings = reactive(configService.getSettings());
 
 // 处理通用设置保存的函数
-const handleAppSettingsSave = (settings: { uiSettings: UiSettings, quizSettings: QuizSettings, debugEnabled: boolean }) => {
+const handleAppSettingsSave = () => { // 移除 settings 参数
   // configService.updateSettings(settings); // 移除此行，因为 modal-settings 已经保存
-  // 更新本地响应式变量，如果 ModalSettings 修改了 settings 的话
-  Object.assign(appSettings, configService.getSettings());
-  isDarkMode.value = settings.uiSettings.darkMode;
+  // 更新本地响应式变量
+  Object.assign(appSettings, configService.getSettings()); // 从服务重新获取最新设置
+  isDarkMode.value = appSettings.uiSettings.darkMode; // 从更新后的 appSettings 获取 darkMode
 };
 
 // 保持原有 handleGeneralSettingsSave 的引用（如果其他地方还在用）
