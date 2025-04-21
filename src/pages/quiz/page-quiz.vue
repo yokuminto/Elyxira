@@ -97,7 +97,7 @@
       </div>
 
       <!-- 问题区域 -->
-      <div class="page-quiz__question-area">
+      <div class="page-quiz__question-area" ref="questionAreaRef">
         <transition name="question-fade-slide">
           <div v-if="!loading && currentQuestion" :key="currentQuestion.id || currentIndex">
             <div class="page-quiz__question-content-wrapper">
@@ -314,7 +314,7 @@
 <script setup lang="ts">
 import { ref, computed, reactive, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import MarkdownIt from 'markdown-it'
+import MarkdownIt from 'markdown-it' // 确保已导入
 
 import configService, { QuizMode, type Question, type GithubConfig, type UiSettings, type QuizSettings, type AppSettings, type ApiConfig } from '@/services/config-service'
 import { showToast } from '@/utils/toast'
@@ -331,6 +331,15 @@ import ModalApiConfig from '@/modals/modal-api-config.vue'
 import './page-quiz.css'
 import '../../styles/variables.css'
 import '../../styles/quiz-medical.css'  // 添加医学专家模式的样式
+
+// 在 setup 顶部初始化 MarkdownIt 实例
+const md = new MarkdownIt({
+  html: true,
+  linkify: true,
+  typographer: true,
+  breaks: true,
+  xhtmlOut: true,
+});
 
 // --- 类型定义 ---
 interface UserAnswerRecord {
@@ -877,9 +886,11 @@ async function renderNotesForCurrentQuestion() {
   }
 
   const noteContent = question.notes || '';
-  const generating = isGeneratingCurrent.value && activeGenerationIndex.value === currentIndex.value;
+  // 检查是否正在为当前查看的这个题目生成笔记
+  const isGeneratingThisQuestion = isGenerating.value && activeGenerationIndex.value === currentIndex.value;
 
-  if (!noteContent && !generating) {
+  // 情况1：没有笔记内容，并且没有正在为这个题目生成笔记
+  if (!noteContent && !isGeneratingThisQuestion) {
     renderedNotesHtml.value = '<p class="page-quiz__notes-placeholder">这道题目还没有笔记...</p>';
     return;
   }
@@ -887,11 +898,20 @@ async function renderNotesForCurrentQuestion() {
   try {
     let htmlContent = '';
 
-    if (generating && !htmlContent) {
-      htmlContent = '<p class="page-quiz__notes-placeholder">思考中...</p>';
+    // 情况2：正在为当前这个题目生成笔记
+    if (isGeneratingThisQuestion) {
+      // 优先显示已流式传输的部分内容，否则显示"思考中"
+      htmlContent = noteContent
+        ? md.render(noteContent) // 渲染已有的部分笔记
+        : '<p class="page-quiz__notes-placeholder">思考中...</p>';
+    }
+    // 情况3：有笔记内容，并且没有正在为这个题目生成笔记
+    else if (noteContent) {
+      htmlContent = md.render(noteContent); // 渲染完整的笔记内容
     }
 
-    renderedNotesHtml.value = htmlContent || '<p class="page-quiz__notes-placeholder">这道题目还没有笔记...</p>';
+    // 设置最终的 HTML，添加一个备用占位符以防万一
+    renderedNotesHtml.value = htmlContent || '<p class="page-quiz__notes-placeholder">加载笔记时出错...</p>';
 
   } catch (error) {
     console.error('笔记 Markdown 渲染失败:', error);
