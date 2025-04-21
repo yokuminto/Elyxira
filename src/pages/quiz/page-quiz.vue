@@ -906,12 +906,18 @@ async function renderNotesForCurrentQuestion() {
 
     renderedNotesHtml.value = htmlContent;
 
-    // 渲染HTML后处理Mermaid图表
     await nextTick(); // 等待DOM更新
 
-    // **** START MODIFICATION ****
+    // **** 新增检查 ****
+    if (!notesDisplayRef.value || !document.body.contains(notesDisplayRef.value)) {
+      console.log('[Mermaid] Skipping rendering: notesDisplayRef not found or detached from DOM.');
+      return; // 如果元素不在 DOM 中，则不尝试渲染 Mermaid
+    }
+    // **** 结束新增检查 ****
+
+
     // Skip Mermaid rendering if notes are currently being generated via stream
-    if (!notesDisplayRef.value || (isGeneratingCurrent.value && activeGenerationIndex.value === currentIndex.value)) {
+    if (isGeneratingCurrent.value && activeGenerationIndex.value === currentIndex.value) {
       console.log('[Mermaid] Skipping rendering during note generation.');
       return;
     }
