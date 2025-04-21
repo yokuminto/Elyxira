@@ -99,7 +99,9 @@
       <!-- 问题区域 -->
       <div class="page-quiz__question-area" ref="questionAreaRef" @touchstart="handleTouchStart"
         @touchmove="handleTouchMove" @touchend="handleTouchEnd">
-        <transition name="question-fade-slide" mode="out-in" :css="uiSettings.animationEnabled">
+        <!-- **** 添加 @after-enter 钩子 **** -->
+        <transition name="question-fade-slide" mode="out-in" :css="uiSettings.animationEnabled"
+          @after-enter="handleQuestionTransitionEnd">
           <div class="page-quiz__question-content-wrapper" v-if="currentQuestion" :key="currentQuestion.id">
             <div class="page-quiz__question-text" ref="questionTextRef">
               <span class="page-quiz__question-id">第{{ currentQuestion.number || (currentIndex + 1) }}题</span>
@@ -895,12 +897,11 @@ function saveNotes() {
 
 
 /**
- * 渲染当前问题的笔记 (Markdown + Mermaid)
+ * 渲染当前问题的笔记 (Markdown) - 移除 Mermaid 渲染部分
  */
 async function renderNotesForCurrentQuestion() {
   const question = currentQuestion.value;
 
-  // 如果题目不存在，直接返回占位符
   if (!question) {
     renderedNotesHtml.value = '<p class="page-quiz__notes-placeholder">请先加载题目</p>';
     return;
@@ -909,7 +910,6 @@ async function renderNotesForCurrentQuestion() {
   const noteContent = question.notes || '';
   const generating = isGeneratingCurrent.value && activeGenerationIndex.value === currentIndex.value;
 
-  // 如果没有笔记内容且没有在生成笔记，显示提示信息
   if (!noteContent && !generating) {
     renderedNotesHtml.value = '<p class="page-quiz__notes-placeholder">这道题目还没有笔记...</p>';
     return;
@@ -918,51 +918,25 @@ async function renderNotesForCurrentQuestion() {
   try {
     let htmlContent = '';
 
-    // 如果有笔记内容，则渲染Markdown
     if (noteContent) {
       htmlContent = mdInstance.render(noteContent);
     }
 
-    // 如果正在生成笔记，显示“思考中”
     if (generating && !htmlContent) {
       htmlContent = '<p class="page-quiz__notes-placeholder">思考中...</p>';
     }
 
     renderedNotesHtml.value = htmlContent || '<p class="page-quiz__notes-placeholder">这道题目还没有笔记...</p>';
 
-    await nextTick(); // 等待 DOM 更新
-
-    // 如果容器不存在，则不渲染 Mermaid
-    const container = notesDisplayRef.value;
-    if (!container || !document.body.contains(container)) return;
-
-    const mermaidElements = container.querySelectorAll('.mermaid');
-
-    // 如果找到 Mermaid 图表，进行渲染
-    if (mermaidElements.length > 0) {
-      console.log(`[Mermaid] 找到 ${mermaidElements.length} 个图表，开始渲染...`);
-
-      try {
-        // 如果 Mermaid 没有初始化，则进行初始化
-        if (typeof mermaid !== 'undefined' && mermaid) {
-          await initMermaid();
-
-          // 使用 Array.prototype.slice.call() 转换 NodeList 为 ArrayLike<HTMLElement>
-          const nodes = Array.prototype.slice.call(mermaidElements) as ArrayLike<HTMLElement>;
-
-          // 调用 mermaid.run() 渲染图表
-          await mermaid.run({ nodes });
-          console.log('[Mermaid] 图表渲染成功');
-        } else {
-          console.warn('[Mermaid] Mermaid 未加载，跳过渲染');
-        }
-      } catch (error) {
-        console.error('[Mermaid] 渲染图表失败:', error);
-      }
-    }
+    // **** 移除 Mermaid 渲染逻辑 ****
+    // await nextTick(); // 不再需要 nextTick 来等待 Mermaid
+    // const container = notesDisplayRef.value;
+    // if (!container || !document.body.contains(container)) return;
+    // const mermaidElements = container.querySelectorAll('.mermaid');
+    // if (mermaidElements.length > 0) { ... } // 移除这部分
 
   } catch (error) {
-    console.error('笔记渲染失败:', error);
+    console.error('笔记 Markdown 渲染失败:', error);
     renderedNotesHtml.value = `<p class="page-quiz__notes-error">笔记内容解析失败: ${error instanceof Error ? error.message : '未知错误'}</p>`;
   }
 }
@@ -1929,49 +1903,67 @@ function requestNoteGeneration(targetIndex: number, isManual: boolean) {
 
   // Stream chunk handler
   const handleStreamChunk: StreamCallback = (chunk, streamTargetIndex) => {
-    if (streamTargetIndex !== targetIndex) return; // 忽略错误索引的块
+    if (streamTargetIndex !== targetIndex) return; // Ignore chunks for wrong index
 
     questionToGenerate.notes = (questionToGenerate.notes || '') + chunk;
-    autoSaveNotes(); // 触发新块的自动保存
+    autoSaveNotes(); // Trigger auto-save on new chunk
 
-    // **** 开始修改：简化节流和更新逻辑 ****
-    // 使用节流更新当前查看问题的 UI
+    // **** Start modification: Simplified throttle and update logic ****
+    // Use throttled update for currently viewed question's UI
     if (currentIndex.value === streamTargetIndex) {
       const now = Date.now();
-      const fixedThrottleDelay = 250; // 使用固定的节流延迟（例如 250 毫秒）
+      const fixedThrottleDelay = 250; // Use a fixed throttle delay (e.g., 250ms)
 
       if (!renderTimeoutId) {
-        // 如果没有待处理的超时，则安排一个
+        // Schedule one if no timeout is pending
         renderTimeoutId = window.setTimeout(() => {
           if (activeGenerationIndex.value === streamTargetIndex && currentIndex.value === streamTargetIndex) {
             // console.debug(`[DEBUG] Executing Throttled Render (Stream)`);
-            renderNotesForCurrentQuestion(); // 渲染 Markdown 更新（Mermaid 在内部跳过）
+            // Render Markdown updates ONLY. Mermaid is handled by transition end.
+            renderNotesForCurrentQuestion();
             lastRenderTime = Date.now();
           }
           renderTimeoutId = null;
         }, fixedThrottleDelay);
       } else if (now - lastRenderTime > fixedThrottleDelay * 4) {
-        // 如果一段时间没有更新，则强制渲染（例如 4 倍延迟）
+        // Force render if no update for a while (e.g., 4x delay)
         clearTimeout(renderTimeoutId);
         renderTimeoutId = null;
         if (activeGenerationIndex.value === streamTargetIndex && currentIndex.value === streamTargetIndex) {
-          renderNotesForCurrentQuestion();
+          renderNotesForCurrentQuestion(); // Render Markdown only
           lastRenderTime = now;
         }
       }
     }
-    // **** 结束修改 ****
+    // **** End modification ****
   };
 
   // Completion handler
-  const handleCompletion: CompletionCallback = (finalNote, completedIndex, error) => {
+  const handleCompletion: CompletionCallback = async (finalNote, completedIndex, error) => { // 移除多余的 async
     console.log(`[LOG] 生成完成: Index=${completedIndex}, Expected=${targetIndex}, Error=${error || 'None'}, Final Length=${finalNote?.length}`);
 
     if (renderTimeoutId) clearTimeout(renderTimeoutId);
     if (autoSaveTimeoutId) clearTimeout(autoSaveTimeoutId);
 
+    // Add check: Ensure questionToGenerate still exists before proceeding
+    const questionToGenerate = localQuestions.value[completedIndex];
+    if (!questionToGenerate) {
+      console.warn(`[WARN] Generation completed for index ${completedIndex}, but the question object no longer exists.`);
+      // Reset state even if question is gone to prevent blockage
+      if (activeGenerationIndex.value === completedIndex) {
+        activeGenerationIndex.value = null;
+        isGenerating.value = false;
+      }
+      // Still check for next auto-generation if applicable
+      checkAndTriggerAutoGeneration();
+      return;
+    }
+
+
     if (activeGenerationIndex.value !== completedIndex) {
       console.warn(`[WARN] 忽略过时的完成回调 (Completed: ${completedIndex}, Active: ${activeGenerationIndex.value})`);
+      // Do not reset state here, the active generation is different
+      // Also, do not check for next auto-gen based on this stale callback
       return;
     }
 
@@ -1985,19 +1977,25 @@ function requestNoteGeneration(targetIndex: number, isManual: boolean) {
         console.error(`[ERROR] 无法为索引 ${completedIndex} 执行最终保存，缺少问题ID`);
       }
 
-      // **** 开始修改：完成后最终渲染 ****
-      // 在最终渲染之前重置生成状态
-      console.log(`[LOG] 重置生成状态: activeGenerationIndex from ${activeGenerationIndex.value} to null`);
-      const previousActiveIndex = activeGenerationIndex.value;
-      activeGenerationIndex.value = null;
+      // **** Start modification: Final Render on Completion ****
+      // Reset generation state BEFORE final render attempt
+      console.log(`[LOG] Resetting generation state: activeGenerationIndex from ${activeGenerationIndex.value} to null`);
+      // const previousActiveIndex = activeGenerationIndex.value; // Not needed
+      activeGenerationIndex.value = null; // Reset state *before* rendering
       isGenerating.value = false;
 
-      // 如果完成的问题是当前正在查看的问题，则渲染最终笔记（包括 Mermaid）。
+      // If the completed question is the one currently being viewed,
+      // render the final Markdown. Then explicitly call handleQuestionTransitionEnd
+      // to render any Mermaid charts immediately, as the transition hook won't fire.
       if (currentIndex.value === completedIndex) {
-        console.log(`[LOG] 为当前查看的索引 ${completedIndex} 渲染最终笔记 (包含Mermaid)`);
-        nextTick(renderNotesForCurrentQuestion); // 现在将渲染 Mermaid
+        console.log(`[LOG] Rendering final Markdown for currently viewed index ${completedIndex}`);
+        await renderNotesForCurrentQuestion(); // Render the final Markdown HTML
+        await nextTick(); // Wait for DOM update after Markdown render
+        console.log(`[LOG] Explicitly calling handleQuestionTransitionEnd after completion for index ${completedIndex}`);
+        await handleQuestionTransitionEnd(); // Attempt to render mermaid now
       }
-      // **** 结束修改 ****
+      // **** End modification ****
+
 
       // 显示适当的提示消息
       if (error) {
@@ -2015,17 +2013,21 @@ function requestNoteGeneration(targetIndex: number, isManual: boolean) {
     } catch (completionError) {
       console.error(`[ERROR] 处理索引 ${completedIndex} 的完成回调时出错:`, completionError);
       showToast('处理笔记生成结果时出错', 'error');
+      // Ensure state is reset even on error within the try block
+      if (activeGenerationIndex.value === completedIndex) { // Check again before resetting in catch
+        activeGenerationIndex.value = null;
+        isGenerating.value = false;
+      }
     } finally {
-      // 重置状态（已在最终渲染前完成）
-      // if (activeGenerationIndex.value === completedIndex) { // 确保仅当它是活动状态时才重置状态
-      //   console.log(`[LOG] 重置生成状态 (finally block): activeGenerationIndex from ${activeGenerationIndex.value} to null`);
-      //   activeGenerationIndex.value = null;
-      //   isGenerating.value = false;
-      // }
-
-      // --- 关键: 在重置状态后检查下一个自动生成 --- (moved from inside try)
+      // --- 关键: 在重置状态后检查下一个自动生成 ---
+      // Ensure state is reset if we somehow missed it (e.g., error before reset)
+      if (activeGenerationIndex.value === completedIndex) {
+        console.warn(`[WARN] Generation state was not reset before finally block for index ${completedIndex}. Resetting now.`);
+        activeGenerationIndex.value = null;
+        isGenerating.value = false;
+      }
       console.log("[LOG] 完成处理结束，检查下一个自动生成。");
-      checkAndTriggerAutoGeneration();
+      checkAndTriggerAutoGeneration(); // Check regardless of success/error previously
     }
   };
 
@@ -2110,5 +2112,42 @@ watch(isDarkMode, () => {
     renderNotesForCurrentQuestion(); // 使用可能的新主题重新渲染笔记
   });
 });
+
+// --- 新增方法：处理问题过渡动画结束 ---
+/**
+ * 在问题切换动画（进入）结束后渲染 Mermaid 图表
+ */
+async function handleQuestionTransitionEnd() {
+  // 确保笔记显示区域的引用有效且在 DOM 中
+  const container = notesDisplayRef.value;
+  if (!container || !document.body.contains(container)) {
+    console.log('[Mermaid] Transition end: Notes container not ready or not in DOM, skipping Mermaid render.');
+    return;
+  }
+
+  const mermaidElements = container.querySelectorAll('.mermaid');
+
+  if (mermaidElements.length > 0) {
+    console.log(`[Mermaid] Transition end: Found ${mermaidElements.length} charts, attempting render...`);
+    try {
+      if (typeof mermaid !== 'undefined' && mermaid) {
+        // 确保 Mermaid 已初始化 (可能因为主题切换等原因需要重新初始化)
+        await initMermaid();
+
+        const nodes = Array.prototype.slice.call(mermaidElements) as ArrayLike<HTMLElement>;
+        await mermaid.run({ nodes });
+        console.log('[Mermaid] Transition end: Charts rendered successfully.');
+      } else {
+        console.warn('[Mermaid] Transition end: Mermaid library not available, skipping render.');
+      }
+    } catch (error) {
+      console.error('[Mermaid] Transition end: Failed to render charts:', error);
+      // 可以在此处添加用户提示，告知图表渲染失败
+      // showToast('部分笔记图表渲染失败', 'warning');
+    }
+  } else {
+    // console.log('[Mermaid] Transition end: No Mermaid charts found in the notes.');
+  }
+}
 
 </script>
