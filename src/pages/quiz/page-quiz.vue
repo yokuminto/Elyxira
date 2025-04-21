@@ -460,7 +460,7 @@ const quizStats = computed<QuizStats>(() => ({
   totalQuestions: totalQuestions.value,
   answeredCount: answeredCount.value,
   correctCount: correctCount.value,
-  wrongQuestionIds: wrongQuestionIds.value.map(String) // Ensure IDs are strings
+  wrongQuestionIds: wrongQuestionIds.value.map(String) // 确保ID是字符串
 }));
 
 const notesVisible = computed(() => {
@@ -512,6 +512,28 @@ const mdInstance = new MarkdownIt({
   typographer: true,
   breaks: true,
 });
+
+// Store the original fence rule
+const defaultFence = mdInstance.renderer.rules.fence || function (tokens, idx, options, env, self) {
+  return self.renderToken(tokens, idx, options);
+};
+
+// Override the fence rule for mermaid blocks
+mdInstance.renderer.rules.fence = (tokens, idx, options, env, self) => {
+  const token = tokens[idx];
+  const info = token.info ? token.info.trim() : '';
+  const content = token.content.trim();
+
+  if (info === 'mermaid') {
+    // Directly output a div with the mermaid class
+    // Mermaid will find this div later when mermaid.run() is called
+    // Ensure content is properly handled (Mermaid itself should handle its syntax)
+    return `<div class="mermaid">${content}</div>\\n`;
+  }
+
+  // Otherwise, use the default renderer for other languages
+  return defaultFence(tokens, idx, options, env, self);
+};
 
 // --- 方法 ---
 
@@ -883,7 +905,7 @@ async function renderNotesForCurrentQuestion() {
   }
 
   const noteContent = question.notes || '';
-  const generating = isGeneratingCurrent.value && activeGenerationIndex.value === currentIndex.value; // 检查是否正在为当前题目生成笔记
+  const generating = isGeneratingCurrent.value && activeGenerationIndex.value === currentIndex.value;
 
   if (!noteContent && !generating) {
     renderedNotesHtml.value = '<p class="page-quiz__notes-placeholder">这道题目还没有笔记...</p>';
@@ -891,13 +913,13 @@ async function renderNotesForCurrentQuestion() {
   }
 
   try {
-    // 渲染markdown内容
+    // Render markdown content. mdInstance now directly outputs <div class="mermaid">...</div>
     let htmlContent = '';
     if (noteContent) {
       htmlContent = mdInstance.render(noteContent);
     }
 
-    // 如果正在生成则添加占位符
+    // Add placeholder if generating notes
     if (generating && !htmlContent) {
       htmlContent = '<p class="page-quiz__notes-placeholder">思考中...</p>';
     } else if (!htmlContent) {
@@ -906,80 +928,56 @@ async function renderNotesForCurrentQuestion() {
 
     renderedNotesHtml.value = htmlContent;
 
-    await nextTick(); // 等待DOM更新
+    await nextTick(); // Wait for Vue to update the DOM
 
-    // **** 新增检查 ****
+    // Check if the container exists
     if (!notesDisplayRef.value || !document.body.contains(notesDisplayRef.value)) {
       console.log('[Mermaid] Skipping rendering: notesDisplayRef not found or detached from DOM.');
-      return; // 如果元素不在 DOM 中，则不尝试渲染 Mermaid
-    }
-    // **** 结束新增检查 ****
-
-
-    // Skip Mermaid rendering if notes are currently being generated via stream
-    if (isGeneratingCurrent.value && activeGenerationIndex.value === currentIndex.value) {
-      console.log('[Mermaid] Skipping rendering during note generation.');
       return;
     }
-    // **** END MODIFICATION ****
 
-    try {
-      await initMermaid(); // 确保mermaid已初始化
+    // Find all elements with the 'mermaid' class within the notes display area
+    const mermaidElements = notesDisplayRef.value.querySelectorAll('.mermaid');
 
-      // 处理pre>code块
-      const mermaidCodeBlocks = notesDisplayRef.value.querySelectorAll('pre code.language-mermaid');
-      mermaidCodeBlocks.forEach(block => {
-        const preElement = block.closest('pre');
-        // 避免重新处理已转换为div.mermaid的元素
-        if (!preElement || preElement.classList.contains('mermaid-processed')) return;
+    if (mermaidElements.length > 0) {
+      console.log(`[Mermaid] Found ${mermaidElements.length} diagrams to render.`);
+      try {
+        await initMermaid(); // Ensure Mermaid is initialized with the correct theme
 
-        const code = block.textContent || '';
-        if (!code.trim()) return;
+        // Filter elements again right before running, just in case they got detached.
+        const attachedElements = Array.from(mermaidElements).filter(el => document.body.contains(el));
 
-        const mermaidDiv = document.createElement('div');
-        mermaidDiv.className = 'mermaid';
-        mermaidDiv.textContent = code;
+        if (attachedElements.length > 0) {
+          // Explicitly pass the nodes found within our container
+          await mermaid.run({ nodes: attachedElements });
+          console.log(`[Mermaid] Successfully rendered/updated ${attachedElements.length} graphs.`);
 
-        if (preElement.parentNode) {
-          preElement.parentNode.replaceChild(mermaidDiv, preElement);
-        }
-        // 标记原始pre元素，避免重复替换
-        preElement.classList.add('mermaid-processed');
-      });
-
-      // 查找所有指定用于mermaid渲染的元素
-      const mermaidElementsToRender = notesDisplayRef.value.querySelectorAll<HTMLElement>('.mermaid');
-
-      if (mermaidElementsToRender.length > 0) {
-        const elementsArray = Array.from(mermaidElementsToRender);
-        console.log(`[Mermaid] 尝试渲染 ${elementsArray.length} 个图表。`);
-        try {
-          // 让mermaid.run处理幂等渲染
-          await mermaid.run({ nodes: elementsArray });
-          console.log(`[Mermaid] 成功渲染或更新了 ${elementsArray.length} 个图表。`);
-        } catch (renderError) {
-          console.error('[Mermaid] 渲染错误:', renderError);
-          // 在div内添加错误信息以提供用户反馈
-          elementsArray.forEach(el => {
-            // 避免在run多次失败时添加多个错误信息
-            if (!el.querySelector('.mermaid-error-message')) {
-              el.classList.add('mermaid-error');
-              const errorMessage = document.createElement('div');
-              errorMessage.className = 'mermaid-error-message';
-              errorMessage.textContent = `图表渲染失败: ${renderError instanceof Error ? renderError.message : '未知错误'}`;
-              el.appendChild(errorMessage);
-            }
+          // Optional: Remove error states from successfully rendered elements
+          attachedElements.forEach(el => {
+            el.classList.remove('mermaid-error');
+            const errorMsg = el.querySelector('.mermaid-error-message');
+            if (errorMsg) errorMsg.remove();
           });
+
+        } else {
+          console.log('[Mermaid] No attached Mermaid elements found within notesDisplayRef to render.');
         }
+
+      } catch (renderError) {
+        console.error('[Mermaid] mermaid.run failed:', renderError);
+        // Add error messages to the failed elements (check containment again)
+        mermaidElements.forEach(el => {
+          if (document.body.contains(el) && !el.querySelector('.mermaid-error-message')) {
+            el.classList.add('mermaid-error');
+            const errorMessage = document.createElement('div');
+            errorMessage.className = 'mermaid-error-message';
+            errorMessage.textContent = `图表渲染失败: ${renderError instanceof Error ? renderError.message : '未知错误'}`;
+            el.appendChild(errorMessage);
+          }
+        });
       }
-
-    } catch (mermaidError) {
-      console.error('Mermaid处理失败:', mermaidError);
-    }
-
-    // 如果正在生成笔记，则滚动到底部
-    if (generating && notesDisplayRef.value) {
-      notesDisplayRef.value.scrollTop = notesDisplayRef.value.scrollHeight;
+    } else {
+      console.log('[Mermaid] No elements with class "mermaid" found in the rendered notes.');
     }
 
   } catch (error) {
@@ -1154,11 +1152,11 @@ async function generateAINotes(
                 // --- 增加日志 ---
                 console.log(`[DEBUG] Raw dataStr (Index ${generationTargetIndex}):`, dataStr);
                 console.log(`[DEBUG] Parsed data (Index ${generationTargetIndex}):`, parsed);
-                // --- Potential Issue Area ---
+                // --- 潜在问题区域 ---
                 const content = parsed.choices?.[0]?.delta?.content ||
-                  parsed.choices?.[0]?.message?.content || // This might be for non-streamed messages
-                  parsed.delta?.content || // Check if this path is used by DeepSeek R1
-                  ''; // Default to empty string
+                  parsed.choices?.[0]?.message?.content || // 这可能是用于非流式消息
+                  parsed.delta?.content || // 检查 DeepSeek R1 是否使用此路径
+                  ''; // 默认为空字符串
 
                 if (content) {
                   generatedNote += content;
@@ -1954,24 +1952,24 @@ function requestNoteGeneration(targetIndex: number, isManual: boolean) {
     questionToGenerate.notes = (questionToGenerate.notes || '') + chunk;
     autoSaveNotes(); // 触发新块的自动保存
 
-    // **** START MODIFICATION: Simplify throttling and update logic ****
-    // Update UI for the currently viewed question with throttling
+    // **** 开始修改：简化节流和更新逻辑 ****
+    // 使用节流更新当前查看问题的 UI
     if (currentIndex.value === streamTargetIndex) {
       const now = Date.now();
-      const fixedThrottleDelay = 250; // Use a fixed throttle delay (e.g., 250ms)
+      const fixedThrottleDelay = 250; // 使用固定的节流延迟（例如 250 毫秒）
 
       if (!renderTimeoutId) {
-        // If no timeout is pending, schedule one
+        // 如果没有待处理的超时，则安排一个
         renderTimeoutId = window.setTimeout(() => {
           if (activeGenerationIndex.value === streamTargetIndex && currentIndex.value === streamTargetIndex) {
             // console.debug(`[DEBUG] Executing Throttled Render (Stream)`);
-            renderNotesForCurrentQuestion(); // Render Markdown updates (Mermaid skipped inside)
+            renderNotesForCurrentQuestion(); // 渲染 Markdown 更新（Mermaid 在内部跳过）
             lastRenderTime = Date.now();
           }
           renderTimeoutId = null;
         }, fixedThrottleDelay);
       } else if (now - lastRenderTime > fixedThrottleDelay * 4) {
-        // Force render if it hasn't updated in a while (e.g., 4x delay)
+        // 如果一段时间没有更新，则强制渲染（例如 4 倍延迟）
         clearTimeout(renderTimeoutId);
         renderTimeoutId = null;
         if (activeGenerationIndex.value === streamTargetIndex && currentIndex.value === streamTargetIndex) {
@@ -1980,7 +1978,7 @@ function requestNoteGeneration(targetIndex: number, isManual: boolean) {
         }
       }
     }
-    // **** END MODIFICATION ****
+    // **** 结束修改 ****
   };
 
   // Completion handler
@@ -1996,28 +1994,28 @@ function requestNoteGeneration(targetIndex: number, isManual: boolean) {
     }
 
     try {
-      questionToGenerate.notes = finalNote; // Update local object with final note
+      questionToGenerate.notes = finalNote; // 使用最终笔记更新本地对象
       if (questionToGenerate.id) {
         console.log(`[LOG] 最终保存索引 ${completedIndex} 的笔记`);
         configService.saveNoteToQuestion(questionToGenerate.id, finalNote);
-        configService.saveQuizState(); // Ensure overall state is persisted
+        configService.saveQuizState(); // 确保整体状态已持久化
       } else {
         console.error(`[ERROR] 无法为索引 ${completedIndex} 执行最终保存，缺少问题ID`);
       }
 
-      // **** START MODIFICATION: Final render after completion ****
-      // Reset generation state *before* final render
+      // **** 开始修改：完成后最终渲染 ****
+      // 在最终渲染之前重置生成状态
       console.log(`[LOG] 重置生成状态: activeGenerationIndex from ${activeGenerationIndex.value} to null`);
       const previousActiveIndex = activeGenerationIndex.value;
       activeGenerationIndex.value = null;
       isGenerating.value = false;
 
-      // If the completed question is the currently viewed question, render the final note *including* Mermaid.
+      // 如果完成的问题是当前正在查看的问题，则渲染最终笔记（包括 Mermaid）。
       if (currentIndex.value === completedIndex) {
         console.log(`[LOG] 为当前查看的索引 ${completedIndex} 渲染最终笔记 (包含Mermaid)`);
-        nextTick(renderNotesForCurrentQuestion); // Now Mermaid will be rendered
+        nextTick(renderNotesForCurrentQuestion); // 现在将渲染 Mermaid
       }
-      // **** END MODIFICATION ****
+      // **** 结束修改 ****
 
       // 显示适当的提示消息
       if (error) {
@@ -2036,8 +2034,8 @@ function requestNoteGeneration(targetIndex: number, isManual: boolean) {
       console.error(`[ERROR] 处理索引 ${completedIndex} 的完成回调时出错:`, completionError);
       showToast('处理笔记生成结果时出错', 'error');
     } finally {
-      // Reset state (already done before final render)
-      // if (activeGenerationIndex.value === completedIndex) { // Ensure state reset only if it was the active one
+      // 重置状态（已在最终渲染前完成）
+      // if (activeGenerationIndex.value === completedIndex) { // 确保仅当它是活动状态时才重置状态
       //   console.log(`[LOG] 重置生成状态 (finally block): activeGenerationIndex from ${activeGenerationIndex.value} to null`);
       //   activeGenerationIndex.value = null;
       //   isGenerating.value = false;
