@@ -98,7 +98,7 @@
 
       <!-- 问题区域 -->
       <div class="page-quiz__question-area" ref="questionAreaRef">
-        <transition name="question-fade-slide">
+        <transition name="question-fade-slide" mode="out-in">
           <div v-if="!loading && currentQuestion" :key="currentQuestion.id || currentIndex">
             <div class="page-quiz__question-content-wrapper">
               <!-- Question Content -->
