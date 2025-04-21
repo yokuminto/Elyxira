@@ -469,7 +469,9 @@ import type {
   LocalQuizCache,
   GithubApiFile,
   GeneralSettings,
-  AppSettings
+  AppSettings,
+  UiSettings,
+  QuizSettings
 } from '@/services/config-service'
 import { parseQuiz } from '@/services/service-quiz-parser'
 
@@ -1274,8 +1276,8 @@ function handleFileSelect(event: Event) {
 const appSettings = reactive(configService.getSettings());
 
 // 处理通用设置保存的函数
-const handleAppSettingsSave = (settings: AppSettings) => {
-  configService.updateSettings(settings);
+const handleAppSettingsSave = (settings: { uiSettings: UiSettings, quizSettings: QuizSettings, debugEnabled: boolean }) => {
+  // configService.updateSettings(settings); // 移除此行，因为 modal-settings 已经保存
   // 更新本地响应式变量，如果 ModalSettings 修改了 settings 的话
   Object.assign(appSettings, configService.getSettings());
   isDarkMode.value = settings.uiSettings.darkMode;
@@ -1283,7 +1285,7 @@ const handleAppSettingsSave = (settings: AppSettings) => {
 
 // 保持原有 handleGeneralSettingsSave 的引用（如果其他地方还在用）
 // 或者，如果确定不再需要，可以完全移除
-const handleGeneralSettingsSave = handleAppSettingsSave;
+// const handleGeneralSettingsSave = handleAppSettingsSave;
 
 // 返回主页方法
 const goToHome = () => {

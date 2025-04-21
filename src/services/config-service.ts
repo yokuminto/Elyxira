@@ -1962,51 +1962,6 @@ class ConfigService {
     return total > 0 ? total : 100 // 默认100题
   }
 
-  /***********************************************
-   * 通用设置方法
-   ***********************************************/
-  /**
-   * 保存通用设置
-   */
-  public saveGeneralSettings(settings: {
-    uiSettings: UiSettings
-    quizSettings: QuizSettings
-    debugEnabled: boolean
-  }): void {
-    // 1. Directly update the reactive settings object
-    Object.assign(this.settings.uiSettings, settings.uiSettings)
-    Object.assign(this.settings.quizSettings, settings.quizSettings)
-    this.settings.debugEnabled = settings.debugEnabled
-
-    // 2. Update the reactive quizState.config
-    const { randomMode, reviewMode } = settings.quizSettings
-    if (reviewMode) {
-      this.quizState.config.mode = QuizMode.REVIEW
-    } else if (randomMode) {
-      this.quizState.config.mode = QuizMode.RANDOM
-    } else {
-      this.quizState.config.mode = QuizMode.NORMAL
-    }
-    this.quizState.config.randomize = randomMode
-
-    // 3. Save the main settings object once to localStorage
-    this.saveSettings()
-
-    // 4. Save the specific quiz config parts to localStorage
-    this.saveQuizConfigToStorage()
-
-    // 5. Apply theme changes
-    this.applyTheme()
-
-    // 6. Notify relevant listeners
-    this.notifyListeners('settings')
-    this.notifyListeners('ui')
-    this.notifyListeners('quiz')
-
-    // 7. Show toast
-    showToast('通用设置已保存', 'success')
-  }
-
   /**
    * 保存题目笔记到当前测验数据
    * @param questionId 问题ID
