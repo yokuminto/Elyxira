@@ -97,188 +97,191 @@
       </div>
 
       <!-- 问题区域 -->
-      <div class="page-quiz__question-area" ref="questionAreaRef" @touchstart="handleTouchStart"
-        @touchmove="handleTouchMove" @touchend="handleTouchEnd">
-        <!-- **** 添加 @after-enter 钩子 **** -->
-        <transition name="question-fade-slide" mode="out-in" :css="uiSettings.animationEnabled">
-          <div class="page-quiz__question-content-wrapper" v-if="currentQuestion" :key="currentQuestion.id">
-            <div class="page-quiz__question-text" ref="questionTextRef">
-              <span class="page-quiz__question-id">第{{ currentQuestion.number || (currentIndex + 1) }}题</span>
-              <span v-html="formatQuestionTitle(currentQuestion.question)"></span>
-            </div>
-
-            <ul class="page-quiz__options-list" :class="{ 'page-quiz--submitted': isQuizSubmitted }">
-              <li v-for="(option, index) in currentQuestion.options" :key="index" class="page-quiz__option"
-                :class="getOptionClass(getOptionKey(option, index))" :data-key="getOptionKey(option, index)"
-                @click="handleOptionClick(getOptionKey(option, index))">
-                <div class="page-quiz__option-text">
-                  <span class="page-quiz__option-letter">{{ getOptionKey(option, index) }}</span>
-                  <span v-html="getOptionContent(option)"></span>
-                </div>
-                <div class="page-quiz__option-number" :class="getOptionKeyClass(getOptionKey(option, index))">
-                  {{ index + 1 }}
-                </div>
-              </li>
-            </ul>
-
-            <!-- 按钮区域 -->
-            <div class="page-quiz__action-buttons-container">
-              <div class="page-quiz__action-left">
-                <button class="page-quiz__button page-quiz__submit-button" @click="submitAnswer" :disabled="!canSubmit">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                    class="feather feather-check-circle">
-                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                  </svg>
-                  提交
-                  <span class="page-quiz__key-hint">空格</span>
-                </button>
-
-                <button class="page-quiz__button page-quiz__next-button" @click="nextQuestion" :disabled="!canGoNext">
-                  <span>下一题</span>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="9 18 15 12 9 6"></polyline>
-                  </svg>
-                  <span class="page-quiz__key-hint">空格</span>
-                </button>
+      <div class="page-quiz__question-area">
+        <transition name="question-fade-slide">
+          <div v-if="!loading && currentQuestion" :key="currentQuestion.id || currentIndex">
+            <div class="page-quiz__question-content-wrapper">
+              <!-- Question Content -->
+              <div class="page-quiz__question-text" ref="questionTextRef">
+                <span class="page-quiz__question-id">第{{ currentQuestion.number || (currentIndex + 1) }}题</span>
+                <span v-html="formatQuestionTitle(currentQuestion.question)"></span>
               </div>
 
-              <div class="page-quiz__action-right">
-                <button class="page-quiz__button page-quiz__submit-all-button" @click="submitQuiz"
-                  :disabled="isQuizSubmitted">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                    class="feather feather-check-circle">
-                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                  </svg>
-                  交卷
-                </button>
+              <ul class="page-quiz__options-list" :class="{ 'page-quiz--submitted': isQuizSubmitted }">
+                <li v-for="(option, index) in currentQuestion.options" :key="index" class="page-quiz__option"
+                  :class="getOptionClass(getOptionKey(option, index))" :data-key="getOptionKey(option, index)"
+                  @click="handleOptionClick(getOptionKey(option, index))">
+                  <div class="page-quiz__option-text">
+                    <span class="page-quiz__option-letter">{{ getOptionKey(option, index) }}</span>
+                    <span v-html="getOptionContent(option)"></span>
+                  </div>
+                  <div class="page-quiz__option-number" :class="getOptionKeyClass(getOptionKey(option, index))">
+                    {{ index + 1 }}
+                  </div>
+                </li>
+              </ul>
 
-                <button class="page-quiz__button page-quiz__nav-button" @click="previousQuestion"
-                  :disabled="!canGoPrev">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="15 18 9 12 15 6"></polyline>
-                  </svg>
-                  <span>上一题</span>
-                </button>
-
-                <button class="page-quiz__button page-quiz__redo-button" @click="redoQuiz" :disabled="isQuizSubmitted">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                    class="feather feather-rotate-ccw">
-                    <polyline points="1 4 1 10 7 10"></polyline>
-                    <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
-                  </svg>
-                  重做
-                </button>
-              </div>
-            </div>
-
-            <!-- 进度条 -->
-            <div class="page-quiz__progress-footer">
-              <div class="page-quiz__progress-info">
-                <span>进度: {{ answeredCount }}/{{ totalQuestions }}</span>
-                <span class="page-quiz__accuracy">正确率: {{ accuracyPercent }}%</span>
-              </div>
-              <div class="page-quiz__progress-bar-container">
-                <div class="page-quiz__progress-bar" :style="{ width: progressPercent + '%' }"></div>
-              </div>
-            </div>
-
-            <!-- 笔记区域 -->
-            <div class="page-quiz__notes" :class="{ 'page-quiz__notes--hidden': !notesVisible }">
-              <div class="page-quiz__notes-header">
-                <h3 class="page-quiz__notes-title">
-                  笔记
-                  <span v-if="isGeneratingCurrent" class="notes-generation-status current">
-                    题目({{ activeGenerationIndex !== null ? activeGenerationIndex + 1 : '?' }})生成笔记中...
-                  </span>
-                </h3>
-                <div class="page-quiz__notes-actions">
-                  <button class="page-quiz__button page-quiz__button--icon sync-status" :class="syncStatusClass"
-                    :title="syncStatusTitle" @click="triggerSync" :disabled="syncStatus === 'pending'">
+              <!-- 按钮区域 -->
+              <div class="page-quiz__action-buttons-container">
+                <div class="page-quiz__action-left">
+                  <button class="page-quiz__button page-quiz__submit-button" @click="submitAnswer"
+                    :disabled="!canSubmit">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                       stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                      class="feather feather-refresh-cw">
-                      <polyline points="23 4 23 10 17 10"></polyline>
-                      <polyline points="1 20 1 14 7 14"></polyline>
-                      <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                      class="feather feather-check-circle">
+                      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                      <polyline points="22 4 12 14.01 9 11.01"></polyline>
                     </svg>
+                    提交
+                    <span class="page-quiz__key-hint">空格</span>
                   </button>
-                  <button class="page-quiz__button page-quiz__button--icon" @click="toggleNotesEditor"
-                    :disabled="isQuizSubmitted || isGenerating" :title="isEditingNotes ? '取消编辑' : '编辑笔记'">
-                    <svg v-if="!isEditingNotes" xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-                      viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                      stroke-linejoin="round" class="feather feather-edit">
-                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+
+                  <button class="page-quiz__button page-quiz__next-button" @click="nextQuestion" :disabled="!canGoNext">
+                    <span>下一题</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="9 18 15 12 9 6"></polyline>
                     </svg>
-                    <svg v-else xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
-                      fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                      class="feather feather-x">
-                      <line x1="18" y1="6" x2="6" y2="18"></line>
-                      <line x1="6" y1="6" x2="18" y2="18"></line>
-                    </svg>
+                    <span class="page-quiz__key-hint">空格</span>
                   </button>
-                  <button class="page-quiz__button page-quiz__button--icon page-quiz__ai-button icon-only"
-                    @click="triggerAINotesGeneration" :disabled="isQuizSubmitted || isGenerating"
-                    :class="{ 'button--loading': isGeneratingCurrent }"
-                    :title="isGeneratingCurrent ? '正在生成笔记...' : 'AI生成笔记'">
-                    <span v-if="isGeneratingCurrent" class="loading-spinner"></span>
-                    <svg v-else xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
-                      fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                      class="feather feather-zap">
-                      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
-                    </svg>
-                  </button>
-                  <button class="page-quiz__button page-quiz__button--icon page-quiz__settings-button"
-                    @click="openSyncConfigModal" title="GitHub仓库设置">
+                </div>
+
+                <div class="page-quiz__action-right">
+                  <button class="page-quiz__button page-quiz__submit-all-button" @click="submitQuiz"
+                    :disabled="isQuizSubmitted">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                       stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                      class="feather feather-github">
-                      <path
-                        d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22">
-                      </path>
+                      class="feather feather-check-circle">
+                      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                      <polyline points="22 4 12 14.01 9 11.01"></polyline>
                     </svg>
+                    交卷
                   </button>
-                  <button class="page-quiz__button page-quiz__button--icon page-quiz__settings-button"
-                    @click="showApiConfigModal = true" title="API设置">
+
+                  <button class="page-quiz__button page-quiz__nav-button" @click="previousQuestion"
+                    :disabled="!canGoPrev">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                    <span>上一题</span>
+                  </button>
+
+                  <button class="page-quiz__button page-quiz__redo-button" @click="redoQuiz"
+                    :disabled="isQuizSubmitted">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                       stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                      class="feather feather-sliders">
-                      <line x1="4" y1="21" x2="4" y2="14"></line>
-                      <line x1="4" y1="10" x2="4" y2="3"></line>
-                      <line x1="12" y1="21" x2="12" y2="12"></line>
-                      <line x1="12" y1="8" x2="12" y2="3"></line>
-                      <line x1="20" y1="21" x2="20" y2="16"></line>
-                      <line x1="20" y1="12" x2="20" y2="3"></line>
-                      <line x1="1" y1="14" x2="7" y2="14"></line>
-                      <line x1="9" y1="8" x2="15" y2="8"></line>
-                      <line x1="17" y1="16" x2="23" y2="16"></line>
+                      class="feather feather-rotate-ccw">
+                      <polyline points="1 4 1 10 7 10"></polyline>
+                      <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
                     </svg>
+                    重做
                   </button>
                 </div>
               </div>
 
-              <div ref="notesDisplayRef" class="page-quiz__notes-display markdown-body"
-                :class="{ 'page-quiz__notes-display--hidden': isEditingNotes, 'generating': isGeneratingCurrent }"
-                v-html="renderedNotesHtml"></div>
-
-              <div class="page-quiz__notes-editor" :class="{ 'page-quiz__notes-editor--hidden': !isEditingNotes }">
-                <div class="page-quiz__markdown-toolbar">
-                  <button @click="insertMarkdown('**粗体**')">粗体</button>
-                  <button @click="insertMarkdown('*斜体*')">斜体</button>
-                  <button @click="insertMarkdown('# 标题')">标题</button>
-                  <button @click="insertMarkdown('- 列表项')">列表</button>
-                  <button @click="insertMarkdown('```\\n代码块\\n```')">代码</button>
+              <!-- 进度条 -->
+              <div class="page-quiz__progress-footer">
+                <div class="page-quiz__progress-info">
+                  <span>进度: {{ answeredCount }}/{{ totalQuestions }}</span>
+                  <span class="page-quiz__accuracy">正确率: {{ accuracyPercent }}%</span>
                 </div>
-                <textarea ref="notesTextareaRef" class="page-quiz__notes-textarea" placeholder="在此添加笔记..."
-                  v-model="notesEditText" @input="autoResizeTextarea"></textarea>
-                <button @click="saveNotes" class="page-quiz__button page-quiz__button--primary">保存笔记</button>
+                <div class="page-quiz__progress-bar-container">
+                  <div class="page-quiz__progress-bar" :style="{ width: progressPercent + '%' }"></div>
+                </div>
+              </div>
+
+              <!-- 笔记区域 -->
+              <div class="page-quiz__notes" :class="{ 'page-quiz__notes--hidden': !notesVisible }">
+                <div class="page-quiz__notes-header">
+                  <h3 class="page-quiz__notes-title">
+                    笔记
+                    <span v-if="isGeneratingCurrent" class="notes-generation-status current">
+                      题目({{ activeGenerationIndex !== null ? activeGenerationIndex + 1 : '?' }})生成笔记中...
+                    </span>
+                  </h3>
+                  <div class="page-quiz__notes-actions">
+                    <button class="page-quiz__button page-quiz__button--icon sync-status" :class="syncStatusClass"
+                      :title="syncStatusTitle" @click="triggerSync" :disabled="syncStatus === 'pending'">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        class="feather feather-refresh-cw">
+                        <polyline points="23 4 23 10 17 10"></polyline>
+                        <polyline points="1 20 1 14 7 14"></polyline>
+                        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                      </svg>
+                    </button>
+                    <button class="page-quiz__button page-quiz__button--icon" @click="toggleNotesEditor"
+                      :disabled="isQuizSubmitted || isGenerating" :title="isEditingNotes ? '取消编辑' : '编辑笔记'">
+                      <svg v-if="!isEditingNotes" xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round" class="feather feather-edit">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                      </svg>
+                      <svg v-else xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round" class="feather feather-x">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                      </svg>
+                    </button>
+                    <button class="page-quiz__button page-quiz__button--icon page-quiz__ai-button icon-only"
+                      @click="triggerAINotesGeneration" :disabled="isQuizSubmitted || isGenerating"
+                      :class="{ 'button--loading': isGeneratingCurrent }"
+                      :title="isGeneratingCurrent ? '正在生成笔记...' : 'AI生成笔记'">
+                      <span v-if="isGeneratingCurrent" class="loading-spinner"></span>
+                      <svg v-else xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round" class="feather feather-zap">
+                        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                      </svg>
+                    </button>
+                    <button class="page-quiz__button page-quiz__button--icon page-quiz__settings-button"
+                      @click="openSyncConfigModal" title="GitHub仓库设置">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        class="feather feather-github">
+                        <path
+                          d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22">
+                        </path>
+                      </svg>
+                    </button>
+                    <button class="page-quiz__button page-quiz__button--icon page-quiz__settings-button"
+                      @click="showApiConfigModal = true" title="API设置">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        class="feather feather-sliders">
+                        <line x1="4" y1="21" x2="4" y2="14"></line>
+                        <line x1="4" y1="10" x2="4" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="12"></line>
+                        <line x1="12" y1="8" x2="12" y2="3"></line>
+                        <line x1="20" y1="21" x2="20" y2="16"></line>
+                        <line x1="20" y1="12" x2="20" y2="3"></line>
+                        <line x1="1" y1="14" x2="7" y2="14"></line>
+                        <line x1="9" y1="8" x2="15" y2="8"></line>
+                        <line x1="17" y1="16" x2="23" y2="16"></line>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+
+                <div ref="notesDisplayRef" class="page-quiz__notes-display markdown-body"
+                  :class="{ 'page-quiz__notes-display--hidden': isEditingNotes, 'generating': isGeneratingCurrent }"
+                  v-html="renderedNotesHtml"></div>
+
+                <div class="page-quiz__notes-editor" :class="{ 'page-quiz__notes-editor--hidden': !isEditingNotes }">
+                  <div class="page-quiz__markdown-toolbar">
+                    <button @click="insertMarkdown('**粗体**')">粗体</button>
+                    <button @click="insertMarkdown('*斜体*')">斜体</button>
+                    <button @click="insertMarkdown('# 标题')">标题</button>
+                    <button @click="insertMarkdown('- 列表项')">列表</button>
+                    <button @click="insertMarkdown('```\\n代码块\\n```')">代码</button>
+                  </div>
+                  <textarea ref="notesTextareaRef" class="page-quiz__notes-textarea" placeholder="在此添加笔记..."
+                    v-model="notesEditText" @input="autoResizeTextarea"></textarea>
+                  <button @click="saveNotes" class="page-quiz__button page-quiz__button--primary">保存笔记</button>
+                </div>
               </div>
             </div>
           </div>
