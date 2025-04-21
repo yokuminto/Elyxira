@@ -15,6 +15,8 @@ export interface UiSettings {
   fontSize: number
   fontFamily: string
   animationEnabled: boolean
+  soundEffectsEnabled: boolean // 新增：音效开关
+  soundVolume: number // 新增：音效音量 (0-1)
 }
 
 // 测验设置接口
@@ -249,6 +251,8 @@ const DEFAULT_UI_SETTINGS: UiSettings = {
   fontSize: 14,
   fontFamily: 'sans-serif',
   animationEnabled: false,
+  soundEffectsEnabled: true, // 新增：默认开启
+  soundVolume: 0.5, // 新增：默认音量 50%
 }
 
 // 默认测验设置
@@ -425,8 +429,14 @@ class ConfigService {
         ? storedSettings.activeApiPresetName
         : apiPresets[0]?.name || 'Default' // 如果无效，则使用第一个预设的名称
 
+    // 合并 UI 设置，确保新字段有默认值
+    const mergedUiSettings: UiSettings = {
+      ...DEFAULT_UI_SETTINGS,
+      ...storedSettings.uiSettings,
+    }
+
     return {
-      uiSettings: { ...DEFAULT_UI_SETTINGS, ...storedSettings.uiSettings },
+      uiSettings: mergedUiSettings, // 使用合并后的 UI 设置
       quizSettings: { ...DEFAULT_QUIZ_SETTINGS, ...storedSettings.quizSettings },
       debugEnabled: storedSettings.debugEnabled ?? DEFAULT_SETTINGS.debugEnabled,
       githubConfig: { ...DEFAULT_GITHUB_CONFIG, ...storedSettings.githubConfig },
@@ -457,6 +467,7 @@ class ConfigService {
     document.documentElement.setAttribute('theme', darkMode ? 'dark' : 'light')
     document.documentElement.style.setProperty('--font-size', `${fontSize}px`)
     document.documentElement.style.setProperty('--font-family', fontFamily)
+    // 注意：音效不在这里应用，而是在播放时读取设置
   }
 
   /**
@@ -958,14 +969,18 @@ class ConfigService {
       if (typedConfig.generalSettings) {
         if (typedConfig.generalSettings.uiSettings) {
           newSettings.uiSettings = {
-            ...this.settings.uiSettings,
-            ...(typedConfig.generalSettings.uiSettings as UiSettings),
+            ...DEFAULT_UI_SETTINGS, // 从默认开始，确保新字段存在
+            ...this.settings.uiSettings, // 应用当前设置
+            ...(typedConfig.generalSettings.uiSettings as UiSettings), // 应用导入的设置
           }
         }
         newSettings.debugEnabled =
           'debugEnabled' in typedConfig.generalSettings
             ? !!typedConfig.generalSettings.debugEnabled
             : this.settings.debugEnabled
+      } else {
+        // 如果导入文件没有 generalSettings，确保 uiSettings 至少是当前的
+        newSettings.uiSettings = { ...this.settings.uiSettings }
       }
 
       // --- 导入 Quiz Settings ---

@@ -106,6 +106,26 @@
         </div>
       </div>
 
+      <!-- 新增：音效设置组 -->
+      <div class="modal__settings-group">
+        <h3 class="modal__settings-group-title">音效</h3>
+        <div class="modal__setting-item">
+          <span class="modal__setting-item-name">启用音效</span>
+          <label class="modal__toggle-switch">
+            <input type="checkbox" v-model="localSettings.uiSettings.soundEffectsEnabled" />
+            <span class="modal__toggle-slider"></span>
+          </label>
+        </div>
+        <div class="modal__setting-item">
+          <span class="modal__setting-item-name">音量调节</span>
+          <div class="modal__form-input-group">
+            <input type="range" v-model.number="localSettings.uiSettings.soundVolume" min="0" max="1" step="0.1" />
+            <span>{{ Math.round(localSettings.uiSettings.soundVolume * 100) }}%</span>
+          </div>
+        </div>
+      </div>
+      <!-- 音效设置组结束 -->
+
       <div class="modal__settings-group">
         <h3 class="modal__settings-group-title">数据管理</h3>
         <div class="modal__setting-item">

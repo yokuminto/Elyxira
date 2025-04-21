@@ -99,6 +99,23 @@
 
 .page-quiz {
   background-color: var(--bg-light, #f5f7fa);
+  background-image:
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.05), transparent 200px),
+    linear-gradient(
+      45deg,
+      rgba(0, 0, 0, 0.018) 25%,
+      transparent 25%,
+      transparent 50%,
+      rgba(0, 0, 0, 0.018) 50%,
+      rgba(0, 0, 0, 0.018) 75%,
+      transparent 75%,
+      transparent
+    );
+  background-size:
+    100% 200px,
+    10px 10px;
+  background-repeat: no-repeat, repeat;
+  background-attachment: fixed;
   min-height: 100vh;
   width: 100%;
   display: flex;
@@ -363,7 +380,7 @@
   display: inline-flex;
   flex-direction: row;
   gap: 12px;
-  margin: 20px 0;
+  margin: 0.5rem 0;
   width: 100%;
 }
 
@@ -565,7 +582,7 @@
 .page-quiz__options-list {
   list-style: none;
   padding: 0;
-  margin: 0 0 30px 0;
+  margin: 0 0 0.5rem 0;
 }
 
 .page-quiz__option {
@@ -1147,6 +1164,38 @@
   max-width: 100%;
 }
 
+/* --- 新增 Aside 样式 --- */
+.markdown-body aside {
+  position: relative;
+  margin: 1.5rem 0 1.5rem 4rem; /* 左侧留出头像空间 */
+  padding: 0.8rem 1.2rem;
+  background-color: var(--bg-blue);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--c-blue-light);
+  color: var(--text-main);
+  box-shadow: var(--shadow-light);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.markdown-body aside::before {
+  content: '';
+  position: absolute;
+  left: -4rem; /* 定位到气泡左侧 */
+  top: 0;
+  width: 3rem; /* 头像尺寸 */
+  height: 3rem;
+  background-image: url('/images/elyxira.png'); /* 使用 public 目录下的路径 */
+  background-size: cover;
+  background-position: center;
+  border-radius: 50%; /* 圆形头像 */
+  border: 2px solid var(--color-white); /* 白色边框 */
+  box-shadow: var(--shadow); /* 加点阴影 */
+}
+
+/* 可以添加一个指向气泡的小尾巴效果 (可选) */
+/* --- 结束 Aside 样式 --- */
+
 .toggle-switch {
   position: relative;
   display: inline-block;
@@ -1446,6 +1495,7 @@ input:checked + .slider:before {
 
   .page-quiz__action-buttons-container {
     width: 100% !important;
+    display: flex;
   }
 
   .page-quiz__action-row {

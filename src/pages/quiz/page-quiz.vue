@@ -169,7 +169,6 @@
                 <!-- Reasoning Section (Moved Above Notes Display/Editor) -->
                 <div v-if="isGeneratingCurrent && reasoningContent && !hasContentStartedStreaming"
                   class="page-quiz__notes-reasoning">
-                  <h4 class="reasoning-title">实时思考过程...</h4>
                   <div class="reasoning-content markdown-body" v-html="renderedReasoningHtml"></div>
                 </div>
                 <!-- End Reasoning Section -->
@@ -402,7 +401,6 @@ function initializeQuiz() {
   isReviewingWrong.value = false;
   wrongQuestionIds.value = [];
   error.value = null;
-  setupKeyboardListeners();
   loadQuizDataAndFilter();
 }
 function loadQuizDataAndFilter() {
@@ -435,12 +433,17 @@ async function loadQuestion(index: number) {
     }
     return;
   }
+  const previousIndex = currentIndex.value;
   currentIndex.value = index;
   selectedAnswer.value = currentQuestion.value?.userAnswer ?? null;
   isEditingNotes.value = false;
   await renderNotesForCurrentQuestion();
   if (questionAreaRef.value) {
     questionAreaRef.value.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+  // 播放导航音效 (如果不是第一次加载)
+  if (previousIndex !== index && index !== 0) { // 避免第一次加载和原地跳转时播放
+    playAudio('navigate');
   }
   nextTick(() => {
     checkAndTriggerAutoGeneration();
@@ -451,6 +454,7 @@ function handleOptionClick(key: string) {
     return;
   }
   selectedAnswer.value = key;
+  playAudio('select'); // 播放选择音效
   if (isCurrentAnswered.value && !quizSettings.value.lockAnswerAfterSubmit) {
     updateUserAnswer(key);
   }
@@ -473,6 +477,8 @@ function updateUserAnswer(answerKey: string) {
   } else if (isCorrect && wasWrong) {
     wrongQuestionIds.value.splice(wasWrongIndex, 1);
   }
+  // 播放正确或错误音效
+  playAudio(isCorrect ? 'correct' : 'incorrect');
 }
 function submitAnswer() {
   if (selectedAnswer.value === null || isAnswerLocked.value) return;
@@ -512,11 +518,13 @@ function submitAnswer() {
 }
 function previousQuestion() {
   if (canGoPrev.value) {
+    // playAudio('navigate'); // 移动到 loadQuestion 中播放
     loadQuestion(currentIndex.value - 1);
   }
 }
 function nextQuestion() {
   if (currentIndex.value < totalQuestions.value - 1) {
+    // playAudio('navigate'); // 移动到 loadQuestion 中播放
     loadQuestion(currentIndex.value + 1);
   } else if (!isQuizSubmitted.value) {
     showToast('已经是最后一题了', 'info');
@@ -524,6 +532,7 @@ function nextQuestion() {
 }
 function jumpToQuestion(index: number) {
   if (index >= 0 && index < totalQuestions.value) {
+    // playAudio('navigate'); // 移动到 loadQuestion 中播放
     loadQuestion(index);
   }
 }
@@ -619,19 +628,26 @@ async function renderNotesForCurrentQuestion() {
   const noteContent = question.notes || '';
   const isGeneratingThisQuestion = isGenerating.value && activeGenerationIndex.value === currentIndex.value;
   console.log(`[DEBUG] renderNotes: Index=${currentIndex.value}, isGeneratingThis=${isGeneratingThisQuestion}, Note Length=${noteContent.length}`);
+
   try {
+    // Preprocess the Markdown content before rendering
+    const preprocessedNotes = preprocessMarkdown(noteContent, 0); // Pass depth 0
+
     let htmlContent = '';
-    if (isGeneratingThisQuestion) {
-      htmlContent = noteContent
-        ? md.render(noteContent)
-        : '<p class="page-quiz__notes-placeholder">思考中...</p>';
+    // Use preprocessed content for rendering
+    if (isGeneratingThisQuestion && !preprocessedNotes.trim()) {
+      // If generating and no content yet after preprocessing, show thinking...
+      htmlContent = '<p class="page-quiz__notes-placeholder">思考中...</p>';
+    } else if (preprocessedNotes) {
+      htmlContent = md.render(preprocessedNotes);
+    } else {
+      // If not generating and still no content, show the standard placeholder
+      htmlContent = '<p class="page-quiz__notes-placeholder">暂无笔记，可点击编辑或AI生成。</p>';
     }
-    else if (noteContent) {
-      htmlContent = md.render(noteContent);
-    }
-    renderedNotesHtml.value = htmlContent || '<p class="page-quiz__notes-placeholder">加载笔记时出错...</p>';
+    renderedNotesHtml.value = htmlContent;
+
   } catch (error) {
-    console.error('笔记 Markdown 渲染失败:', error);
+    console.error('笔记 Markdown 预处理或渲染失败:', error);
     renderedNotesHtml.value = `<p class="page-quiz__notes-error">笔记内容解析失败: ${error instanceof Error ? error.message : '未知错误'}</p>`;
   }
 }
@@ -961,6 +977,7 @@ function triggerAINotesGeneration() {
   forceShowNotes.value = true;
   reasoningContent.value = '';
   renderedReasoningHtml.value = '';
+  hasContentStartedStreaming.value = false; // <-- ADDED: Reset flag on manual trigger
   requestNoteGeneration(currentIndex.value, true);
 }
 async function triggerSync() {
@@ -1219,10 +1236,10 @@ function handleKeyPress(e: KeyboardEvent) {
   }
   else if (e.key === ' ') {
     e.preventDefault();
-    if (canSubmit.value) {
-      submitAnswer();
-    } else if (canGoNext.value && isCurrentAnswered.value) {
+    if (isCurrentAnswered.value && canGoNext.value) {
       nextQuestion();
+    } else if (canSubmit.value) {
+      submitAnswer();
     }
   }
   else if (e.key === 'ArrowLeft') {
@@ -1362,15 +1379,25 @@ function requestNoteGeneration(targetIndex: number, isManual: boolean) {
   activeGenerationIndex.value = targetIndex;
   isGenerating.value = true;
   forceShowNotes.value = true;
+  // Reset states for the new generation request
+  reasoningContent.value = '';
+  renderedReasoningHtml.value = '';
+  hasContentStartedStreaming.value = false; // <-- ADDED: Reset flag at the start of request processing
+
   showToast(`开始为题目 ${targetIndex + 1} 生成笔记...`, 'info');
   if (questionToGenerate) {
-    questionToGenerate.notes = '';
-    reasoningContent.value = '';
-    renderedReasoningHtml.value = '';
-    requestNoteGeneration(targetIndex, isManual);
+    questionToGenerate.notes = ''; // Clear existing notes only if manually triggered or auto-gen on empty
+    // REMOVED Redundant call: requestNoteGeneration(targetIndex, isManual);
+  } else {
+    // Handle case where questionToGenerate might be null after async checks (though unlikely here)
+    console.error(`[ERROR] Cannot start generation for index ${targetIndex}, question data became unavailable.`);
+    activeGenerationIndex.value = null;
+    isGenerating.value = false;
+    return;
   }
+
   if (currentIndex.value === targetIndex) {
-    renderNotesForCurrentQuestion();
+    renderNotesForCurrentQuestion(); // Render cleared notes or placeholder immediately
   }
   let lastRenderTime = 0;
   const baseThrottleDelay = 150;
@@ -1477,6 +1504,8 @@ function requestNoteGeneration(targetIndex: number, isManual: boolean) {
       checkAndTriggerAutoGeneration();
     }
   };
+
+  // Call the actual generation function
   generateAINotes(questionToGenerate, targetIndex, handleCompletion);
 }
 function checkAndTriggerAutoGeneration() {
@@ -1501,6 +1530,7 @@ function checkAndTriggerAutoGeneration() {
 }
 onMounted(() => {
   initializeQuiz();
+  setupKeyboardListeners();
   window.addEventListener('resize', autoResizeTextarea);
   const questionAreaElement = questionAreaRef.value;
   if (questionAreaElement) {
@@ -1553,10 +1583,12 @@ function renderReasoning() {
   console.log(`[DEBUG] renderReasoning called. Content length: ${reasoningContent.value?.length}`);
   if (reasoningContent.value) {
     try {
-      renderedReasoningHtml.value = md.render(reasoningContent.value);
-      console.log(`[DEBUG] Reasoning rendered successfully. HTML length: ${renderedReasoningHtml.value?.length}`);
+      // Preprocess the reasoning content before rendering
+      const preprocessedReasoning = preprocessMarkdown(reasoningContent.value, 0); // Pass depth 0
+      renderedReasoningHtml.value = md.render(preprocessedReasoning); // Use preprocessed content
+      console.log(`[DEBUG] Reasoning preprocessed & rendered successfully. HTML length: ${renderedReasoningHtml.value?.length}`);
     } catch (error) {
-      console.error("Reasoning Markdown rendering failed:", error);
+      console.error("Reasoning Markdown pre-processing or rendering failed:", error);
       renderedReasoningHtml.value = `<p class="page-quiz__notes-error">思考过程解析失败: ${error instanceof Error ? error.message : '未知错误'}</p>`;
     }
   } else {
@@ -1565,4 +1597,122 @@ function renderReasoning() {
   }
 }
 watch(reasoningContent, renderReasoning);
+
+// 改回使用文件加载的 playAudio 函数
+const playAudio = (soundName: 'select' | 'correct' | 'incorrect' | 'navigate') => {
+  const settings = configService.getUiSettings();
+  if (!settings.soundEffectsEnabled) return;
+
+  // 避免快速重复播放同一个音效
+  const now = Date.now();
+  if (lastSoundPlayed.name === soundName && now - lastSoundPlayed.time < 100) {
+    return;
+  }
+
+  try {
+    const audio = new Audio(`/audio/${soundName}.mp3`); // 使用文件路径
+    audio.volume = settings.soundVolume;
+    audio.play().catch(err => console.warn('播放音效失败:', err)); // 添加播放错误捕获
+    lastSoundPlayed.name = soundName;
+    lastSoundPlayed.time = now;
+  } catch (err) {
+    console.error('创建或播放音效失败:', err);
+  }
+};
+
+// 存储上次播放的音效信息，用于防止快速重复播放 (移动到顶层作用域)
+const lastSoundPlayed = reactive({ name: '', time: 0 });
+
+// Function to preprocess Markdown text recursively for certain blocks
+function preprocessMarkdown(text: string | undefined, depth: number = 0): string {
+  if (!text || depth >= 3) { // Base case: empty text or max depth reached
+    return text || '';
+  }
+
+  // Regular expressions to identify top-level blocks
+  // Code blocks (```lang\n...\n``` or ~~~lang\n...\n~~~)
+  const codeBlockRegex = /(^```|~~~)(.*?)\\n([\\s\\S]*?)\\n\\1/gm;
+  // Block quotes (> ...\n> ... or > ...)
+  // Adjusted to better handle single lines and multiple consecutive lines
+  const blockQuoteRegex = /(?:^>.*(?:\n|$))+/gm;
+
+  let result = '';
+
+  // Combine regexes using exec to process blocks in order of appearance
+  // Important: Ensure regexes are properly reset for each call if stateful (like using /g with exec)
+  const combinedRegexSource = `${codeBlockRegex.source}|${blockQuoteRegex.source}`;
+  // We create a new RegExp object inside the loop or reset lastIndex if we reuse it.
+  // For simplicity, let's refine the processing logic slightly.
+
+  let remainingText = text;
+  result = '';
+
+  while (remainingText.length > 0) {
+    codeBlockRegex.lastIndex = 0; // Reset regex state
+    blockQuoteRegex.lastIndex = 0; // Reset regex state
+
+    const codeMatch = codeBlockRegex.exec(remainingText);
+    const quoteMatch = blockQuoteRegex.exec(remainingText);
+
+    let firstMatch: RegExpExecArray | null = null;
+    let matchType: 'code' | 'quote' | null = null;
+
+    // Determine which match comes first
+    if (codeMatch && quoteMatch) {
+      if (codeMatch.index < quoteMatch.index) {
+        firstMatch = codeMatch;
+        matchType = 'code';
+      } else {
+        firstMatch = quoteMatch;
+        matchType = 'quote';
+      }
+    } else if (codeMatch) {
+      firstMatch = codeMatch;
+      matchType = 'code';
+    } else if (quoteMatch) {
+      firstMatch = quoteMatch;
+      matchType = 'quote';
+    }
+
+    if (firstMatch) {
+      // Add text before the match
+      result += remainingText.substring(0, firstMatch.index);
+      const blockText = firstMatch[0];
+
+      if (matchType === 'code') {
+        const lang = firstMatch[2]?.trim() || '';
+        const innerText = firstMatch[3] || '';
+        // PRESERVE code blocks
+        result += `${firstMatch[1]}${lang}\n${innerText}\n${firstMatch[1]}`;
+      } else if (matchType === 'quote') {
+        // Extract inner content of the block quote
+        const innerQuoteText = blockText.split('\n').map(line => line.replace(/^>\s?/, '')).join('\n').trimEnd(); // Trim trailing newline from map/join
+        const processedInnerQuote = preprocessMarkdown(innerQuoteText, depth + 1);
+        // Reconstruct the block quote
+        const reconstructedQuote = processedInnerQuote.split('\n').map(line => `> ${line}`).join('\n');
+        result += reconstructedQuote;
+        // Add back potential trailing newline if the original block had one and wasn't the end of the string
+        if (blockText.endsWith('\n')) { // Check if original ended with newline
+          result += '\n';
+        }
+      }
+
+      // Update remainingText to the part after the match
+      remainingText = remainingText.substring(firstMatch.index + blockText.length);
+
+    } else {
+      // No more matches, add the rest of the text
+      result += remainingText;
+      remainingText = ''; // Exit loop
+    }
+  }
+
+
+  // --- Optional: renderInline for non-block text ---
+  // Skipped for now.
+  // --- End Optional ---
+
+  return result;
+}
+
 </script>

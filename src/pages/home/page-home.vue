@@ -166,12 +166,6 @@ import { onMounted, ref, computed } from 'vue'
 // 导入showToast函数
 import { showToast } from '../../utils/toast'
 
-// 直接导入图片资源
-import screenshot1 from '../../assets/images/screenshot1.png'
-import screenshot2 from '../../assets/images/screenshot2.png'
-import thmedRed from '../../assets/images/thmed-red.png'
-import thmedWhite from '../../assets/images/thmed-white.png'
-
 // Toast测试函数
 const showInfoToast = () => {
   showToast('这是一条信息提示', 'info', 3000)
@@ -241,9 +235,10 @@ const syncThemeState = () => {
 // 添加logo计算属性
 const isDarkTheme = ref(false)
 const themedLogo = computed(() => {
+  // 直接返回 public 目录下的路径
   return isDarkTheme.value
-    ? thmedWhite
-    : thmedRed
+    ? '/images/thmed-white.png'
+    : '/images/thmed-red.png'
 })
 
 const brandDescription = '东方医学致力于医学病案交流、循证体系建构与文化传播<br />提供东方世界观作品与医学专业课的交流平台<br />我们希望您在这里度过一段美好的时光～'
@@ -258,11 +253,11 @@ const navItems = ref([
 
 const showcaseImages = ref([
   {
-    src: screenshot1,
+    src: '/images/screenshot1.png', // 更新路径
     alt: 'Elyxira 医学题库截图'
   },
   {
-    src: screenshot2,
+    src: '/images/screenshot2.png', // 更新路径
     alt: 'Elyxira AI分析截图'
   }
 ])
