@@ -189,11 +189,12 @@ const availableFonts = [
 
 const props = defineProps<{
   show: boolean;
+  currentSettings?: Partial<{ uiSettings: UiSettings, quizSettings: QuizSettings, debugEnabled: boolean }>;
 }>();
 
 const emit = defineEmits<{
   (e: 'close'): void;
-  (e: 'save', settings: { uiSettings: UiSettings, quizSettings: QuizSettings, debugEnabled: boolean }): void;
+  (e: 'save'): void;
 }>();
 
 // 活动标签
@@ -217,7 +218,7 @@ const localSettings = reactive<{
 
 // 设置变更监听器 - 保持不变
 const settingsChangeListener = () => {
-  console.log("Settings changed externally, updating local state in modal.");
+  // console.log("Settings changed externally, updating local state in modal.");
   Object.assign(localSettings.uiSettings, configService.getUiSettings());
   Object.assign(localSettings.quizSettings, configService.getQuizSettings());
   localSettings.debugEnabled = configService.isDebugEnabled();
@@ -237,7 +238,7 @@ onBeforeUnmount(() => {
 watch(() => props.show, (newVal) => {
   if (newVal) {
     // 当模态框显示时，从 configService 获取最新的设置
-    console.log("Settings modal opened, loading fresh settings from service.");
+    // console.log("Settings modal opened, loading fresh settings from service.");
     const currentSettings = configService.getSettings(); // 获取完整的 AppSettings
     Object.assign(localSettings.uiSettings, currentSettings.uiSettings);
     Object.assign(localSettings.quizSettings, currentSettings.quizSettings);
@@ -255,12 +256,8 @@ function saveSettings() {
       debugEnabled: localSettings.debugEnabled
     });
 
-    // 触发父组件的保存事件 (参数保持不变，仍然传递包含所有设置的对象)
-    emit('save', {
-      uiSettings: { ...localSettings.uiSettings },
-      quizSettings: { ...localSettings.quizSettings },
-      debugEnabled: localSettings.debugEnabled
-    });
+    // 触发父组件的保存事件 (不再传递负载)
+    emit('save');
     emit('close');
   } catch (error) {
     console.error('保存设置失败:', error);
