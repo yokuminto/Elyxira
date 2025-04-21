@@ -942,16 +942,12 @@ async function renderNotesForCurrentQuestion() {
     if (mermaidElements.length > 0) {
       console.log(`[Mermaid] Found ${mermaidElements.length} diagrams to render.`);
       try {
-        await initMermaid(); // Ensure Mermaid is initialized with the correct theme
-
-
+        await initMermaid();
         const attachedElements = Array.from(mermaidElements).filter(el => document.body.contains(el));
 
         if (attachedElements.length > 0) {
-          s.
           await mermaid.run({ nodes: attachedElements as HTMLElement[] }); // Cast here
           console.log(`[Mermaid] Successfully rendered/updated ${attachedElements.length} graphs.`);
-
 
           attachedElements.forEach(el => {
             el.classList.remove('mermaid-error');
@@ -965,7 +961,6 @@ async function renderNotesForCurrentQuestion() {
 
       } catch (renderError) {
         console.error('[Mermaid] mermaid.run failed:', renderError);
-        // Add error messages to the failed elements (check containment again)
         mermaidElements.forEach(el => {
           if (document.body.contains(el) && !el.querySelector('.mermaid-error-message')) {
             el.classList.add('mermaid-error');
