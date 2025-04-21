@@ -100,8 +100,7 @@
       <div class="page-quiz__question-area" ref="questionAreaRef" @touchstart="handleTouchStart"
         @touchmove="handleTouchMove" @touchend="handleTouchEnd">
         <!-- **** 添加 @after-enter 钩子 **** -->
-        <transition name="question-fade-slide" mode="out-in" :css="uiSettings.animationEnabled"
-          @after-enter="handleQuestionTransitionEnd">
+        <transition name="question-fade-slide" mode="out-in" :css="uiSettings.animationEnabled">
           <div class="page-quiz__question-content-wrapper" v-if="currentQuestion" :key="currentQuestion.id">
             <div class="page-quiz__question-text" ref="questionTextRef">
               <span class="page-quiz__question-id">第{{ currentQuestion.number || (currentIndex + 1) }}题</span>
@@ -276,7 +275,6 @@
                   <button @click="insertMarkdown('# 标题')">标题</button>
                   <button @click="insertMarkdown('- 列表项')">列表</button>
                   <button @click="insertMarkdown('```\\n代码块\\n```')">代码</button>
-                  <button @click="insertMarkdown('```mermaid\\ngraph TD;\\nA-->B;\\n```')">图表</button>
                 </div>
                 <textarea ref="notesTextareaRef" class="page-quiz__notes-textarea" placeholder="在此添加笔记..."
                   v-model="notesEditText" @input="autoResizeTextarea"></textarea>
@@ -314,7 +312,6 @@
 import { ref, computed, reactive, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import MarkdownIt from 'markdown-it'
-import mermaid from 'mermaid'
 
 import configService, { QuizMode, type Question, type GithubConfig, type UiSettings, type QuizSettings, type AppSettings, type ApiConfig } from '@/services/config-service'
 import { showToast } from '@/utils/toast'
@@ -515,28 +512,6 @@ const mdInstance = new MarkdownIt({
   breaks: true,
 });
 
-// Store the original fence rule
-const defaultFence = mdInstance.renderer.rules.fence || function (tokens, idx, options, env, self) {
-  return self.renderToken(tokens, idx, options);
-};
-
-// Override the fence rule for mermaid blocks
-mdInstance.renderer.rules.fence = (tokens, idx, options, env, self) => {
-  const token = tokens[idx];
-  const info = token.info ? token.info.trim() : '';
-  const content = token.content.trim();
-
-  if (info === 'mermaid') {
-    // Directly output a div with the mermaid class
-    // Mermaid will find this div later when mermaid.run() is called
-    // Ensure content is properly handled (Mermaid itself should handle its syntax)
-    return `<div class="mermaid">${content}</div>\\n`;
-  }
-
-  // Otherwise, use the default renderer for other languages
-  return defaultFence(tokens, idx, options, env, self);
-};
-
 // --- 方法 ---
 
 /**
@@ -572,7 +547,6 @@ function initializeQuiz() {
   wrongQuestionIds.value = [];
   error.value = null;
 
-  initMermaid();
   setupKeyboardListeners();
   loadQuizDataAndFilter();
 }
@@ -1023,7 +997,6 @@ async function generateAINotes(
   question: Question | null,
   generationTargetIndex: number,
   completionCallback: CompletionCallback,
-  streamCallback?: StreamCallback
 ) {
   console.log(`[LOG] 请求生成笔记: 目标索引=${generationTargetIndex}, 问题ID=${question?.id ?? 'null'}`);
   if (!question) {
@@ -1060,7 +1033,7 @@ async function generateAINotes(
 
     let generatedNote = '';
 
-    if (requestData.stream && response.body && streamCallback) {
+    if (requestData.stream && response.body) {
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let buffer = '';
@@ -1116,7 +1089,6 @@ async function generateAINotes(
 
                 if (content) {
                   generatedNote += content;
-                  streamCallback(content, generationTargetIndex); // 传递内容块和索引
                 }
               } catch (e) {
                 if (dataStr.trim()) { // 避免将空数据行记录为错误
@@ -1692,7 +1664,6 @@ function toggleTheme() {
 
   // 在DOM更新后重新初始化或更新Mermaid主题
   nextTick(() => {
-    initMermaid(); // 重新初始化以应用新主题
     renderNotesForCurrentQuestion(); // 使用可能的新主题重新渲染笔记
   });
 }
@@ -1986,7 +1957,7 @@ function requestNoteGeneration(targetIndex: number, isManual: boolean) {
 
       // If the completed question is the one currently being viewed,
       // render the final Markdown. Then explicitly call handleQuestionTransitionEnd
-      // to render any Mermaid charts immediately, as the transition hook won't fire.
+      // to render any Mermaid charts immediately, as the transition hook won\'t fire.
       if (currentIndex.value === completedIndex) {
         console.log(`[LOG] Rendering final Markdown for currently viewed index ${completedIndex}`);
         await renderNotesForCurrentQuestion(); // Render the final Markdown HTML
@@ -2108,46 +2079,8 @@ watch(notesEditText, () => {
 // 监听暗黑模式变化以重新初始化Mermaid
 watch(isDarkMode, () => {
   nextTick(() => {
-    initMermaid();
     renderNotesForCurrentQuestion(); // 使用可能的新主题重新渲染笔记
   });
 });
-
-// --- 新增方法：处理问题过渡动画结束 ---
-/**
- * 在问题切换动画（进入）结束后渲染 Mermaid 图表
- */
-async function handleQuestionTransitionEnd() {
-  // 确保笔记显示区域的引用有效且在 DOM 中
-  const container = notesDisplayRef.value;
-  if (!container || !document.body.contains(container)) {
-    console.log('[Mermaid] Transition end: Notes container not ready or not in DOM, skipping Mermaid render.');
-    return;
-  }
-
-  const mermaidElements = container.querySelectorAll('.mermaid');
-
-  if (mermaidElements.length > 0) {
-    console.log(`[Mermaid] Transition end: Found ${mermaidElements.length} charts, attempting render...`);
-    try {
-      if (typeof mermaid !== 'undefined' && mermaid) {
-        // 确保 Mermaid 已初始化 (可能因为主题切换等原因需要重新初始化)
-        await initMermaid();
-
-        const nodes = Array.prototype.slice.call(mermaidElements) as ArrayLike<HTMLElement>;
-        await mermaid.run({ nodes });
-        console.log('[Mermaid] Transition end: Charts rendered successfully.');
-      } else {
-        console.warn('[Mermaid] Transition end: Mermaid library not available, skipping render.');
-      }
-    } catch (error) {
-      console.error('[Mermaid] Transition end: Failed to render charts:', error);
-      // 可以在此处添加用户提示，告知图表渲染失败
-      // showToast('部分笔记图表渲染失败', 'warning');
-    }
-  } else {
-    // console.log('[Mermaid] Transition end: No Mermaid charts found in the notes.');
-  }
-}
 
 </script>
