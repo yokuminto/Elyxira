@@ -504,14 +504,6 @@ const currentQuizInfo = computed(() => {
   };
 });
 
-// --- Markdown & Mermaid ---
-const mdInstance = new MarkdownIt({
-  html: true,
-  linkify: true,
-  typographer: true,
-  breaks: true,
-});
-
 // --- 方法 ---
 
 /**
@@ -871,7 +863,7 @@ function saveNotes() {
 
 
 /**
- * 渲染当前问题的笔记 (Markdown) - 移除 Mermaid 渲染部分
+ * 渲染当前问题的笔记 (Markdown)
  */
 async function renderNotesForCurrentQuestion() {
   const question = currentQuestion.value;
@@ -892,22 +884,11 @@ async function renderNotesForCurrentQuestion() {
   try {
     let htmlContent = '';
 
-    if (noteContent) {
-      htmlContent = mdInstance.render(noteContent);
-    }
-
     if (generating && !htmlContent) {
       htmlContent = '<p class="page-quiz__notes-placeholder">思考中...</p>';
     }
 
     renderedNotesHtml.value = htmlContent || '<p class="page-quiz__notes-placeholder">这道题目还没有笔记...</p>';
-
-    // **** 移除 Mermaid 渲染逻辑 ****
-    // await nextTick(); // 不再需要 nextTick 来等待 Mermaid
-    // const container = notesDisplayRef.value;
-    // if (!container || !document.body.contains(container)) return;
-    // const mermaidElements = container.querySelectorAll('.mermaid');
-    // if (mermaidElements.length > 0) { ... } // 移除这部分
 
   } catch (error) {
     console.error('笔记 Markdown 渲染失败:', error);
@@ -938,7 +919,6 @@ function insertMarkdown(markup: string) {
     '# 标题': '标题',
     '- 列表项': '列表项',
     '```\\n代码块\\n```': '代码块',
-    '```mermaid\\ngraph TD;\\nA-->B;\\n```': 'A-->B',
   };
 
   for (const key in placeholders) {
@@ -1625,34 +1605,6 @@ function removeKeyboardListeners() {
   document.removeEventListener('keydown', handleKeyPress);
 }
 
-
-// --- Mermaid 初始化 ---
-
-/**
- * 初始化 Mermaid 图表库
- */
-async function initMermaid() {
-  try {
-    // 确保 Mermaid 已加载（它可能是异步加载的）
-    if (typeof mermaid !== 'undefined' && mermaid.initialize) {
-      mermaid.initialize({
-        startOnLoad: false, // 我们手动触发渲染
-        theme: isDarkMode.value ? 'dark' : 'default',
-        securityLevel: 'loose', // 如果使用不可信输入，请考虑其影响
-        flowchart: { useMaxWidth: true },
-        // 如果需要，可以配置其他图表类型
-      });
-      console.log("Mermaid 已初始化，主题:", isDarkMode.value ? 'dark' : 'default');
-    } else {
-      console.warn("Mermaid 库尚未完全加载或初始化。");
-    }
-
-  } catch (error) {
-    console.error('初始化Mermaid失败:', error);
-  }
-}
-
-
 // --- UI 辅助函数 ---
 
 /**
@@ -1662,7 +1614,7 @@ function toggleTheme() {
   configService.toggleDarkMode(); // 处理状态和保存
   // isDarkMode计算属性将自动更新
 
-  // 在DOM更新后重新初始化或更新Mermaid主题
+  // 在DOM更新后重新初始化
   nextTick(() => {
     renderNotesForCurrentQuestion(); // 使用可能的新主题重新渲染笔记
   });
@@ -1890,7 +1842,6 @@ function requestNoteGeneration(targetIndex: number, isManual: boolean) {
         renderTimeoutId = window.setTimeout(() => {
           if (activeGenerationIndex.value === streamTargetIndex && currentIndex.value === streamTargetIndex) {
             // console.debug(`[DEBUG] Executing Throttled Render (Stream)`);
-            // Render Markdown updates ONLY. Mermaid is handled by transition end.
             renderNotesForCurrentQuestion();
             lastRenderTime = Date.now();
           }
@@ -1948,22 +1899,15 @@ function requestNoteGeneration(targetIndex: number, isManual: boolean) {
         console.error(`[ERROR] 无法为索引 ${completedIndex} 执行最终保存，缺少问题ID`);
       }
 
-      // **** Start modification: Final Render on Completion ****
-      // Reset generation state BEFORE final render attempt
       console.log(`[LOG] Resetting generation state: activeGenerationIndex from ${activeGenerationIndex.value} to null`);
       // const previousActiveIndex = activeGenerationIndex.value; // Not needed
       activeGenerationIndex.value = null; // Reset state *before* rendering
       isGenerating.value = false;
 
-      // If the completed question is the one currently being viewed,
-      // render the final Markdown. Then explicitly call handleQuestionTransitionEnd
-      // to render any Mermaid charts immediately, as the transition hook won\'t fire.
       if (currentIndex.value === completedIndex) {
         console.log(`[LOG] Rendering final Markdown for currently viewed index ${completedIndex}`);
         await renderNotesForCurrentQuestion(); // Render the final Markdown HTML
         await nextTick(); // Wait for DOM update after Markdown render
-        console.log(`[LOG] Explicitly calling handleQuestionTransitionEnd after completion for index ${completedIndex}`);
-        await handleQuestionTransitionEnd(); // Attempt to render mermaid now
       }
       // **** End modification ****
 
@@ -2003,7 +1947,7 @@ function requestNoteGeneration(targetIndex: number, isManual: boolean) {
   };
 
   // --- 发起API调用 ---
-  generateAINotes(questionToGenerate, targetIndex, handleCompletion, handleStreamChunk);
+  generateAINotes(questionToGenerate, targetIndex, handleCompletion);
 }
 
 
@@ -2076,7 +2020,6 @@ watch(notesEditText, () => {
   }
 });
 
-// 监听暗黑模式变化以重新初始化Mermaid
 watch(isDarkMode, () => {
   nextTick(() => {
     renderNotesForCurrentQuestion(); // 使用可能的新主题重新渲染笔记
