@@ -62,6 +62,41 @@
   }
 }
 
+/* General Feather Icon Styles */
+.feather {
+  display: inline-block;
+  vertical-align: middle;
+  width: 1em; /* Use em for scalable size based on font-size */
+  height: 1em;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+}
+
+/* Adjust icon size within buttons if needed */
+.page-quiz__button .feather,
+.page-quiz__mode-button .feather {
+  width: 12px; /* Or adjust as needed */
+  height: 12px;
+  margin-right: 4px; /* Add some spacing if next to text */
+}
+
+/* Specific icon size for header buttons if needed */
+.page-quiz__back-button .feather,
+.page-quiz__settings-button .feather {
+  width: 16px; /* Example size adjustment */
+  height: 16px;
+  margin-right: 0; /* No spacing needed if button is icon-only */
+}
+
+.page-quiz__notes-actions .page-quiz__button .feather {
+  width: 14px;
+  height: 14px;
+  margin-right: 0;
+}
+
 .page-quiz {
   background-color: var(--bg-light, #f5f7fa);
   min-height: 100vh;
@@ -325,8 +360,8 @@
 }
 
 .page-quiz__action-buttons-container {
-  display: flex;
-  flex-direction: column;
+  display: inline-flex;
+  flex-direction: row;
   gap: 12px;
   margin: 20px 0;
   width: 100%;
@@ -336,7 +371,6 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  width: 100%;
   gap: 12px;
 }
 
@@ -1602,76 +1636,72 @@ input:checked + .slider:before {
   border: 1px solid var(--border);
 }
 
-/* 新的分离式推理区域样式 */
+/* 新的分离式推理区域样式 (已集成到笔记区内) */
 .page-quiz__notes-reasoning {
-  margin-top: 1rem;
-  border-radius: var(--radius);
-  background-color: var(--bg-light);
+  margin-top: 1rem; /* 与笔记编辑/显示区保持间距 */
+  /* 移除独立背景和边框，因为它现在在笔记区内 */
+  /* background-color: var(--bg-light); */
+  /* border: 1px solid var(--border); */
   overflow: hidden;
-  border: 1px solid var(--border);
-  transition: all 0.1s ease;
+  transition: all 0.3s ease-out;
 }
 
-.page-quiz__notes-reasoning--hidden {
-  display: none;
-}
-
-.reasoning-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.6rem 1rem;
-  background-color: var(--bg-blue-light);
-  border-bottom: 1px solid var(--border-blue);
-  cursor: pointer;
-  transition: background-color 0.1s ease;
-}
-
-.reasoning-header:hover {
-  background-color: var(--bg-blue);
-}
+/* 移除 header 和 toggle 相关样式，因为标题现在直接显示 */
+/* .reasoning-header { ... } */
+/* .reasoning-toggle { ... } */
 
 .reasoning-title {
-  color: var(--c-blue);
-  font-size: 1rem;
-  margin: 0;
-}
-
-.reasoning-toggle {
-  background: none;
-  border: none;
-  color: var(--c-blue);
-  cursor: pointer;
-  padding: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  color: var(--text-secondary); /* 使用次要文本颜色 */
+  font-size: 0.9rem; /* 稍微减小字体大小 */
+  font-weight: 500; /* 普通字重 */
+  margin: 0 0 0.5rem 0; /* 调整下边距 */
+  padding-left: 0.5rem; /* 稍微缩进 */
+  border-left: 3px solid var(--c-blue-light); /* 添加一个细微的左边框 */
 }
 
 .reasoning-content {
-  padding: 1rem;
+  padding: 0.5rem 0.5rem 0.5rem 1rem; /* 调整内边距，左侧多一点以配合标题缩进 */
+  /* 移除背景色，使用父级笔记区的背景 */
+  /* background-color: var(--bg-white); */
+  transition: all 0.3s ease-out;
+  /* 继承 markdown-body 的样式 */
+  height: 100px; /* <-- ADDED: 固定高度 */
+  overflow: hidden; /* <-- ADDED: 隐藏溢出内容 */
+  border-bottom: 1px dashed var(--border-light); /* <-- 保持底部虚线分隔 */
+  margin-bottom: 0.5rem; /* <-- 保持底部外边距 */
+}
+
+.dark-mode .reasoning-title {
+  color: var(--text-light);
+  border-left-color: var(--c-blue-dark);
+}
+
+/* 移除暗黑模式下的独立背景色调整 */
+/* .dark-mode .page-quiz__notes-reasoning { ... } */
+/* .dark-mode .reasoning-content { ... } */
+
+/* Reasoning Fade Transition (保持不变) */
+.reasoning-fade-enter-active,
+.reasoning-fade-leave-active {
+  transition: all 0.3s ease-out;
   max-height: 500px;
-  overflow-y: auto;
-  background-color: var(--bg-white);
 }
 
-.dark-mode .reasoning-content {
-  background-color: var(--bg-dark);
+.reasoning-fade-enter-from,
+.reasoning-fade-leave-to {
+  opacity: 0;
+  max-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  margin-top: 0;
+  margin-bottom: 0;
+  overflow: hidden;
 }
 
-.dark-mode .reasoning-header {
-  background-color: var(--bg-blue-dark);
-}
-
-.reasoning-separator {
-  border: none;
-  height: 1px;
-  background-color: rgba(0, 0, 0, 0.1);
-  margin: 1rem 0;
-}
-
-.dark-mode .reasoning-section {
-  background-color: rgba(255, 255, 255, 0.05);
+.reasoning-fade-enter-to,
+.reasoning-fade-leave-from {
+  opacity: 1;
+  max-height: 500px;
 }
 
 /* 添加新的 transition 类 */
@@ -1682,14 +1712,22 @@ input:checked + .slider:before {
 
 .question-fade-slide-enter-from {
   transform: translateY(0.25rem);
+  opacity: 0;
 }
 
 .question-fade-slide-enter-to {
   transform: translateY(0);
+  opacity: 1;
+}
+
+.question-fade-slide-leave-from {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .question-fade-slide-leave-to {
-  transform: translateY(0.25rem);
+  transform: translateY(-0.25rem);
+  opacity: 0;
 }
 
 /* 问题内容包裹器，用于过渡 */

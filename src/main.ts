@@ -4,13 +4,34 @@ import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
 import ErrorHandler from './pages/error/handler-error'
-// 导入 Toast 插件
+// import feather from 'feather-icons' // 删除 feather-icons 导入
 import Toast from 'vue-toastification'
-// 导入 Toast 样式
 import 'vue-toastification/dist/index.css'
-// 导入全局样式
 import './styles/variables.css'
 import './styles/modal.css'
+// import { nextTick } from 'vue' // nextTick 不再需要
+
+// 添加 Font Awesome 导入
+import { library } from '@fortawesome/fontawesome-svg-core'
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
+import {
+  faArrowLeft,
+  faSun,
+  faMoon,
+  faCog,
+  faRepeat,
+  faThLarge,
+  faEdit,
+  faCheckCircle,
+  faChevronRight,
+  faChevronLeft,
+  faUndo,
+  faSync,
+  faTimes,
+  faBolt,
+  faSlidersH,
+} from '@fortawesome/free-solid-svg-icons'
+import { faGithub } from '@fortawesome/free-brands-svg-icons'
 
 // 初始化全局错误处理器 - 移动到 app 创建和 router 使用之后
 // ErrorHandler.init(router)
@@ -29,6 +50,29 @@ app.use(router)
 
 // 在 router 插件使用后初始化 ErrorHandler
 ErrorHandler.init(router)
+
+// 添加 Font Awesome 图标到库
+library.add(
+  faArrowLeft,
+  faSun,
+  faMoon,
+  faCog,
+  faRepeat,
+  faThLarge,
+  faEdit,
+  faCheckCircle,
+  faChevronRight,
+  faChevronLeft,
+  faUndo,
+  faSync,
+  faTimes,
+  faBolt,
+  faSlidersH,
+  faGithub,
+)
+
+// 注册 Font Awesome 组件
+app.component('font-awesome-icon', FontAwesomeIcon)
 
 // 注册 Toast 插件
 app.use(Toast, {
@@ -49,3 +93,9 @@ app.use(Toast, {
 })
 
 app.mount('#app')
+
+// 移除 feather.replace()
+// 使用 nextTick 确保 DOM 准备好后再替换图标
+// nextTick(() => {
+//   feather.replace()
+// })
