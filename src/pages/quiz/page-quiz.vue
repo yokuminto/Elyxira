@@ -944,15 +944,15 @@ async function renderNotesForCurrentQuestion() {
       try {
         await initMermaid(); // Ensure Mermaid is initialized with the correct theme
 
-        // Filter elements again right before running, just in case they got detached.
+
         const attachedElements = Array.from(mermaidElements).filter(el => document.body.contains(el));
 
         if (attachedElements.length > 0) {
-          // Explicitly pass the nodes found within our container
-          await mermaid.run({ nodes: attachedElements });
+          s.
+          await mermaid.run({ nodes: attachedElements as HTMLElement[] }); // Cast here
           console.log(`[Mermaid] Successfully rendered/updated ${attachedElements.length} graphs.`);
 
-          // Optional: Remove error states from successfully rendered elements
+
           attachedElements.forEach(el => {
             el.classList.remove('mermaid-error');
             const errorMsg = el.querySelector('.mermaid-error-message');
