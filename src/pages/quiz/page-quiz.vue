@@ -1637,21 +1637,20 @@ const lastSoundPlayed = reactive({ name: '', time: 0 });
 const reasoningContainerRef = ref<HTMLDivElement | null>(null);
 const reasoningContentRef = ref<HTMLDivElement | null>(null); // Add ref for the scrollable content
 
-// Refactored function using a two-step approach
+// Refactored function using a three-step approach
 function preprocessLineBreaks(text: string | undefined): string {
   if (!text) return '';
 
   // Step 1: Convert Markdown Lists to HTML
   const linesWithHtmlLists = convertMdListsToHtml(text.split('\n'));
 
-  // Step 2: Add <br> tags where appropriate
-  const linesWithBreaks = addBrTags(linesWithHtmlLists);
+  // Step 2: Convert Inline Markdown (e.g., Bold) to HTML
+  const linesWithInlineHtml = convertInlineMdToHtml(linesWithHtmlLists);
 
-  // --- Step 3: Remove empty lines ---/  REMOVED THIS STEP
-  // const finalLines = linesWithBreaks.filter(line => line.trim().length > 0);
+  // Step 3: Add <br> tags where appropriate
+  const linesWithBreaks = addBrTags(linesWithInlineHtml); // Pass the result of step 2
 
-
-  return linesWithBreaks.join('\n'); // Join the result from addBrTags directly
+  return linesWithBreaks.join('\n'); // Join the final result
 }
 
 // Helper function for Step 1: Convert MD Lists to HTML (Simplified)
@@ -1716,8 +1715,26 @@ function convertMdListsToHtml(lines: string[]): string[] {
   return resultLines;
 }
 
+// Helper function for Step 2: Convert Inline Markdown (Bold) to HTML
+function convertInlineMdToHtml(lines: string[]): string[] {
+  const resultLines: string[] = [];
+  // Regex for **bold** and __bold__ (non-greedy)
+  const boldRegexAsterisk = /\*\*(.+?)\*\*/g;
+  const boldRegexUnderscore = /__(.+?)__/g;
 
-// Helper function for Step 2: Add <br> tags (Refactored Logic)
+  for (const line of lines) {
+    let processedLine = line;
+    // Apply replacements sequentially
+    processedLine = processedLine.replace(boldRegexAsterisk, '<strong>$1</strong>');
+    processedLine = processedLine.replace(boldRegexUnderscore, '<strong>$1</strong>');
+    // Add more replacements here for italics, etc. if needed
+    resultLines.push(processedLine);
+  }
+  return resultLines;
+}
+
+
+// Helper function for Step 3: Add <br> tags (Refactored Logic)
 function addBrTags(lines: string[]): string[] {
   const resultLines: string[] = [];
   const blockStartTagRegex = new RegExp(
