@@ -235,7 +235,7 @@ const md = new MarkdownIt({
   html: true,
   linkify: true,
   typographer: true,
-  breaks: true,
+  breaks: false, // Changed from true to false
   xhtmlOut: true,
 });
 interface UserAnswerRecord {
@@ -630,24 +630,21 @@ async function renderNotesForCurrentQuestion() {
   console.log(`[DEBUG] renderNotes: Index=${currentIndex.value}, isGeneratingThis=${isGeneratingThisQuestion}, Note Length=${noteContent.length}`);
 
   try {
-    // Preprocess the Markdown content before rendering
-    const preprocessedNotes = preprocessMarkdown(noteContent, 0); // Pass depth 0
-
     let htmlContent = '';
-    // Use preprocessed content for rendering
-    if (isGeneratingThisQuestion && !preprocessedNotes.trim()) {
-      // If generating and no content yet after preprocessing, show thinking...
-      htmlContent = '<p class="page-quiz__notes-placeholder">思考中...</p>';
-    } else if (preprocessedNotes) {
-      htmlContent = md.render(preprocessedNotes);
-    } else {
-      // If not generating and still no content, show the standard placeholder
-      htmlContent = '<p class="page-quiz__notes-placeholder">暂无笔记，可点击编辑或AI生成。</p>';
+    if (isGeneratingThisQuestion) {
+      htmlContent = noteContent
+        ? md.render(noteContent)
+        : '<p class="page-quiz__notes-placeholder">思考中...</p>';
     }
-    renderedNotesHtml.value = htmlContent;
+    else if (noteContent) {
+      // Preprocess line breaks before rendering
+      const preprocessedContent = preprocessLineBreaks(noteContent);
+      htmlContent = md.render(preprocessedContent);
+    }
+    renderedNotesHtml.value = htmlContent || '<p class="page-quiz__notes-placeholder">暂无笔记，可点击编辑或AI生成。</p>';
 
   } catch (error) {
-    console.error('笔记 Markdown 预处理或渲染失败:', error);
+    console.error('笔记 Markdown 渲染失败:', error);
     renderedNotesHtml.value = `<p class="page-quiz__notes-error">笔记内容解析失败: ${error instanceof Error ? error.message : '未知错误'}</p>`;
   }
 }
@@ -1583,12 +1580,12 @@ function renderReasoning() {
   console.log(`[DEBUG] renderReasoning called. Content length: ${reasoningContent.value?.length}`);
   if (reasoningContent.value) {
     try {
-      // Preprocess the reasoning content before rendering
-      const preprocessedReasoning = preprocessMarkdown(reasoningContent.value, 0); // Pass depth 0
-      renderedReasoningHtml.value = md.render(preprocessedReasoning); // Use preprocessed content
-      console.log(`[DEBUG] Reasoning preprocessed & rendered successfully. HTML length: ${renderedReasoningHtml.value?.length}`);
+      // Preprocess line breaks before rendering
+      const preprocessedContent = preprocessLineBreaks(reasoningContent.value);
+      renderedReasoningHtml.value = md.render(preprocessedContent); // Use preprocessed content
+      console.log(`[DEBUG] Reasoning rendered successfully. HTML length: ${renderedReasoningHtml.value?.length}`);
     } catch (error) {
-      console.error("Reasoning Markdown pre-processing or rendering failed:", error);
+      console.error("Reasoning Markdown rendering failed:", error); // Restore error message
       renderedReasoningHtml.value = `<p class="page-quiz__notes-error">思考过程解析失败: ${error instanceof Error ? error.message : '未知错误'}</p>`;
     }
   } else {
@@ -1623,96 +1620,17 @@ const playAudio = (soundName: 'select' | 'correct' | 'incorrect' | 'navigate') =
 // 存储上次播放的音效信息，用于防止快速重复播放 (移动到顶层作用域)
 const lastSoundPlayed = reactive({ name: '', time: 0 });
 
-// Function to preprocess Markdown text recursively for certain blocks
-function preprocessMarkdown(text: string | undefined, depth: number = 0): string {
-  if (!text || depth >= 3) { // Base case: empty text or max depth reached
-    return text || '';
-  }
+// New function to preprocess line breaks
+function preprocessLineBreaks(text: string | undefined): string {
+  if (!text) return '';
 
-  // Regular expressions to identify top-level blocks
-  // Code blocks (```lang\n...\n``` or ~~~lang\n...\n~~~)
-  const codeBlockRegex = /(^```|~~~)(.*?)\\n([\\s\\S]*?)\\n\\1/gm;
-  // Block quotes (> ...\n> ... or > ...)
-  // Adjusted to better handle single lines and multiple consecutive lines
-  const blockQuoteRegex = /(?:^>.*(?:\n|$))+/gm;
+  // 1. Remove blank lines (lines with only whitespace)
+  const lines = text.split('\n');
+  const nonBlankLines = lines.filter(line => line.trim().length > 0);
+  const textWithoutBlankLines = nonBlankLines.join('\n');
 
-  let result = '';
-
-  // Combine regexes using exec to process blocks in order of appearance
-  // Important: Ensure regexes are properly reset for each call if stateful (like using /g with exec)
-  const combinedRegexSource = `${codeBlockRegex.source}|${blockQuoteRegex.source}`;
-  // We create a new RegExp object inside the loop or reset lastIndex if we reuse it.
-  // For simplicity, let's refine the processing logic slightly.
-
-  let remainingText = text;
-  result = '';
-
-  while (remainingText.length > 0) {
-    codeBlockRegex.lastIndex = 0; // Reset regex state
-    blockQuoteRegex.lastIndex = 0; // Reset regex state
-
-    const codeMatch = codeBlockRegex.exec(remainingText);
-    const quoteMatch = blockQuoteRegex.exec(remainingText);
-
-    let firstMatch: RegExpExecArray | null = null;
-    let matchType: 'code' | 'quote' | null = null;
-
-    // Determine which match comes first
-    if (codeMatch && quoteMatch) {
-      if (codeMatch.index < quoteMatch.index) {
-        firstMatch = codeMatch;
-        matchType = 'code';
-      } else {
-        firstMatch = quoteMatch;
-        matchType = 'quote';
-      }
-    } else if (codeMatch) {
-      firstMatch = codeMatch;
-      matchType = 'code';
-    } else if (quoteMatch) {
-      firstMatch = quoteMatch;
-      matchType = 'quote';
-    }
-
-    if (firstMatch) {
-      // Add text before the match
-      result += remainingText.substring(0, firstMatch.index);
-      const blockText = firstMatch[0];
-
-      if (matchType === 'code') {
-        const lang = firstMatch[2]?.trim() || '';
-        const innerText = firstMatch[3] || '';
-        // PRESERVE code blocks
-        result += `${firstMatch[1]}${lang}\n${innerText}\n${firstMatch[1]}`;
-      } else if (matchType === 'quote') {
-        // Extract inner content of the block quote
-        const innerQuoteText = blockText.split('\n').map(line => line.replace(/^>\s?/, '')).join('\n').trimEnd(); // Trim trailing newline from map/join
-        const processedInnerQuote = preprocessMarkdown(innerQuoteText, depth + 1);
-        // Reconstruct the block quote
-        const reconstructedQuote = processedInnerQuote.split('\n').map(line => `> ${line}`).join('\n');
-        result += reconstructedQuote;
-        // Add back potential trailing newline if the original block had one and wasn't the end of the string
-        if (blockText.endsWith('\n')) { // Check if original ended with newline
-          result += '\n';
-        }
-      }
-
-      // Update remainingText to the part after the match
-      remainingText = remainingText.substring(firstMatch.index + blockText.length);
-
-    } else {
-      // No more matches, add the rest of the text
-      result += remainingText;
-      remainingText = ''; // Exit loop
-    }
-  }
-
-
-  // --- Optional: renderInline for non-block text ---
-  // Skipped for now.
-  // --- End Optional ---
-
-  return result;
+  // 2. Replace remaining newlines with <br>
+  return textWithoutBlankLines.replace(/\n/g, '<br>');
 }
 
 </script>
