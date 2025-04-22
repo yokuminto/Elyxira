@@ -1717,7 +1717,7 @@ input:checked + .slider:before {
   transition: all 0.3s ease-out;
   /* 继承 markdown-body 的样式 */
   height: 100px; /* <-- ADDED: 固定高度 */
-  overflow: hidden; /* <-- ADDED: 隐藏溢出内容 */
+  overflow-y: auto; /* <-- MODIFIED: 启用垂直滚动 */
   border-bottom: 1px dashed var(--border-light); /* <-- 保持底部虚线分隔 */
   margin-bottom: 0.5rem; /* <-- 保持底部外边距 */
 }

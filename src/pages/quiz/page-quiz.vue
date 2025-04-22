@@ -169,7 +169,8 @@
                 <!-- Reasoning Section (Moved Above Notes Display/Editor) -->
                 <div v-if="isGeneratingCurrent && reasoningContent && !hasContentStartedStreaming"
                   class="page-quiz__notes-reasoning" ref="reasoningContainerRef">
-                  <div class="reasoning-content markdown-body" v-html="renderedReasoningHtml"></div>
+                  <div class="reasoning-content markdown-body" ref="reasoningContentRef" v-html="renderedReasoningHtml">
+                  </div> <!-- ADDED ref -->
                 </div>
                 <!-- End Reasoning Section -->
 
@@ -182,7 +183,7 @@
                     <button @click="insertMarkdown('*斜体*')">斜体</button>
                     <button @click="insertMarkdown('# 标题')">标题</button>
                     <button @click="insertMarkdown('- 列表项')">列表</button>
-                    <button @click="insertMarkdown('```\\n代码块\\n```')">代码</button>
+                    <button @click="insertMarkdown('```\n代码块\n```')">代码</button>
                   </div>
                   <textarea ref="notesTextareaRef" class="page-quiz__notes-textarea" placeholder="在此添加笔记..."
                     v-model="notesEditText" @input="autoResizeTextarea"></textarea>
@@ -628,23 +629,29 @@ async function renderNotesForCurrentQuestion() {
   const noteContent = question.notes || '';
   const isGeneratingThisQuestion = isGenerating.value && activeGenerationIndex.value === currentIndex.value;
   console.log(`[DEBUG] renderNotes: Index=${currentIndex.value}, isGeneratingThis=${isGeneratingThisQuestion}, Note Length=${noteContent.length}`);
+  // --- 新增日志: 原始笔记内容 ---
+  // console.log('[DEBUG] Original Note Content:\n', noteContent);
+  // --- 结束新增日志 ---
 
   try {
     let htmlContent = '';
     if (isGeneratingThisQuestion) {
       htmlContent = noteContent
-        ? md.render(noteContent)
+        ? md.render(noteContent) // Directly render if generating, assuming it's Markdown
         : '<p class="page-quiz__notes-placeholder">思考中...</p>';
-      console.log('[DEBUG] Rendered HTML Output (Generating):\n', htmlContent); // Log rendered HTML (generating case)
+      // console.log('[DEBUG] Rendered HTML Output (Generating):\n', htmlContent);
     }
     else if (noteContent) {
       // Render raw content directly, letting markdown-it handle paragraphs and lists
-      // const preprocessedContent = preprocessLineBreaks(noteContent); // Bypassed preprocessing
+      const preprocessedContent = preprocessLineBreaks(noteContent); // Apply preprocessing
       // console.log('[DEBUG] Preprocessed Content for Rendering:\n', preprocessedContent);
-      htmlContent = md.render(noteContent);
-      console.log('[DEBUG] Rendered HTML Output (Raw Note Rendered):\n', htmlContent);
+      htmlContent = md.render(preprocessedContent); // Render preprocessed content
+      // console.log('[DEBUG] Rendered HTML Output (Raw Note Rendered):\n', htmlContent);
     }
     renderedNotesHtml.value = htmlContent || '<p class="page-quiz__notes-placeholder">暂无笔记，可点击编辑或AI生成。</p>';
+    // --- 新增日志: 最终渲染的HTML ---
+    // console.log('[DEBUG] Final Rendered HTML Output:\n', renderedNotesHtml.value);
+    // --- 结束新增日志 ---
 
   } catch (error) {
     console.error('笔记 Markdown 渲染失败:', error);
@@ -665,7 +672,7 @@ function insertMarkdown(markup: string) {
     '*斜体*': '斜体',
     '# 标题': '标题',
     '- 列表项': '列表项',
-    '```\\n代码块\\n```': '代码块',
+    '```\n代码块\n```': '代码块',
   };
   for (const key in placeholders) {
     if (markup === key && selectedText) {
@@ -1578,13 +1585,18 @@ function renderReasoning() {
       const preprocessedContent = preprocessLineBreaks(reasoningContent.value);
       renderedReasoningHtml.value = md.render(preprocessedContent); // Use preprocessed content
       console.log(`[DEBUG] Reasoning rendered successfully. HTML length: ${renderedReasoningHtml.value?.length}`);
-      // 添加滚动逻辑
+      // --- MODIFIED SCROLL LOGIC ---
       nextTick(() => {
-        const container = reasoningContainerRef.value;
-        if (container) {
-          container.scrollTop = container.scrollHeight;
+        // Target the inner content div now
+        const scrollableContent = reasoningContentRef.value;
+        if (scrollableContent) {
+          scrollableContent.scrollTop = scrollableContent.scrollHeight;
+          console.log(`[DEBUG] Scrolled reasoning content. scrollTop=${scrollableContent.scrollTop}, scrollHeight=${scrollableContent.scrollHeight}`);
+        } else {
+          console.warn("[WARN] reasoningContentRef not available for scrolling.");
         }
       });
+      // --- END MODIFIED SCROLL LOGIC ---
     } catch (error) {
       console.error("Reasoning Markdown rendering failed:", error); // Restore error message
       renderedReasoningHtml.value = `<p class="page-quiz__notes-error">思考过程解析失败: ${error instanceof Error ? error.message : '未知错误'}</p>`;
@@ -1623,54 +1635,136 @@ const lastSoundPlayed = reactive({ name: '', time: 0 });
 
 // New ref for reasoning container
 const reasoningContainerRef = ref<HTMLDivElement | null>(null);
+const reasoningContentRef = ref<HTMLDivElement | null>(null); // Add ref for the scrollable content
 
-// New function to preprocess line breaks
+// Refactored function using a two-step approach
 function preprocessLineBreaks(text: string | undefined): string {
   if (!text) return '';
 
-  const lines = text.split('\n');
+  // Step 1: Convert Markdown Lists to HTML
+  const linesWithHtmlLists = convertMdListsToHtml(text.split('\n'));
 
-  const resultLines = lines.map(line => {
-    const trimmedEndLine = line.trimEnd(); // Preserve leading whitespace, trim trailing
-    const trimmedLine = trimmedEndLine.trim(); // For checks
+  // Step 2: Add <br> tags where appropriate
+  const linesWithBreaks = addBrTags(linesWithHtmlLists);
 
-    // 1. Skip empty lines
+  // --- Step 3: Remove empty lines ---/  REMOVED THIS STEP
+  // const finalLines = linesWithBreaks.filter(line => line.trim().length > 0);
+
+
+  return linesWithBreaks.join('\n'); // Join the result from addBrTags directly
+}
+
+// Helper function for Step 1: Convert MD Lists to HTML (Simplified)
+function convertMdListsToHtml(lines: string[]): string[] {
+  const resultLines: string[] = [];
+  let currentListType: 'ul' | 'ol' | null = null;
+  let inListItem = false;
+  const ulMarkerRegex = /^(\s*[-*+]\s+)/;
+  const olMarkerRegex = /^(\s*\d+\.\s+)/;
+
+  const closeListItem = () => {
+    if (inListItem) {
+      resultLines.push('</li>');
+      inListItem = false;
+    }
+  };
+  const closeList = () => {
+    closeListItem();
+    if (currentListType) {
+      resultLines.push(`</${currentListType}>`);
+      currentListType = null;
+    }
+  };
+  const getLineContent = (line: string, markerRegex: RegExp): string => {
+    const match = line.match(markerRegex);
+    return match ? line.substring(match[0].length) : line;
+  };
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const trimmedLine = line.trim();
+    const ulMatch = trimmedLine.match(ulMarkerRegex);
+    const olMatch = trimmedLine.match(olMarkerRegex);
+    const isUlItem = ulMatch !== null;
+    const isOlItem = olMatch !== null;
+
     if (trimmedLine.length === 0) {
-      return '';
+      closeList();
+      resultLines.push(line);
+      continue;
     }
 
-    // 2. Keep lines already ending with <br>
-    if (/<br\s*\/?>$/i.test(trimmedEndLine)) {
-      return trimmedEndLine;
+    if (isUlItem || isOlItem) {
+      const listType = isUlItem ? 'ul' : 'ol';
+      const markerRegex = isUlItem ? ulMarkerRegex : olMarkerRegex;
+      const lineContent = getLineContent(line, markerRegex);
+
+      if (currentListType && currentListType !== listType) closeList();
+      if (!currentListType) {
+        resultLines.push(`<${listType}>`);
+        currentListType = listType;
+      }
+      closeListItem();
+      resultLines.push(`<li>` + lineContent);
+      inListItem = true;
+    } else {
+      closeList();
+      resultLines.push(line);
+    }
+  }
+  closeList();
+  return resultLines;
+}
+
+
+// Helper function for Step 2: Add <br> tags (Refactored Logic)
+function addBrTags(lines: string[]): string[] {
+  const resultLines: string[] = [];
+  const blockStartTagRegex = new RegExp(
+    '^(?:\\s*#{1,6}\\s+|\\s*< *(?:p|h[1-6]|div|ul|ol|li|blockquote|table|tr|td|th|form|address|article|aside|details|dialog|dd|dl|dt|fieldset|figcaption|figure|footer|header|hr|main|nav|pre|section)\\b)',
+    'i'
+  );
+  const blockEndTagRegex = new RegExp(
+    '<\\/ *(?:p|h[1-6]|div|ul|ol|li|blockquote|table|form|address|article|aside|details|dialog|dd|dl|dt|fieldset|figcaption|figure|footer|header|main|nav|pre|section)>\\s*$',
+    'i'
+  );
+  const tableSyntaxRegex = /^\s*\|.*\|?\s*$/;
+  const onlyTagsRegex = /^\s*<[^>]+>\s*$/;
+  const endsWithBrRegex = /<br\s*\/?>$/i;
+
+  for (let i = 0; i < lines.length; i++) {
+    const currentLine = lines[i];
+    const currentTrimmedEndLine = currentLine.trimEnd();
+    const currentTrimmed = currentTrimmedEndLine.trim();
+
+    let lineToAdd = currentTrimmedEndLine;
+    let addBr = false;
+
+    if (i + 1 < lines.length) {
+      const nextLine = lines[i + 1];
+      const nextTrimmed = nextLine.trim();
+
+      addBr = (
+        currentTrimmed.length > 0 &&
+        nextTrimmed.length > 0 &&
+        !endsWithBrRegex.test(currentTrimmedEndLine) &&
+        !blockStartTagRegex.test(currentTrimmed) &&
+        !blockEndTagRegex.test(currentTrimmed) &&
+        !tableSyntaxRegex.test(currentTrimmed) &&
+        !onlyTagsRegex.test(currentTrimmed) &&
+        !blockStartTagRegex.test(nextTrimmed) &&
+        !tableSyntaxRegex.test(nextTrimmed)
+      );
     }
 
-    // 3. Identify lines that are part of HTML/Markdown structures and should NOT get an extra <br>
-    const blockTagRegex = /^<(p|h[1-6]|div|ul|ol|li|blockquote|table|tr|td|th|form|address|article|aside|details|dialog|dd|dl|dt|fieldset|figcaption|figure|footer|header|hr|main|nav|pre|section)\b/i;
-    const listMarkerRegex = /^(\s*[-*+]\s+|\s*\d+\.\s+)/; // Matches '- ', '* ', '1. '
-    const tableRowRegex = /^\s*\|.*\|\s*$/; // Matches '| ... |'
-    // Fixed regex for table separator line
-    const tableSeparatorRegex = /^\s*\|[-\s:|]{3,}\|?\s*$/; // Matches '|---|---|', '|:---|:---:|' etc.
-    const headingMarkerRegex = /^#{1,6}\s+/; // Matches '# ', '## '
-
-    if (blockTagRegex.test(trimmedLine) ||
-      listMarkerRegex.test(trimmedLine) ||
-      tableRowRegex.test(trimmedLine) ||
-      tableSeparatorRegex.test(trimmedLine) ||
-      headingMarkerRegex.test(trimmedLine)) {
-      return trimmedEndLine; // Let markdown-it handle these structures
+    if (addBr) {
+      lineToAdd += '<br>';
     }
 
-    // 4. Don't add <br> to lines containing only HTML tags (like closing tags)
-    const contentWithoutTags = trimmedLine.replace(/<[^>]*>/g, '').trim();
-    if (contentWithoutTags.length === 0 && /^<.*>$/.test(trimmedLine)) {
-      return trimmedEndLine;
-    }
+    resultLines.push(lineToAdd);
+  }
 
-    // 5. Otherwise, it's likely inline content or text needing a manual break
-    return trimmedEndLine + '<br>';
-  }); // End of lines.map()
-
-  return resultLines.join(''); // Join lines back
-} // End of preprocessLineBreaks function
+  return resultLines;
+}
 
 </script>
