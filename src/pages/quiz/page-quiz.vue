@@ -168,7 +168,7 @@
 
                 <!-- Reasoning Section (Moved Above Notes Display/Editor) -->
                 <div v-if="isGeneratingCurrent && reasoningContent && !hasContentStartedStreaming"
-                  class="page-quiz__notes-reasoning">
+                  class="page-quiz__notes-reasoning" ref="reasoningContainerRef">
                   <div class="reasoning-content markdown-body" v-html="renderedReasoningHtml"></div>
                 </div>
                 <!-- End Reasoning Section -->
@@ -918,16 +918,7 @@ async function generateAINotes(
                 }
                 // --- 修改: 限制显示的Reasoning行数 ---
                 if (reasoningChunk) {
-                  const MAX_REASONING_LINES = 4; // 最多显示行数 (改为4行)
-                  // 将新片段追加到完整字符串 (这里直接用 reasoningContent.value 作为累加器)
-                  reasoningContent.value += reasoningChunk;
-                  // 按换行符分割
-                  const lines = reasoningContent.value.split('\n');
-                  // 如果行数超过限制，只取最后几行
-                  if (lines.length > MAX_REASONING_LINES) {
-                    reasoningContent.value = lines.slice(-MAX_REASONING_LINES).join('\n');
-                  }
-                  // 注意：这里修改了 reasoningContent.value，watch 会自动触发 renderReasoning
+                  reasoningContent.value += reasoningChunk; // 直接追加
                 }
                 // --- 结束修改 ---
               } catch (e) {
@@ -1189,7 +1180,7 @@ function handleTouchEnd(e: TouchEvent) {
     const touchEndY = e.changedTouches[0].clientY;
     const diffX = touchStartX - touchEndX;
     const diffY = touchStartY - touchEndY;
-    const horizontalThreshold = window.innerWidth * 0.25;
+    const horizontalThreshold = window.innerWidth * 0.5; // 修改这里
     const verticalThreshold = window.innerHeight * 0.1;
     if (isSwiping || (Math.abs(diffX) > horizontalThreshold && Math.abs(diffY) < verticalThreshold)) {
       if (diffX > 0) {
@@ -1587,6 +1578,13 @@ function renderReasoning() {
       const preprocessedContent = preprocessLineBreaks(reasoningContent.value);
       renderedReasoningHtml.value = md.render(preprocessedContent); // Use preprocessed content
       console.log(`[DEBUG] Reasoning rendered successfully. HTML length: ${renderedReasoningHtml.value?.length}`);
+      // 添加滚动逻辑
+      nextTick(() => {
+        const container = reasoningContainerRef.value;
+        if (container) {
+          container.scrollTop = container.scrollHeight;
+        }
+      });
     } catch (error) {
       console.error("Reasoning Markdown rendering failed:", error); // Restore error message
       renderedReasoningHtml.value = `<p class="page-quiz__notes-error">思考过程解析失败: ${error instanceof Error ? error.message : '未知错误'}</p>`;
@@ -1622,6 +1620,9 @@ const playAudio = (soundName: 'select' | 'correct' | 'incorrect' | 'navigate') =
 
 // 存储上次播放的音效信息，用于防止快速重复播放 (移动到顶层作用域)
 const lastSoundPlayed = reactive({ name: '', time: 0 });
+
+// New ref for reasoning container
+const reasoningContainerRef = ref<HTMLDivElement | null>(null);
 
 // New function to preprocess line breaks
 function preprocessLineBreaks(text: string | undefined): string {
