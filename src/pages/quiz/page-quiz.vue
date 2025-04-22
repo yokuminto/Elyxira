@@ -1627,11 +1627,23 @@ function preprocessLineBreaks(text: string | undefined): string {
   // 1. Split into lines
   const lines = text.split('\\n');
 
-  // 2. Filter out blank lines (lines with only whitespace)
-  const nonBlankLines = lines.filter(line => line.trim().length > 0);
+  // 2. Process each line
+  const resultLines = lines.map(line => {
+    const trimmedLine = line.trimEnd();
 
-  // 3. Join the non-blank lines with <br> tags
-  return nonBlankLines.join('<br>');
+
+    if (/<\\s*br\\s*>$/i.test(trimmedLine)) {
+      return trimmedLine;
+    } else if (trimmedLine.length > 0) {
+
+      return trimmedLine + '<br>';
+    } else {
+      return '';
+    }
+  });
+
+
+  return resultLines.filter(line => line.length > 0).join('');
 }
 
 </script>
