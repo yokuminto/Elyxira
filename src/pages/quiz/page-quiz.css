@@ -1362,7 +1362,7 @@ input:checked + .slider:before {
   border: 1.5px solid var(--note-table-border);
   border-radius: var(--radius);
   overflow: hidden;
-  margin: 0 0 1rem 0;
+  margin: 1rem 0 1rem 0;
 }
 
 .markdown-body th,

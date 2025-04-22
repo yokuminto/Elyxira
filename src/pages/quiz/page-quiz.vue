@@ -635,11 +635,14 @@ async function renderNotesForCurrentQuestion() {
       htmlContent = noteContent
         ? md.render(noteContent)
         : '<p class="page-quiz__notes-placeholder">思考中...</p>';
+      console.log('[DEBUG] Rendered HTML Output (Generating):\n', htmlContent); // Log rendered HTML (generating case)
     }
     else if (noteContent) {
-      // Preprocess line breaks before rendering
-      const preprocessedContent = preprocessLineBreaks(noteContent);
-      htmlContent = md.render(preprocessedContent);
+      // Render raw content directly, letting markdown-it handle paragraphs and lists
+      // const preprocessedContent = preprocessLineBreaks(noteContent); // Bypassed preprocessing
+      // console.log('[DEBUG] Preprocessed Content for Rendering:\n', preprocessedContent);
+      htmlContent = md.render(noteContent);
+      console.log('[DEBUG] Rendered HTML Output (Raw Note Rendered):\n', htmlContent);
     }
     renderedNotesHtml.value = htmlContent || '<p class="page-quiz__notes-placeholder">暂无笔记，可点击编辑或AI生成。</p>';
 
@@ -1630,37 +1633,43 @@ function preprocessLineBreaks(text: string | undefined): string {
     const trimmedEndLine = line.trimEnd(); // Preserve leading whitespace, trim trailing
     const trimmedLine = trimmedEndLine.trim(); // For checks
 
+    // 1. Skip empty lines
     if (trimmedLine.length === 0) {
-      return ''; // Handle empty lines
+      return '';
     }
 
-    // Check if the line already ends with <br> or <br/>
+    // 2. Keep lines already ending with <br>
     if (/<br\s*\/?>$/i.test(trimmedEndLine)) {
-      return trimmedEndLine; // Keep it as is
-    }
-
-    // Specific block tags first (table cells/headers)
-    if (/^<(td|th)\b/i.test(trimmedLine)) {
       return trimmedEndLine;
     }
 
-    // NEW: Check if the line starts with other common block-level tags
-    const blockTagRegex = /^<(p|h[1-6]|div|ul|ol|li|blockquote|table|tr|form|address|article|aside|details|dialog|dd|dl|dt|fieldset|figcaption|figure|footer|header|hr|main|nav|pre|section)\b/i;
-    if (blockTagRegex.test(trimmedLine)) {
-      return trimmedEndLine; // Don't add <br> after these block elements either
+    // 3. Identify lines that are part of HTML/Markdown structures and should NOT get an extra <br>
+    const blockTagRegex = /^<(p|h[1-6]|div|ul|ol|li|blockquote|table|tr|td|th|form|address|article|aside|details|dialog|dd|dl|dt|fieldset|figcaption|figure|footer|header|hr|main|nav|pre|section)\b/i;
+    const listMarkerRegex = /^(\s*[-*+]\s+|\s*\d+\.\s+)/; // Matches '- ', '* ', '1. '
+    const tableRowRegex = /^\s*\|.*\|\s*$/; // Matches '| ... |'
+    // Fixed regex for table separator line
+    const tableSeparatorRegex = /^\s*\|[-\s:|]{3,}\|?\s*$/; // Matches '|---|---|', '|:---|:---:|' etc.
+    const headingMarkerRegex = /^#{1,6}\s+/; // Matches '# ', '## '
+
+    if (blockTagRegex.test(trimmedLine) ||
+      listMarkerRegex.test(trimmedLine) ||
+      tableRowRegex.test(trimmedLine) ||
+      tableSeparatorRegex.test(trimmedLine) ||
+      headingMarkerRegex.test(trimmedLine)) {
+      return trimmedEndLine; // Let markdown-it handle these structures
     }
 
-    // Check if the line contains *only* HTML tags (covers closing tags like </div>, </ul> etc.)
+    // 4. Don't add <br> to lines containing only HTML tags (like closing tags)
     const contentWithoutTags = trimmedLine.replace(/<[^>]*>/g, '').trim();
     if (contentWithoutTags.length === 0 && /^<.*>$/.test(trimmedLine)) {
-      return trimmedEndLine; // Don't add <br>
+      return trimmedEndLine;
     }
 
-    // Otherwise, assume it's inline content or text needing a break
+    // 5. Otherwise, it's likely inline content or text needing a manual break
     return trimmedEndLine + '<br>';
-  });
+  }); // End of lines.map()
 
-  return resultLines.join(''); // Join directly into HTML string
-}
+  return resultLines.join(''); // Join lines back
+} // End of preprocessLineBreaks function
 
 </script>
