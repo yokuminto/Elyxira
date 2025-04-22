@@ -1624,13 +1624,14 @@ const lastSoundPlayed = reactive({ name: '', time: 0 });
 function preprocessLineBreaks(text: string | undefined): string {
   if (!text) return '';
 
-  // 1. Remove blank lines (lines with only whitespace)
-  const lines = text.split('\n');
-  const nonBlankLines = lines.filter(line => line.trim().length > 0);
-  const textWithoutBlankLines = nonBlankLines.join('\n');
+  // 1. Split into lines
+  const lines = text.split('\\n');
 
-  // 2. Replace remaining newlines with <br>
-  return textWithoutBlankLines.replace(/\n/g, '<br>');
+  // 2. Filter out blank lines (lines with only whitespace)
+  const nonBlankLines = lines.filter(line => line.trim().length > 0);
+
+  // 3. Join the non-blank lines with <br> tags
+  return nonBlankLines.join('<br>');
 }
 
 </script>
