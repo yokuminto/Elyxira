@@ -1624,26 +1624,43 @@ const lastSoundPlayed = reactive({ name: '', time: 0 });
 function preprocessLineBreaks(text: string | undefined): string {
   if (!text) return '';
 
-  // 1. Split into lines
-  const lines = text.split('\\n');
+  const lines = text.split('\n');
 
-  // 2. Process each line
   const resultLines = lines.map(line => {
-    const trimmedLine = line.trimEnd();
+    const trimmedEndLine = line.trimEnd(); // Preserve leading whitespace, trim trailing
+    const trimmedLine = trimmedEndLine.trim(); // For checks
 
-
-    if (/<\\s*br\\s*>$/i.test(trimmedLine)) {
-      return trimmedLine;
-    } else if (trimmedLine.length > 0) {
-
-      return trimmedLine + '<br>';
-    } else {
-      return '';
+    if (trimmedLine.length === 0) {
+      return ''; // Handle empty lines
     }
+
+    // Check if the line already ends with <br> or <br/>
+    if (/<br\s*\/?>$/i.test(trimmedEndLine)) {
+      return trimmedEndLine; // Keep it as is
+    }
+
+    // Specific block tags first (table cells/headers)
+    if (/^<(td|th)\b/i.test(trimmedLine)) {
+      return trimmedEndLine;
+    }
+
+    // NEW: Check if the line starts with other common block-level tags
+    const blockTagRegex = /^<(p|h[1-6]|div|ul|ol|li|blockquote|table|tr|form|address|article|aside|details|dialog|dd|dl|dt|fieldset|figcaption|figure|footer|header|hr|main|nav|pre|section)\b/i;
+    if (blockTagRegex.test(trimmedLine)) {
+      return trimmedEndLine; // Don't add <br> after these block elements either
+    }
+
+    // Check if the line contains *only* HTML tags (covers closing tags like </div>, </ul> etc.)
+    const contentWithoutTags = trimmedLine.replace(/<[^>]*>/g, '').trim();
+    if (contentWithoutTags.length === 0 && /^<.*>$/.test(trimmedLine)) {
+      return trimmedEndLine; // Don't add <br>
+    }
+
+    // Otherwise, assume it's inline content or text needing a break
+    return trimmedEndLine + '<br>';
   });
 
-
-  return resultLines.filter(line => line.length > 0).join('');
+  return resultLines.join(''); // Join directly into HTML string
 }
 
 </script>
