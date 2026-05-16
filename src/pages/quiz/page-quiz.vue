@@ -1289,7 +1289,7 @@ function normalizeAnswerToIndices(correctAnswer: Question['answer']): number[] {
 
   // 已经是数字索引数组 [0,1,2]
   if (Array.isArray(correctAnswer) && correctAnswer.length > 0 && typeof correctAnswer[0] === 'number') {
-    return [...correctAnswer];
+    return [...correctAnswer] as number[];
   }
 
   // 字符串数组 ["A","B","C"]
