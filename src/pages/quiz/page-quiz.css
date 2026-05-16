@@ -313,7 +313,7 @@
   background-color: var(--bg-white);
   font-size: 0.9rem;
   color: var(--text-primary);
-  width: 128px;
+  width: fit-content;
 }
 
 .page-quiz__mode-buttons {

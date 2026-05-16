@@ -61,6 +61,7 @@
               <!-- Question Content -->
               <div class="page-quiz__question-text" ref="questionTextRef">
                 <span class="page-quiz__question-id">第{{ currentQuestion.number || (currentIndex + 1) }}题</span>
+                <span>{{ isMultipleChoice && !quizTitle.includes('多选')  ? '(多选题) ' :'' }} </span>
                 <span v-html="formatQuestionTitle(currentQuestion.question)"></span>
               </div>
               <ul class="page-quiz__options-list" :class="{ 'page-quiz--submitted': isQuizSubmitted }">
@@ -236,28 +237,33 @@ const md = new MarkdownIt({
   html: true,
   linkify: true,
   typographer: true,
-  breaks: false, // Changed from true to false
+  breaks: false,
   xhtmlOut: true,
 });
+
 interface UserAnswerRecord {
   answer: string;
   timestamp?: number;
   isCorrect?: boolean;
 }
+
 interface QuizStats {
   totalQuestions: number;
   answeredCount: number;
   correctCount: number;
   wrongQuestionIds: string[];
 }
+
 type StreamCallback = (chunk: string, targetIndex: number) => void;
 type CompletionCallback = (finalNote: string, targetIndex: number, error?: string) => void;
+
 const router = useRouter();
+
 const loading = ref(true);
 const error = ref<string | null>(null);
 const localQuestions = ref<Question[]>([]);
 const currentIndex = ref(0);
-const selectedAnswer = ref<string | null>(null);
+const selectedAnswers = ref<string[]>([]); // 改为数组，支持多选
 const isQuizSubmitted = ref(false);
 const wrongQuestionIds = ref<string[]>([]);
 const isReviewingWrong = ref(false);
@@ -271,8 +277,8 @@ const notesEditText = ref('');
 const renderedNotesHtml = ref('');
 const forceShowNotes = ref(false);
 const reasoningContent = ref<string>('');
-const renderedReasoningHtml = ref<string>(''); // RE-ADDED
-const hasContentStartedStreaming = ref(false); // <-- ADDED: Flag for content start
+const renderedReasoningHtml = ref<string>('');
+const hasContentStartedStreaming = ref(false);
 const showOverviewModal = ref(false);
 const showModalStatistics = ref(false);
 const showModalSettings = ref(false);
@@ -286,51 +292,87 @@ const toast = reactive<{ show: boolean; message: string; type: 'info' | 'success
   type: 'info'
 });
 let toastTimer: number | null = null;
+
 const quizSettings = computed(() => configService.getQuizSettings());
 const uiSettings = computed(() => configService.getUiSettings());
 const apiConfig = computed(() => configService.getApiConfig());
 const isDarkMode = computed(() => uiSettings.value.darkMode);
+
 const questionAreaRef = ref<HTMLDivElement | null>(null);
 const notesDisplayRef = ref<HTMLDivElement | null>(null);
 const notesTextareaRef = ref<HTMLTextAreaElement | null>(null);
 const questionTextRef = ref<HTMLElement | null>(null);
+const reasoningContainerRef = ref<HTMLDivElement | null>(null);
+const reasoningContentRef = ref<HTMLDivElement | null>(null);
+
 const quizTitle = computed(() => {
   const quizData = configService.getQuizData();
   const lastLoaded = configService.getLastLoadedQuiz();
   return quizData?.title || lastLoaded?.name || '测验';
 });
+
 const currentQuestion = computed<Question | null>(() => {
   if (currentIndex.value >= 0 && currentIndex.value < localQuestions.value.length) {
     return localQuestions.value[currentIndex.value];
   }
   return null;
 });
-const isCurrentAnswered = computed(() => {
-  return currentQuestion.value?.userAnswer !== null && currentQuestion.value?.userAnswer !== undefined;
+
+const isMultipleChoice = computed(() => {
+  const answer = currentQuestion.value?.answer;
+  if (Array.isArray(answer)) {
+    return answer.length > 1;
+  }
+  if (typeof answer === 'string') {
+    // 包含竖线分隔符表示多选
+    if (answer.includes('|')) {
+      return true;
+    }
+    // 多个大写字母（如 "ABC"）表示多选
+    if (answer.length > 1 && /^[A-Z]+$/.test(answer)) {
+      return true;
+    }
+  }
+  return false;
 });
+
+const isCurrentAnswered = computed(() => {
+  const ua = currentQuestion.value?.userAnswer;
+  return ua !== null && ua !== undefined && ua !== '';
+});
+
 const canSubmit = computed(() => {
-  return selectedAnswer.value !== null &&
+  const hasSelection = isMultipleChoice.value ? selectedAnswers.value.length > 0 : selectedAnswers.value.length > 0;
+  return hasSelection &&
     !isQuizSubmitted.value &&
     !quizSettings.value.reviewMode &&
     (!isCurrentAnswered.value || !quizSettings.value.lockAnswerAfterSubmit);
 });
+
 const isAnswerLocked = computed(() => {
   return isCurrentAnswered.value && quizSettings.value.lockAnswerAfterSubmit;
 });
+
 const canGoNext = computed(() => {
   const hasMoreQuestions = currentIndex.value < totalQuestions.value - 1;
   const canProceed = isCurrentAnswered.value || quizSettings.value.reviewMode || quizSettings.value.allowSkip;
   return !isQuizSubmitted.value && (hasMoreQuestions || canProceed);
 });
+
 const canGoPrev = computed(() => {
   return currentIndex.value > 0 && !isQuizSubmitted.value;
 });
+
 const totalQuestions = computed(() => localQuestions.value.length);
 const answeredCount = computed(() => {
-  return localQuestions.value.filter(q => q.userAnswer !== null && q.userAnswer !== undefined).length;
+  return localQuestions.value.filter(q => q.userAnswer !== null && q.userAnswer !== undefined && q.userAnswer !== '').length;
 });
 const correctCount = computed(() => {
-  return localQuestions.value.filter(q => q.userAnswer !== null && q.userAnswer !== undefined && compareAnswers(q.userAnswer, q.answer)).length;
+  return localQuestions.value.filter(q => {
+    const ua = q.userAnswer;
+    if (!ua) return false;
+    return compareAnswers(ua, q.answer);
+  }).length;
 });
 const progressPercent = computed(() => {
   return totalQuestions.value > 0 ? Math.round((answeredCount.value / totalQuestions.value) * 100) : 0;
@@ -381,10 +423,9 @@ const currentQuizInfo = computed(() => {
     exists: exists
   };
 });
+
 function showCustomToast(message: string, type: 'info' | 'success' | 'warning' | 'error' = 'info', duration = 3000) {
-  if (toastTimer) {
-    clearTimeout(toastTimer);
-  }
+  if (toastTimer) clearTimeout(toastTimer);
   toast.message = message;
   toast.type = type;
   toast.show = true;
@@ -393,9 +434,11 @@ function showCustomToast(message: string, type: 'info' | 'success' | 'warning' |
     toastTimer = null;
   }, duration);
 }
+
 function navigateBack() {
   router.push('/library');
 }
+
 function initializeQuiz() {
   loading.value = true;
   isQuizSubmitted.value = false;
@@ -404,6 +447,7 @@ function initializeQuiz() {
   error.value = null;
   loadQuizDataAndFilter();
 }
+
 function loadQuizDataAndFilter() {
   loading.value = true;
   error.value = null;
@@ -426,6 +470,7 @@ function loadQuizDataAndFilter() {
   }
   loading.value = false;
 }
+
 async function loadQuestion(index: number) {
   if (index < 0 || index >= localQuestions.value.length) {
     console.warn("无效的问题索引:", index);
@@ -436,59 +481,101 @@ async function loadQuestion(index: number) {
   }
   const previousIndex = currentIndex.value;
   currentIndex.value = index;
-  selectedAnswer.value = currentQuestion.value?.userAnswer ?? null;
+  const question = currentQuestion.value;
+  if (question) {
+    const userAnswer = question.userAnswer;
+    if (userAnswer && typeof userAnswer === 'string') {
+      if (isMultipleChoice.value) {
+        selectedAnswers.value = userAnswer.split('');
+      } else {
+        selectedAnswers.value = userAnswer ? [userAnswer] : [];
+      }
+    } else {
+      selectedAnswers.value = [];
+    }
+  } else {
+    selectedAnswers.value = [];
+  }
   isEditingNotes.value = false;
   await renderNotesForCurrentQuestion();
   if (questionAreaRef.value) {
     questionAreaRef.value.scrollTo({ top: 0, behavior: 'smooth' });
   }
-  // 播放导航音效 (如果不是第一次加载)
-  if (previousIndex !== index && index !== 0) { // 避免第一次加载和原地跳转时播放
+  if (previousIndex !== index && index !== 0) {
     playAudio('navigate');
   }
   nextTick(() => {
     checkAndTriggerAutoGeneration();
   });
 }
+
 function handleOptionClick(key: string) {
   if (isQuizSubmitted.value || quizSettings.value.reviewMode || isAnswerLocked.value) {
     return;
   }
-  selectedAnswer.value = key;
-  playAudio('select'); // 播放选择音效
-  if (isCurrentAnswered.value && !quizSettings.value.lockAnswerAfterSubmit) {
-    updateUserAnswer(key);
-  }
-  if (quizSettings.value.autoSubmit && !isCurrentAnswered.value) {
-    nextTick(submitAnswer);
+  playAudio('select');
+  if (isMultipleChoice.value) {
+    const idx = selectedAnswers.value.indexOf(key);
+    if (idx === -1) {
+      selectedAnswers.value.push(key);
+    } else {
+      selectedAnswers.value.splice(idx, 1);
+    }
+    if (isCurrentAnswered.value && !quizSettings.value.lockAnswerAfterSubmit) {
+      updateUserAnswer(formatMultipleChoiceAnswer(selectedAnswers.value));
+    }
+    if (quizSettings.value.autoSubmit && !isCurrentAnswered.value) {
+      nextTick(submitAnswer);
+    }
+  } else {
+    selectedAnswers.value = [key];
+    if (isCurrentAnswered.value && !quizSettings.value.lockAnswerAfterSubmit) {
+      updateUserAnswer(key);
+    }
+    if (quizSettings.value.autoSubmit && !isCurrentAnswered.value) {
+      nextTick(submitAnswer);
+    }
   }
 }
+
+function formatMultipleChoiceAnswer(answers: string[]): string {
+  return answers.sort().join('');
+}
+
 function updateUserAnswer(answerKey: string) {
   const question = currentQuestion.value;
   if (!question) return;
-  const previousAnswer = question.userAnswer;
   question.userAnswer = answerKey;
   configService.updateQuestion(question.id, { userAnswer: answerKey });
   const isCorrect = compareAnswers(answerKey, question.answer);
   const questionIdStr = String(question.id);
   const wasWrongIndex = wrongQuestionIds.value.indexOf(questionIdStr);
-  const wasWrong = wasWrongIndex !== -1;
-  if (!isCorrect && !wasWrong) {
+  if (!isCorrect && wasWrongIndex === -1) {
     wrongQuestionIds.value.push(questionIdStr);
-  } else if (isCorrect && wasWrong) {
+  } else if (isCorrect && wasWrongIndex !== -1) {
     wrongQuestionIds.value.splice(wasWrongIndex, 1);
   }
-  // 播放正确或错误音效
   playAudio(isCorrect ? 'correct' : 'incorrect');
 }
+
 function submitAnswer() {
-  if (selectedAnswer.value === null || isAnswerLocked.value) return;
+  if ((isMultipleChoice.value && selectedAnswers.value.length === 0) || (!isMultipleChoice.value && selectedAnswers.value.length === 0)) {
+    return;
+  }
+  if (isAnswerLocked.value) return;
   const question = currentQuestion.value;
   if (!question) return;
-  const isCorrect = compareAnswers(selectedAnswer.value, question.answer);
-  if (question.userAnswer !== selectedAnswer.value) {
-    question.userAnswer = selectedAnswer.value;
-    const updateSuccess = configService.updateQuestion(question.id, { userAnswer: selectedAnswer.value });
+  let userAnswerStr: string | null = null;
+  if (isMultipleChoice.value) {
+    userAnswerStr = formatMultipleChoiceAnswer(selectedAnswers.value);
+  } else {
+    userAnswerStr = selectedAnswers.value[0] || null;
+  }
+  if (userAnswerStr === null) return;
+  const isCorrect = compareAnswers(userAnswerStr, question.answer);
+  if (question.userAnswer !== userAnswerStr) {
+    question.userAnswer = userAnswerStr;
+    const updateSuccess = configService.updateQuestion(question.id, { userAnswer: userAnswerStr });
     if (updateSuccess) {
       configService.updateQuizStats({
         totalAnswered: 1,
@@ -517,28 +604,32 @@ function submitAnswer() {
     setTimeout(nextQuestion, 1000);
   }
 }
+
 function previousQuestion() {
   if (canGoPrev.value) {
-    // playAudio('navigate'); // 移动到 loadQuestion 中播放
     loadQuestion(currentIndex.value - 1);
   }
 }
+
 function nextQuestion() {
   if (currentIndex.value < totalQuestions.value - 1) {
-    // playAudio('navigate'); // 移动到 loadQuestion 中播放
     loadQuestion(currentIndex.value + 1);
   } else if (!isQuizSubmitted.value) {
     showToast('已经是最后一题了', 'info');
   }
 }
+
 function jumpToQuestion(index: number) {
   if (index >= 0 && index < totalQuestions.value) {
-    // playAudio('navigate'); // 移动到 loadQuestion 中播放
     loadQuestion(index);
   }
 }
+
 function submitQuiz() {
   if (isQuizSubmitted.value) return;
+  if (selectedAnswers.value.length > 0 && !isCurrentAnswered.value) {
+    submitAnswer();
+  }
   isQuizSubmitted.value = true;
   showModalStatistics.value = true;
   localStorage.setItem('lastQuizStats', JSON.stringify({
@@ -547,11 +638,12 @@ function submitQuiz() {
     quizTitle: quizTitle.value
   }));
 }
+
 function redoQuiz() {
   if (window.confirm('确定要重做本次测验吗？所有答题记录将被清空。')) {
     isQuizSubmitted.value = false;
     wrongQuestionIds.value = [];
-    selectedAnswer.value = null;
+    selectedAnswers.value = [];
     isReviewingWrong.value = false;
     const quizData = configService.getQuizData();
     if (quizData) {
@@ -573,6 +665,7 @@ function redoQuiz() {
     showToast('测验已重置', 'success');
   }
 }
+
 function viewWrongQuestions() {
   if (wrongQuestionIds.value.length === 0) {
     showToast('没有错题记录', 'info');
@@ -592,6 +685,7 @@ function viewWrongQuestions() {
     showToast('没有找到错题详情', 'warning');
   }
 }
+
 function toggleNotesEditor() {
   isEditingNotes.value = !isEditingNotes.value;
   if (isEditingNotes.value) {
@@ -604,6 +698,7 @@ function toggleNotesEditor() {
     });
   }
 }
+
 function saveNotes() {
   if (!currentQuestion.value || !currentQuestion.value.id) return;
   const updatedNotes = notesEditText.value;
@@ -620,6 +715,7 @@ function saveNotes() {
     showToast('保存笔记失败', 'error');
   }
 }
+
 async function renderNotesForCurrentQuestion() {
   const question = currentQuestion.value;
   if (!question) {
@@ -628,36 +724,21 @@ async function renderNotesForCurrentQuestion() {
   }
   const noteContent = question.notes || '';
   const isGeneratingThisQuestion = isGenerating.value && activeGenerationIndex.value === currentIndex.value;
-  console.log(`[DEBUG] renderNotes: Index=${currentIndex.value}, isGeneratingThis=${isGeneratingThisQuestion}, Note Length=${noteContent.length}`);
-  // --- 新增日志: 原始笔记内容 ---
-  // console.log('[DEBUG] Original Note Content:\n', noteContent);
-  // --- 结束新增日志 ---
-
   try {
     let htmlContent = '';
     if (isGeneratingThisQuestion) {
-      htmlContent = noteContent
-        ? md.render(noteContent) // Directly render if generating, assuming it's Markdown
-        : '<p class="page-quiz__notes-placeholder">思考中...</p>';
-      // console.log('[DEBUG] Rendered HTML Output (Generating):\n', htmlContent);
-    }
-    else if (noteContent) {
-      // Render raw content directly, letting markdown-it handle paragraphs and lists
-      const preprocessedContent = preprocessLineBreaks(noteContent); // Apply preprocessing
-      // console.log('[DEBUG] Preprocessed Content for Rendering:\n', preprocessedContent);
-      htmlContent = md.render(preprocessedContent); // Render preprocessed content
-      // console.log('[DEBUG] Rendered HTML Output (Raw Note Rendered):\n', htmlContent);
+      htmlContent = noteContent ? md.render(noteContent) : '<p class="page-quiz__notes-placeholder">思考中...</p>';
+    } else if (noteContent) {
+      const preprocessedContent = preprocessLineBreaks(noteContent);
+      htmlContent = md.render(preprocessedContent);
     }
     renderedNotesHtml.value = htmlContent || '<p class="page-quiz__notes-placeholder">暂无笔记，可点击编辑或AI生成。</p>';
-    // --- 新增日志: 最终渲染的HTML ---
-    // console.log('[DEBUG] Final Rendered HTML Output:\n', renderedNotesHtml.value);
-    // --- 结束新增日志 ---
-
   } catch (error) {
     console.error('笔记 Markdown 渲染失败:', error);
     renderedNotesHtml.value = `<p class="page-quiz__notes-error">笔记内容解析失败: ${error instanceof Error ? error.message : '未知错误'}</p>`;
   }
 }
+
 function insertMarkdown(markup: string) {
   const textarea = notesTextareaRef.value;
   if (!textarea) return;
@@ -698,6 +779,7 @@ function insertMarkdown(markup: string) {
     autoResizeTextarea();
   });
 }
+
 function autoResizeTextarea() {
   const textarea = notesTextareaRef.value;
   if (textarea) {
@@ -711,6 +793,7 @@ function autoResizeTextarea() {
     });
   }
 }
+
 async function generateAINotes(
   question: Question | null,
   generationTargetIndex: number,
@@ -730,7 +813,6 @@ async function generateAINotes(
     return;
   }
   let lastRenderTime = 0;
-  const baseThrottleDelay = 150;
   let renderTimeoutId: number | null = null;
   let autoSaveTimeoutId: number | null = null;
   const autoSaveNotes = () => {
@@ -739,7 +821,6 @@ async function generateAINotes(
       if (activeGenerationIndex.value === generationTargetIndex && questionRef && questionRef.id && questionRef.notes) {
         console.log(`[LOG] Auto-saving notes for index ${generationTargetIndex}`);
         configService.saveNoteToQuestion(questionRef.id, questionRef.notes);
-      } else {
       }
     }, 2000);
   };
@@ -883,55 +964,45 @@ async function generateAINotes(
                 const parsed = JSON.parse(dataStr);
                 console.log(`[DEBUG] Parsed JSON:`, parsed);
                 let content = '';
-                let reasoningChunk = ''; // 新增: 用于存储reasoning片段
+                let reasoningChunk = '';
                 if (parsed.choices && parsed.choices.length > 0) {
-                  const delta = parsed.choices[0].delta; // 获取delta对象
-                  if (delta) { // 检查delta是否存在
+                  const delta = parsed.choices[0].delta;
+                  if (delta) {
                     if (delta.content) {
                       content = delta.content;
                     }
-                    // --- 新增: 提取reasoning ---
                     if (delta.reasoning) {
                       reasoningChunk = delta.reasoning;
                     }
-                    // --- 结束新增 ---
                   } else if (parsed.choices[0].message && parsed.choices[0].message.content) {
-                    // 处理非delta的内容 (流式传输中不太可能，但保留兼容性)
                     content = parsed.choices[0].message.content;
                   } else if (parsed.choices[0].text) {
-                    // 处理旧格式
                     content = parsed.choices[0].text;
                   }
-                } else if (parsed.delta && parsed.delta.content) { // 兼容某些API直接返回delta的情况
+                } else if (parsed.delta && parsed.delta.content) {
                   content = parsed.delta.content;
-                  // --- 新增: 提取reasoning (兼容结构) ---
                   if (parsed.delta.reasoning) {
                     reasoningChunk = parsed.delta.reasoning;
                   }
-                  // --- 结束新增 ---
-                } else if (parsed.delta && parsed.delta.text) { // 兼容旧格式
+                } else if (parsed.delta && parsed.delta.text) {
                   content = parsed.delta.text;
-                } else if (parsed.text) { // 兼容更旧的格式
+                } else if (parsed.text) {
                   content = parsed.text;
                 }
-                console.log(`[DEBUG] Extracted Content: '${content}', Reasoning: '${reasoningChunk}'`); // 修改日志输出
+                console.log(`[DEBUG] Extracted Content: '${content}', Reasoning: '${reasoningChunk}'`);
                 if (content) {
-                  // Check if this is the first content chunk
                   if (!hasContentStartedStreaming.value) {
                     console.log("[LOG] First content chunk received, hiding reasoning.");
-                    hasContentStartedStreaming.value = true; // <-- ADDED: Set flag on first content
+                    hasContentStartedStreaming.value = true;
                   }
                   handleStreamChunk(content, generationTargetIndex);
                 }
-                // --- 修改: 限制显示的Reasoning行数 ---
                 if (reasoningChunk) {
-                  reasoningContent.value += reasoningChunk; // 直接追加
+                  reasoningContent.value += reasoningChunk;
                 }
-                // --- 结束修改 ---
               } catch (e) {
                 if (dataStr.trim()) {
                   console.error('[ERROR] 解析流式 JSON 出错:', e, '原始行:', line, `(Index: ${generationTargetIndex})`);
-                } else {
                 }
               }
             } else if (line) {
@@ -970,14 +1041,16 @@ async function generateAINotes(
     handleCompletion(questionRef?.notes?.trim() ?? '', generationTargetIndex, `笔记生成失败: ${error instanceof Error ? error.message : '未知错误'}`);
   }
 }
+
 function triggerAINotesGeneration() {
   if (!currentQuestion.value || isQuizSubmitted.value) return;
   forceShowNotes.value = true;
   reasoningContent.value = '';
   renderedReasoningHtml.value = '';
-  hasContentStartedStreaming.value = false; // <-- ADDED: Reset flag on manual trigger
+  hasContentStartedStreaming.value = false;
   requestNoteGeneration(currentIndex.value, true);
 }
+
 async function triggerSync() {
   if (syncStatus.value === 'pending') return;
   syncStatus.value = 'pending';
@@ -1008,13 +1081,16 @@ async function triggerSync() {
     }
   }
 }
+
 function openSyncConfigModal() {
   showSyncConfigModal.value = true;
 }
+
 function handleSyncConfigSave(config: Partial<GithubConfig>) {
   console.log('同步配置已保存:', config);
   configService.updateGithubConfig(config);
 }
+
 async function handleSyncComplete(result: { action: string; quiz: string; overrideLocal?: boolean; success: boolean }) {
   console.log('同步完成', result);
   const syncResult = await configService.handleQuizSyncComplete(result);
@@ -1027,12 +1103,15 @@ async function handleSyncComplete(result: { action: string; quiz: string; overri
     }
   }
 }
+
 function openApiConfigModal() {
   showApiConfigModal.value = true;
 }
+
 function getCompleteApiConfig(): ApiConfig {
   return configService.getApiConfig();
 }
+
 function openCurrentQuestionEditor() {
   if (!quizSettings.value.canEditQuestion || isQuizSubmitted.value || !currentQuestion.value) {
     showToast('当前状态无法编辑题目', 'warning');
@@ -1041,10 +1120,12 @@ function openCurrentQuestionEditor() {
   questionToEdit.value = JSON.parse(JSON.stringify(currentQuestion.value));
   showEditModal.value = true;
 }
+
 function closeEditModal() {
   showEditModal.value = false;
   questionToEdit.value = null;
 }
+
 function handleSaveQuestion(updatedQuestionData: Partial<Question>) {
   if (!questionToEdit.value || !questionToEdit.value.id) {
     console.error("无法保存：编辑中的问题或其ID无效");
@@ -1058,8 +1139,6 @@ function handleSaveQuestion(updatedQuestionData: Partial<Question>) {
     if (localIndex !== -1) {
       localQuestions.value[localIndex] = { ...localQuestions.value[localIndex], ...updatedQuestionData };
     }
-    if (currentQuestion.value && currentQuestion.value.id === questionId) {
-    }
     if ('notes' in updatedQuestionData) {
       renderNotesForCurrentQuestion();
     }
@@ -1069,6 +1148,7 @@ function handleSaveQuestion(updatedQuestionData: Partial<Question>) {
     showToast('更新题目失败', 'error');
   }
 }
+
 function getOptionKey(optionText: string | unknown, index: number): string {
   if (typeof optionText === 'string') {
     const keyMatch = optionText.match(/^([A-Z])([.:)]|\s+|$)/i);
@@ -1078,6 +1158,7 @@ function getOptionKey(optionText: string | unknown, index: number): string {
   }
   return String.fromCharCode(65 + index);
 }
+
 function getOptionContent(optionText: string | unknown): string {
   if (typeof optionText !== 'string') return String(optionText);
   const keyMatch = optionText.match(/^([A-Z])([.:)]|\s)\s*/);
@@ -1086,12 +1167,21 @@ function getOptionContent(optionText: string | unknown): string {
   }
   return formatQuestionText(optionText);
 }
+
 function getOptionClass(optionKey: string): string {
   const question = currentQuestion.value;
   if (!question) return '';
   const classes = ['page-quiz__option'];
-  const isSelected = selectedAnswer.value === optionKey;
-  const isUserAnswer = question.userAnswer === optionKey;
+  const isSelected = selectedAnswers.value.includes(optionKey);
+  let isUserAnswer = false;
+  if (isMultipleChoice.value) {
+    const userAnswerStr = question.userAnswer;
+    if (userAnswerStr && typeof userAnswerStr === 'string') {
+      isUserAnswer = userAnswerStr.includes(optionKey);
+    }
+  } else {
+    isUserAnswer = question.userAnswer === optionKey;
+  }
   const isCorrect = isCorrectAnswerOption(question.answer, optionKey);
   const answered = isCurrentAnswered.value;
   const reviewMode = quizSettings.value.reviewMode;
@@ -1104,8 +1194,7 @@ function getOptionClass(optionKey: string): string {
     if (isCorrect) {
       if (reviewMode || showCorrect) {
         classes.push('page-quiz__option--correct');
-      }
-      else if (isUserAnswer) {
+      } else if (isUserAnswer) {
         classes.push('page-quiz__option--correct');
       }
     } else if (isUserAnswer) {
@@ -1117,11 +1206,20 @@ function getOptionClass(optionKey: string): string {
   }
   return classes.join(' ');
 }
+
 function getOptionKeyClass(optionKey: string): string {
   const question = currentQuestion.value;
   if (!question) return 'page-quiz__option-number';
   const isCorrect = isCorrectAnswerOption(question.answer, optionKey);
-  const isUserAnswer = question.userAnswer === optionKey;
+  let isUserAnswer = false;
+  if (isMultipleChoice.value) {
+    const userAnswerStr = question.userAnswer;
+    if (userAnswerStr && typeof userAnswerStr === 'string') {
+      isUserAnswer = userAnswerStr.includes(optionKey);
+    }
+  } else {
+    isUserAnswer = question.userAnswer === optionKey;
+  }
   const answered = isCurrentAnswered.value;
   const reviewMode = quizSettings.value.reviewMode;
   const showCorrect = quizSettings.value.showCorrectAnswerImmediately;
@@ -1135,30 +1233,66 @@ function getOptionKeyClass(optionKey: string): string {
   }
   return classes.join(' ');
 }
+
 function isCorrectAnswerOption(correctAnswer: Question['answer'], optionKey: string): boolean {
-  if (correctAnswer === undefined || correctAnswer === null || optionKey === '') return false;
   const optionIndex = optionKey.charCodeAt(0) - 65;
-  if (Array.isArray(correctAnswer)) {
-    return correctAnswer.some(ans => {
-      return ans === optionIndex;
-    });
-  } else if (typeof correctAnswer === 'number') {
-    return correctAnswer === optionIndex;
-  } else if (typeof correctAnswer === 'string') {
-    return correctAnswer.toUpperCase() === optionKey.toUpperCase();
-  }
-  console.warn("无法识别的答案格式:", correctAnswer, "对比值:", optionKey);
-  return false;
+  const correctIndices = normalizeAnswerToIndices(correctAnswer);
+  return correctIndices.includes(optionIndex);
 }
+
+// 将任意格式的正确答案标准化为数字索引数组（0-based）
+function normalizeAnswerToIndices(correctAnswer: Question['answer']): number[] {
+  if (correctAnswer === undefined || correctAnswer === null) return [];
+
+  // 已经是数字索引数组 [0,1,2]
+  if (Array.isArray(correctAnswer) && correctAnswer.length > 0 && typeof correctAnswer[0] === 'number') {
+    return [...correctAnswer] as number[];
+  }
+
+  // 字符串数组 ["A","B","C"]
+  if (Array.isArray(correctAnswer) && correctAnswer.length > 0 && typeof correctAnswer[0] === 'string') {
+    return correctAnswer.map(item => (item as string).charCodeAt(0) - 65).filter(i => !isNaN(i));
+  }
+
+  // 单个数字 2
+  if (typeof correctAnswer === 'number') {
+    return [correctAnswer];
+  }
+
+  // 字符串格式: "A" 或 "AB" 或 "A|B|C"
+  if (typeof correctAnswer === 'string') {
+    // 检查是否包含竖线分隔符
+    if (correctAnswer.includes('|')) {
+      return correctAnswer.split('|')
+        .map(part => part.trim())
+        .filter(part => part.length === 1 && /[A-Z]/i.test(part))
+        .map(ch => ch.toUpperCase().charCodeAt(0) - 65);
+    } else {
+      // 无分隔符，可能是 "ABC" 或 "A"
+      return correctAnswer.split('')
+        .filter(ch => /[A-Z]/i.test(ch))
+        .map(ch => ch.toUpperCase().charCodeAt(0) - 65);
+    }
+  }
+
+  return [];
+}
+
 function compareAnswers(selected: string | null | undefined, correctAnswer: Question['answer']): boolean {
-  if (selected === null || selected === undefined || correctAnswer === undefined || correctAnswer === null) {
-    return false;
-  }
-  return isCorrectAnswerOption(correctAnswer, selected);
+  if (!selected || selected === '') return false;
+
+  // 将用户答案字符串（如 "ABC"）转换为索引数组
+  const selectedIndices = selected.split('').map(ch => ch.charCodeAt(0) - 65).sort();
+  const correctIndices = normalizeAnswerToIndices(correctAnswer).sort();
+
+  if (selectedIndices.length !== correctIndices.length) return false;
+  return selectedIndices.every((val, idx) => val === correctIndices[idx]);
 }
+
 let touchStartX = 0;
 let touchStartY = 0;
 let isSwiping = false;
+
 function handleTouchStart(e: TouchEvent) {
   if (!quizSettings.value.swipeGestureEnabled) return;
   if (e.touches.length === 1) {
@@ -1167,6 +1301,7 @@ function handleTouchStart(e: TouchEvent) {
     isSwiping = false;
   }
 }
+
 function handleTouchMove(e: TouchEvent) {
   if (!quizSettings.value.swipeGestureEnabled || touchStartX === 0) return;
   if (e.touches.length === 1) {
@@ -1180,6 +1315,7 @@ function handleTouchMove(e: TouchEvent) {
     }
   }
 }
+
 function handleTouchEnd(e: TouchEvent) {
   if (!quizSettings.value.swipeGestureEnabled || touchStartX === 0) return;
   if (e.changedTouches.length === 1) {
@@ -1187,7 +1323,7 @@ function handleTouchEnd(e: TouchEvent) {
     const touchEndY = e.changedTouches[0].clientY;
     const diffX = touchStartX - touchEndX;
     const diffY = touchStartY - touchEndY;
-    const horizontalThreshold = window.innerWidth * 0.5; // 修改这里
+    const horizontalThreshold = window.innerWidth * 0.5;
     const verticalThreshold = window.innerHeight * 0.1;
     if (isSwiping || (Math.abs(diffX) > horizontalThreshold && Math.abs(diffY) < verticalThreshold)) {
       if (diffX > 0) {
@@ -1207,6 +1343,7 @@ function handleTouchEnd(e: TouchEvent) {
   touchStartY = 0;
   isSwiping = false;
 }
+
 function handleKeyPress(e: KeyboardEvent) {
   const activeElement = document.activeElement;
   const isInputActive = activeElement && (activeElement.tagName === 'TEXTAREA' || activeElement.tagName === 'INPUT' || (activeElement as HTMLElement).isContentEditable);
@@ -1258,12 +1395,15 @@ function handleKeyPress(e: KeyboardEvent) {
     }
   }
 }
+
 function setupKeyboardListeners() {
   document.addEventListener('keydown', handleKeyPress);
 }
+
 function removeKeyboardListeners() {
   document.removeEventListener('keydown', handleKeyPress);
 }
+
 function toggleTheme() {
   configService.toggleDarkMode();
   nextTick(() => {
@@ -1271,6 +1411,7 @@ function toggleTheme() {
     renderReasoning();
   });
 }
+
 function compareQuestionIds(a: Question, b: Question): number {
   const idA = String(a.id || '');
   const idB = String(b.id || '');
@@ -1281,14 +1422,17 @@ function compareQuestionIds(a: Question, b: Question): number {
   }
   return idA.localeCompare(idB);
 }
+
 function formatQuestionText(text: string | undefined): string {
   if (!text) return '';
   return text.replace(/^([A-Z])([.:)]|\s)\s*/, '').trim();
 }
+
 function formatQuestionTitle(title: string | undefined): string {
   if (!title) return '';
   return title.replace(/^\s*\d+\s*\.\s*/, '').trim();
 }
+
 function filterQuestionsByChapter(chapterTitle: string) {
   loading.value = true;
   error.value = null;
@@ -1322,7 +1466,6 @@ function filterQuestionsByChapter(chapterTitle: string) {
         }));
       }
     }
-    const questionNumber = 1;
     filteredQuestions = filteredQuestions.map((q, index) => ({
       ...q,
       id: q.id || `gen_${chapterTitle}_${index}`,
@@ -1343,7 +1486,7 @@ function filterQuestionsByChapter(chapterTitle: string) {
     localQuestions.value = filteredQuestions;
     error.value = filteredQuestions.length === 0 ? `章节 "${chapterTitle}" 下没有题目` : null;
     wrongQuestionIds.value = filteredQuestions
-      .filter(q => q.userAnswer !== null && q.userAnswer !== undefined && !compareAnswers(q.userAnswer, q.answer))
+      .filter(q => q.userAnswer !== null && q.userAnswer !== undefined && q.userAnswer !== '' && !compareAnswers(q.userAnswer, q.answer))
       .map(q => String(q.id));
     configService.setQuizConfig({ chapterIndex: chapterTitle });
     console.log(`Filtered ${filteredQuestions.length} questions. Random mode: ${quizSettings.value.randomMode}`);
@@ -1355,6 +1498,7 @@ function filterQuestionsByChapter(chapterTitle: string) {
     loading.value = false;
   }
 }
+
 function requestNoteGeneration(targetIndex: number, isManual: boolean) {
   console.log(`[LOG] 请求生成笔记: Index=${targetIndex}, Manual=${isManual}, CurrentGenIndex=${activeGenerationIndex.value}, isGenerating=${isGenerating.value}`);
   const questionToGenerate = localQuestions.value[targetIndex];
@@ -1377,30 +1521,21 @@ function requestNoteGeneration(targetIndex: number, isManual: boolean) {
   activeGenerationIndex.value = targetIndex;
   isGenerating.value = true;
   forceShowNotes.value = true;
-  // Reset states for the new generation request
   reasoningContent.value = '';
   renderedReasoningHtml.value = '';
-  hasContentStartedStreaming.value = false; // <-- ADDED: Reset flag at the start of request processing
-
+  hasContentStartedStreaming.value = false;
   showToast(`开始为题目 ${targetIndex + 1} 生成笔记...`, 'info');
   if (questionToGenerate) {
-    questionToGenerate.notes = ''; // Clear existing notes only if manually triggered or auto-gen on empty
-    // REMOVED Redundant call: requestNoteGeneration(targetIndex, isManual);
+    questionToGenerate.notes = '';
   } else {
-    // Handle case where questionToGenerate might be null after async checks (though unlikely here)
     console.error(`[ERROR] Cannot start generation for index ${targetIndex}, question data became unavailable.`);
     activeGenerationIndex.value = null;
     isGenerating.value = false;
     return;
   }
-
   if (currentIndex.value === targetIndex) {
-    renderNotesForCurrentQuestion(); // Render cleared notes or placeholder immediately
+    renderNotesForCurrentQuestion();
   }
-  let lastRenderTime = 0;
-  const baseThrottleDelay = 150;
-  const throttleDelay = baseThrottleDelay;
-  const pendingChunks = '';
   let renderTimeoutId: number | null = null;
   let autoSaveTimeoutId: number | null = null;
   const autoSaveNotes = () => {
@@ -1423,17 +1558,9 @@ function requestNoteGeneration(targetIndex: number, isManual: boolean) {
         renderTimeoutId = window.setTimeout(() => {
           if (activeGenerationIndex.value === streamTargetIndex && currentIndex.value === streamTargetIndex) {
             renderNotesForCurrentQuestion();
-            lastRenderTime = Date.now();
           }
           renderTimeoutId = null;
         }, fixedThrottleDelay);
-      } else if (now - lastRenderTime > fixedThrottleDelay * 4) {
-        clearTimeout(renderTimeoutId);
-        renderTimeoutId = null;
-        if (activeGenerationIndex.value === streamTargetIndex && currentIndex.value === streamTargetIndex) {
-          renderNotesForCurrentQuestion();
-          lastRenderTime = now;
-        }
       }
     }
   };
@@ -1441,8 +1568,8 @@ function requestNoteGeneration(targetIndex: number, isManual: boolean) {
     console.log(`[LOG] 生成完成: Index=${completedIndex}, Expected=${targetIndex}, Error=${error || 'None'}, Final Length=${finalNote?.length}`);
     if (renderTimeoutId) clearTimeout(renderTimeoutId);
     if (autoSaveTimeoutId) clearTimeout(autoSaveTimeoutId);
-    const questionToGenerate = localQuestions.value[completedIndex];
-    if (!questionToGenerate) {
+    const completedQuestion = localQuestions.value[completedIndex];
+    if (!completedQuestion) {
       console.warn(`[WARN] Generation completed for index ${completedIndex}, but the question object no longer exists.`);
       if (activeGenerationIndex.value === completedIndex) {
         activeGenerationIndex.value = null;
@@ -1456,19 +1583,17 @@ function requestNoteGeneration(targetIndex: number, isManual: boolean) {
       return;
     }
     try {
-      questionToGenerate.notes = finalNote;
-      if (questionToGenerate.id) {
+      completedQuestion.notes = finalNote;
+      if (completedQuestion.id) {
         console.log(`[LOG] 最终保存索引 ${completedIndex} 的笔记 (Length: ${finalNote?.length})`);
-        configService.saveNoteToQuestion(questionToGenerate.id, finalNote);
+        configService.saveNoteToQuestion(completedQuestion.id, finalNote);
         configService.saveQuizState();
       } else {
         console.error(`[ERROR] 无法为索引 ${completedIndex} 执行最终保存，缺少问题ID`);
       }
-      console.log(`[LOG] Resetting generation state: activeGenerationIndex from ${activeGenerationIndex.value} to null`);
       activeGenerationIndex.value = null;
       isGenerating.value = false;
-      reasoningContent.value = ''; // <-- ADDED: Clear reasoning on completion
-
+      reasoningContent.value = '';
       if (currentIndex.value === completedIndex) {
         console.log(`[LOG] Rendering final Markdown for currently viewed index ${completedIndex}`);
         await renderNotesForCurrentQuestion();
@@ -1489,23 +1614,22 @@ function requestNoteGeneration(targetIndex: number, isManual: boolean) {
       if (activeGenerationIndex.value === completedIndex) {
         activeGenerationIndex.value = null;
         isGenerating.value = false;
-        reasoningContent.value = ''; // <-- ADDED: Clear reasoning on error
+        reasoningContent.value = '';
       }
     } finally {
       if (activeGenerationIndex.value === completedIndex) {
         console.warn(`[WARN] Generation state was not reset before finally block for index ${completedIndex}. Resetting now.`);
         activeGenerationIndex.value = null;
         isGenerating.value = false;
-        reasoningContent.value = ''; // <-- ADDED: Clear reasoning in finally just in case
+        reasoningContent.value = '';
       }
       console.log("[LOG] 完成处理结束，检查下一个自动生成。");
       checkAndTriggerAutoGeneration();
     }
   };
-
-  // Call the actual generation function
   generateAINotes(questionToGenerate, targetIndex, handleCompletion);
 }
+
 function checkAndTriggerAutoGeneration() {
   console.log("[LOG] 自动生成检查被调用。");
   if (!apiConfig.value.enabled || !apiConfig.value.autoGenerate || isQuizSubmitted.value || isGenerating.value || activeGenerationIndex.value !== null) {
@@ -1526,6 +1650,7 @@ function checkAndTriggerAutoGeneration() {
     console.log("[LOG] 没有更多问题可自动生成。");
   }
 }
+
 onMounted(() => {
   initializeQuiz();
   setupKeyboardListeners();
@@ -1539,6 +1664,7 @@ onMounted(() => {
     console.warn("未能找到问题区域元素来绑定触摸事件。");
   }
 });
+
 onUnmounted(() => {
   removeKeyboardListeners();
   window.removeEventListener('resize', autoResizeTextarea);
@@ -1550,11 +1676,12 @@ onUnmounted(() => {
     questionAreaElement.removeEventListener('touchend', handleTouchEnd);
   }
 });
+
 watch(selectedChapter, (newChapter, oldChapter) => {
   if (newChapter !== oldChapter) {
     console.log(`章节切换到: ${newChapter}`);
     currentIndex.value = 0;
-    selectedAnswer.value = null;
+    selectedAnswers.value = [];
     isQuizSubmitted.value = false;
     isReviewingWrong.value = false;
     filterQuestionsByChapter(newChapter);
@@ -1566,28 +1693,28 @@ watch(selectedChapter, (newChapter, oldChapter) => {
     }
   }
 });
+
 watch(notesEditText, () => {
   if (isEditingNotes.value) {
     autoResizeTextarea();
   }
 });
+
 watch(isDarkMode, () => {
   nextTick(() => {
     renderNotesForCurrentQuestion();
     renderReasoning();
   });
 });
+
 function renderReasoning() {
   console.log(`[DEBUG] renderReasoning called. Content length: ${reasoningContent.value?.length}`);
   if (reasoningContent.value) {
     try {
-      // Preprocess line breaks before rendering
       const preprocessedContent = preprocessLineBreaks(reasoningContent.value);
-      renderedReasoningHtml.value = md.render(preprocessedContent); // Use preprocessed content
+      renderedReasoningHtml.value = md.render(preprocessedContent);
       console.log(`[DEBUG] Reasoning rendered successfully. HTML length: ${renderedReasoningHtml.value?.length}`);
-      // --- MODIFIED SCROLL LOGIC ---
       nextTick(() => {
-        // Target the inner content div now
         const scrollableContent = reasoningContentRef.value;
         if (scrollableContent) {
           scrollableContent.scrollTop = scrollableContent.scrollHeight;
@@ -1596,9 +1723,8 @@ function renderReasoning() {
           console.warn("[WARN] reasoningContentRef not available for scrolling.");
         }
       });
-      // --- END MODIFIED SCROLL LOGIC ---
     } catch (error) {
-      console.error("Reasoning Markdown rendering failed:", error); // Restore error message
+      console.error("Reasoning Markdown rendering failed:", error);
       renderedReasoningHtml.value = `<p class="page-quiz__notes-error">思考过程解析失败: ${error instanceof Error ? error.message : '未知错误'}</p>`;
     }
   } else {
@@ -1606,23 +1732,22 @@ function renderReasoning() {
     console.log("[DEBUG] Reasoning content empty, cleared HTML.");
   }
 }
+
 watch(reasoningContent, renderReasoning);
 
-// 改回使用文件加载的 playAudio 函数
+const lastSoundPlayed = reactive({ name: '', time: 0 });
+
 const playAudio = (soundName: 'select' | 'correct' | 'incorrect' | 'navigate') => {
   const settings = configService.getUiSettings();
   if (!settings.soundEffectsEnabled) return;
-
-  // 避免快速重复播放同一个音效
   const now = Date.now();
   if (lastSoundPlayed.name === soundName && now - lastSoundPlayed.time < 100) {
     return;
   }
-
   try {
-    const audio = new Audio(`/audio/${soundName}.mp3`); // 使用文件路径
+    const audio = new Audio(`/audio/${soundName}.mp3`);
     audio.volume = settings.soundVolume;
-    audio.play().catch(err => console.warn('播放音效失败:', err)); // 添加播放错误捕获
+    audio.play().catch(err => console.warn('播放音效失败:', err));
     lastSoundPlayed.name = soundName;
     lastSoundPlayed.time = now;
   } catch (err) {
@@ -1630,37 +1755,20 @@ const playAudio = (soundName: 'select' | 'correct' | 'incorrect' | 'navigate') =
   }
 };
 
-// 存储上次播放的音效信息，用于防止快速重复播放 (移动到顶层作用域)
-const lastSoundPlayed = reactive({ name: '', time: 0 });
-
-// New ref for reasoning container
-const reasoningContainerRef = ref<HTMLDivElement | null>(null);
-const reasoningContentRef = ref<HTMLDivElement | null>(null); // Add ref for the scrollable content
-
-// Refactored function using a three-step approach
 function preprocessLineBreaks(text: string | undefined): string {
   if (!text) return '';
-
-  // Step 1: Convert Markdown Lists to HTML
   const linesWithHtmlLists = convertMdListsToHtml(text.split('\n'));
-
-  // Step 2: Convert Inline Markdown (e.g., Bold) to HTML
   const linesWithInlineHtml = convertInlineMdToHtml(linesWithHtmlLists);
-
-  // Step 3: Add <br> tags where appropriate
-  const linesWithBreaks = addBrTags(linesWithInlineHtml); // Pass the result of step 2
-
-  return linesWithBreaks.join('\n'); // Join the final result
+  const linesWithBreaks = addBrTags(linesWithInlineHtml);
+  return linesWithBreaks.join('\n');
 }
 
-// Helper function for Step 1: Convert MD Lists to HTML (Simplified)
 function convertMdListsToHtml(lines: string[]): string[] {
   const resultLines: string[] = [];
   let currentListType: 'ul' | 'ol' | null = null;
   let inListItem = false;
   const ulMarkerRegex = /^(\s*[-*+]\s+)/;
   const olMarkerRegex = /^(\s*\d+\.\s+)/;
-
   const closeListItem = () => {
     if (inListItem) {
       resultLines.push('</li>');
@@ -1678,7 +1786,6 @@ function convertMdListsToHtml(lines: string[]): string[] {
     const match = line.match(markerRegex);
     return match ? line.substring(match[0].length) : line;
   };
-
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
     const trimmedLine = line.trim();
@@ -1686,18 +1793,15 @@ function convertMdListsToHtml(lines: string[]): string[] {
     const olMatch = trimmedLine.match(olMarkerRegex);
     const isUlItem = ulMatch !== null;
     const isOlItem = olMatch !== null;
-
     if (trimmedLine.length === 0) {
       closeList();
       resultLines.push(line);
       continue;
     }
-
     if (isUlItem || isOlItem) {
       const listType = isUlItem ? 'ul' : 'ol';
       const markerRegex = isUlItem ? ulMarkerRegex : olMarkerRegex;
       const lineContent = getLineContent(line, markerRegex);
-
       if (currentListType && currentListType !== listType) closeList();
       if (!currentListType) {
         resultLines.push(`<${listType}>`);
@@ -1715,26 +1819,19 @@ function convertMdListsToHtml(lines: string[]): string[] {
   return resultLines;
 }
 
-// Helper function for Step 2: Convert Inline Markdown (Bold) to HTML
 function convertInlineMdToHtml(lines: string[]): string[] {
   const resultLines: string[] = [];
-  // Regex for **bold** and __bold__ (non-greedy)
   const boldRegexAsterisk = /\*\*(.+?)\*\*/g;
   const boldRegexUnderscore = /__(.+?)__/g;
-
   for (const line of lines) {
     let processedLine = line;
-    // Apply replacements sequentially
     processedLine = processedLine.replace(boldRegexAsterisk, '<strong>$1</strong>');
     processedLine = processedLine.replace(boldRegexUnderscore, '<strong>$1</strong>');
-    // Add more replacements here for italics, etc. if needed
     resultLines.push(processedLine);
   }
   return resultLines;
 }
 
-
-// Helper function for Step 3: Add <br> tags (Refactored Logic)
 function addBrTags(lines: string[]): string[] {
   const resultLines: string[] = [];
   const blockStartTagRegex = new RegExp(
@@ -1748,19 +1845,15 @@ function addBrTags(lines: string[]): string[] {
   const tableSyntaxRegex = /^\s*\|.*\|?\s*$/;
   const onlyTagsRegex = /^\s*<[^>]+>\s*$/;
   const endsWithBrRegex = /<br\s*\/?>$/i;
-
   for (let i = 0; i < lines.length; i++) {
     const currentLine = lines[i];
     const currentTrimmedEndLine = currentLine.trimEnd();
     const currentTrimmed = currentTrimmedEndLine.trim();
-
     let lineToAdd = currentTrimmedEndLine;
     let addBr = false;
-
     if (i + 1 < lines.length) {
       const nextLine = lines[i + 1];
       const nextTrimmed = nextLine.trim();
-
       addBr = (
         currentTrimmed.length > 0 &&
         nextTrimmed.length > 0 &&
@@ -1773,15 +1866,11 @@ function addBrTags(lines: string[]): string[] {
         !tableSyntaxRegex.test(nextTrimmed)
       );
     }
-
     if (addBr) {
       lineToAdd += '<br>';
     }
-
     resultLines.push(lineToAdd);
   }
-
   return resultLines;
 }
-
 </script>

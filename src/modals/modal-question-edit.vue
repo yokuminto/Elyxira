@@ -109,6 +109,10 @@ function removeOption(index: number) {
 
 // 保存编辑后的问题
 function saveQuestion() {
+  // 在 saveQuestion 中，将答案统一为数字索引数组
+  if (Array.isArray(editedQuestion.answer) && editedQuestion.answer.length && typeof editedQuestion.answer[0] === 'string') {
+    editedQuestion.answer = editedQuestion.answer.map((s) => (s as string).charCodeAt(0) - 65);
+  }
   const questionToSave: Question = JSON.parse(JSON.stringify(editedQuestion));
   emit('save', questionToSave);
 }

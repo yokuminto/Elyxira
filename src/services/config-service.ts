@@ -148,7 +148,7 @@ export interface Question {
   id?: string
   title: string
   options: string[]
-  answer: number | number[] | string
+  answer: number | number[] | string | string[]
   explanation?: string
   notes?: string
   question?: string
@@ -425,7 +425,7 @@ class ConfigService {
 
     const activeApiPresetName =
       storedSettings.activeApiPresetName &&
-      apiPresets.some((p) => p.name === storedSettings.activeApiPresetName)
+        apiPresets.some((p) => p.name === storedSettings.activeApiPresetName)
         ? storedSettings.activeApiPresetName
         : apiPresets[0]?.name || 'Default' // 如果无效，则使用第一个预设的名称
 
@@ -1553,9 +1553,9 @@ class ConfigService {
       // 过滤出所有JSON文件
       const quizFiles = Array.isArray(contents)
         ? contents.filter(
-            (file) =>
-              file.type === 'file' && (file.name.endsWith('.json') || file.name.endsWith('.txt')),
-          )
+          (file) =>
+            file.type === 'file' && (file.name.endsWith('.json') || file.name.endsWith('.txt')),
+        )
         : []
 
       // 没有找到任何题库文件
