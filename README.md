@@ -1,4 +1,4 @@
-<img src="./asset/banner.png">
+<img src="public/images/banner.png">
 
 <div align="center">
 
@@ -94,3 +94,15 @@ D. 选项D
 ## 📜 开源协议
 
 本项目采用 [MIT 协议](LICENSE.md) 授权。
+
+---
+
+<div align="center">
+<a href="https://thfmu.com/" title="东方医学">
+  <img src="public/images/thmed-red.png" width="180" alt="THMED">
+</a>
+  <br><b>欢迎来到东方医学(THMED)！</b><br>
+  东方医学致力于医学病案交流、循证体系建构与文化传播<br>
+  提供东方世界观作品与医学专业课的交流平台<br>
+  我们希望您在这里度过一段美好的时光～
+</div>
