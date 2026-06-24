@@ -121,30 +121,26 @@ export function initStorage(): Promise<void> {
   return _ready
 }
 
-function _ensureReady(): Record<string, string> {
-  if (!_notes) throw new Error('Storage not initialized — call initStorage() first')
-  return _notes
-}
-
 // ─── 公开 API ─────────────────────────────────────────────────
 
 export function getNotes(): Record<string, string> {
-  return { ..._ensureReady() }
+  return _notes ? { ..._notes } : {}
 }
 
 export async function setNotes(notes: Record<string, string>): Promise<void> {
+  await initStorage()
   _notes = { ...notes }
   await _dbSet(NOTES_KEY, 'data', _notes)
 }
 
 export async function setNote(id: string, content: string): Promise<void> {
-  _ensureReady()
+  await initStorage()
   _notes![id] = content
   await _dbSet(NOTES_KEY, 'data', _notes)
 }
 
 export async function mergeNotes(incoming: Record<string, string>): Promise<void> {
-  _ensureReady()
+  await initStorage()
   Object.assign(_notes!, incoming)
   await _dbSet(NOTES_KEY, 'data', _notes)
 }
@@ -155,11 +151,13 @@ export function getTags(): Record<string, Record<string, string>> {
 }
 
 export async function setTags(tags: Record<string, Record<string, string>>): Promise<void> {
+  await initStorage()
   _tags = JSON.parse(JSON.stringify(tags))
   await _dbSet(TAGS_KEY, 'data', _tags)
 }
 
 export async function mergeTags(incoming: Record<string, Record<string, string>>): Promise<void> {
+  await initStorage()
   if (!_tags) _tags = {}
   Object.assign(_tags, incoming)
   await _dbSet(TAGS_KEY, 'data', _tags)
