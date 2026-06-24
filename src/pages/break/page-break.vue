@@ -155,6 +155,14 @@
           >
             {{ batchGenerating ? '生成中...' : (pendingNoteCount > 0 ? '一键生成全部笔记' : '无需生成') }}
           </button>
+          <button
+            v-if="pendingNoteCount === 0 || batchFailedCount > 0"
+            class="break-btn--primary break-btn--tag"
+            :disabled="tagRegenRunning"
+            @click="startTagRegen"
+          >
+            {{ tagRegenRunning ? `补全中 ${tagRegenProgress}/${tagRegenTotal}` : '补全缺失标签' }}
+          </button>
         </div>
 
         <button class="break-btn--primary" @click="onNext">继续推进</button>
@@ -235,7 +243,7 @@ import ModalBreakSettings from './components/ModalBreakSettings.vue'
 import configService from '@/services/config-service'
 import { showToast } from '@/utils/toast'
 import { useBreakSync } from './composables/useBreakSync'
-import { batchGenerateNotes } from './composables/useBreakAI'
+import { batchGenerateNotes, regenerateMissingTags } from './composables/useBreakAI'
 import { getNotes, initStorage } from './composables/breakStorage'
 
 const router = useRouter()
@@ -247,6 +255,9 @@ const batchProgress = ref(0)
 const batchTotal = ref(0)
 const batchFailedCount = ref(0)
 const batchRound = ref(0)
+const tagRegenRunning = ref(false)
+const tagRegenProgress = ref(0)
+const tagRegenTotal = ref(0)
 
 const { initSync } = useBreakSync()
 
@@ -474,6 +485,24 @@ async function startBatchGenerate() {
   } finally {
     batchGenerating.value = false
     batchRound.value++
+  }
+}
+
+async function startTagRegen() {
+  if (tagRegenRunning.value) return
+  tagRegenRunning.value = true
+  tagRegenProgress.value = 0
+  tagRegenTotal.value = 0
+  try {
+    const r = await regenerateMissingTags(gameState.allQuestions, (done, total) => {
+      tagRegenProgress.value = done
+      tagRegenTotal.value = total
+    })
+    showToast(`标签补全：提取 ${r.extracted}，重新生成 ${r.regenerated}，失败 ${r.failed}`, 'success')
+  } catch (e) {
+    showToast(`补全失败: ${e instanceof Error ? e.message : '未知错误'}`, 'error')
+  } finally {
+    tagRegenRunning.value = false
   }
 }
 

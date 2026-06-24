@@ -405,6 +405,10 @@ body:has(.break-overlay) {
   background: var(--c-green, #059669);
 }
 
+.break-btn--tag {
+  background: var(--c-indigo, #3a42d5);
+}
+
 .break-content__batch-ai {
   display: flex;
   flex-direction: column;

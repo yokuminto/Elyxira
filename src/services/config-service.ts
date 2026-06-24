@@ -990,7 +990,7 @@ class ConfigService {
   /**
    * 导入配置
    */
-  public importConfig(configData: unknown): boolean {
+  public async importConfig(configData: unknown): Promise<boolean> {
     try {
       if (!this.validateConfigData(configData)) {
         showToast('无效的配置文件格式或版本不兼容', 'error')
@@ -1091,10 +1091,10 @@ class ConfigService {
         localStorage.setItem('break_repo', JSON.stringify(typedConfig.breakRepo))
       }
       if (typedConfig.breakNotes) {
-        mergeNotes(typedConfig.breakNotes as Record<string, string>).catch(() => {})
+        await mergeNotes(typedConfig.breakNotes as Record<string, string>)
       }
       if (typedConfig.breakTags) {
-        mergeTags(typedConfig.breakTags as Record<string, Record<string, string>>).catch(() => {})
+        await mergeTags(typedConfig.breakTags as Record<string, Record<string, string>>)
       }
       if (typedConfig.breakStats) {
         _mergeLocalStorage('break_stats', typedConfig.breakStats as Record<string, unknown>)
@@ -2262,7 +2262,7 @@ class ConfigService {
     try {
       const text = await file.text()
       const configData = JSON.parse(text)
-      return this.importConfig(configData)
+      return await this.importConfig(configData)
     } catch (e) {
       console.error('Error reading config file:', e)
       return false

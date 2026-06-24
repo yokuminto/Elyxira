@@ -6,7 +6,7 @@
  */
 
 import configService, { type Question } from '@/services/config-service'
-import { mergeNotes, mergeTags, getNotes } from './breakStorage'
+import { mergeNotes, mergeTags, getNotes, getTags } from './breakStorage'
 
 // ─── <think> 流式过滤器（每个 generateOneNote 有独立缓冲区）──────
 
@@ -301,4 +301,72 @@ export async function batchGenerateNotes(
     failed: failedIds.length,
     failedIds,
   }
+}
+
+/**
+ * 补全缺失标签：扫描所有笔记，对没标签的题先尝试从笔记内容提取，
+ * 提取不到的通过 AI 重新生成。
+ * @param questions 题目池（按 ID 查找题目）
+ * @param onProgress 进度回调
+ */
+export async function regenerateMissingTags(
+  questions: Question[],
+  onProgress?: (done: number, total: number) => void,
+): Promise<{ extracted: number; regenerated: number; failed: number }> {
+  const notes = getNotes()
+  const tags = getTags()
+  const qMap = new Map<string, Question>()
+  for (const q of questions) { if (q.id) qMap.set(q.id, q) }
+
+  // 找出有笔记但无标签的题
+  const missing = Object.keys(notes).filter(id => notes[id] && !tags[id])
+  if (missing.length === 0) return { extracted: 0, regenerated: 0, failed: 0 }
+
+  // 第一遍：从已有笔记中提取标签（同步，不需要 AI）
+  let extracted = 0
+  const needRegen: string[] = []
+  for (const id of missing) {
+    const existingTags = extractTags(notes[id])
+    if (existingTags) {
+      tags[id] = existingTags
+      extracted++
+    } else {
+      needRegen.push(id)
+    }
+  }
+
+  // 第二遍：提取不到的并发生成
+  let regenerated = 0
+  let failed = 0
+  const total = missing.length
+  let done = extracted
+
+  if (needRegen.length > 0) {
+    onProgress?.(done, total)
+    const results = await Promise.allSettled(
+      needRegen.map(async (id) => {
+        const q = qMap.get(id)
+        if (!q) { failed++; done++; onProgress?.(done, total); return }
+        try {
+          const note = await generateOneNote(q)
+          if (note) {
+            notes[id] = note
+            const newTags = extractTags(note)
+            if (newTags) tags[id] = newTags
+            regenerated++
+          } else {
+            failed++
+          }
+        } catch { failed++ }
+        done++
+        onProgress?.(done, total)
+      }),
+    )
+  }
+
+  // 一次性落盘
+  await mergeNotes(notes)
+  await mergeTags(tags)
+
+  return { extracted, regenerated, failed }
 }
