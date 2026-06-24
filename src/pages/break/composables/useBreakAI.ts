@@ -263,7 +263,7 @@ export async function batchGenerateNotes(
     return questions.some(q => q.id === id)
   })
 
-  if (pending.length === 0) return 0
+  if (pending.length === 0) return { succeeded: 0, failed: 0, failedIds: [] }
 
   // 2. 构建题目映射
   const qMap = new Map<string, Question>()
