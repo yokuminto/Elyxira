@@ -1,0 +1,44 @@
+[
+  {
+    "id": "xianzhou",
+    "name": "仙舟同盟",
+    "thresholds": [
+      {
+        "count": 2,
+        "effects": [
+          { "type": "hp_recovery_per_node", "value": 5 }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "touhou",
+    "name": "幻想乡",
+    "thresholds": [
+      {
+        "count": 2,
+        "effects": [
+          { "type": "genki_on_elite_perfect", "value": 1 }
+        ]
+      },
+      {
+        "count": 4,
+        "effects": [
+          { "type": "genki_on_elite_perfect", "value": 2 }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "genius",
+    "name": "天才俱乐部",
+    "thresholds": [
+      {
+        "count": 2,
+        "effects": [
+          { "type": "star_jade_per_perfect", "value": 5 }
+        ]
+      }
+    ]
+  }
+]
