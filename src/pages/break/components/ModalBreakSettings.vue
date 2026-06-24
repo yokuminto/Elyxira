@@ -45,6 +45,14 @@
           <span class="modal__setting-item-name">GitHub 仓库配置</span>
           <button class="modal__button modal__button--primary modal__button--sm" @click="showRepoConfig = true">打开</button>
         </div>
+        <div class="modal__setting-item">
+          <span class="modal__setting-item-name">配置迁移</span>
+          <div class="modal__form-actions">
+            <button class="modal__button modal__button--primary modal__button--sm" @click="exportConfig">导出配置</button>
+            <button class="modal__button modal__button--secondary modal__button--sm" @click="triggerImport">导入配置</button>
+          </div>
+        </div>
+        <input ref="importInputRef" type="file" accept=".json" style="display:none" @change="handleImport" />
       </div>
     </div>
     <ModalBreakRepo :show="showRepoConfig" @close="showRepoConfig = false" />
@@ -59,12 +67,14 @@
 import { reactive, ref } from 'vue'
 import BaseModal from '@/modals/modal-base.vue'
 import configService from '@/services/config-service'
+import { showToast } from '@/utils/toast'
 import ModalBreakRepo from './ModalBreakRepo.vue'
 
 const sp = defineProps<{ show: boolean }>()
 defineEmits<{ (e: 'close'): void }>()
 
 const showRepoConfig = ref(false)
+const importInputRef = ref<HTMLInputElement>()
 
 const fonts = [
   { name: '系统默认 (sans-serif)', value: 'sans-serif' },
@@ -103,6 +113,20 @@ function save() {
     quizSettings: configService.getQuizSettings(),
     debugEnabled: configService.isDebugEnabled(),
   })
+}
+
+function exportConfig() { configService.exportConfig() }
+function triggerImport() { importInputRef.value?.click() }
+
+async function handleImport(event: Event) {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  if (!file) return
+  const ok = await configService.importConfigFromFile(file)
+  if (ok) {
+    showToast('配置导入成功，即将刷新', 'success')
+    setTimeout(() => location.reload(), 1000)
+  }
 }
 </script>
 
