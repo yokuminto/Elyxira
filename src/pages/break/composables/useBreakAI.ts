@@ -34,7 +34,13 @@ class ThinkFilter {
 
   /** 流结束时的最终排空 */
   flush(): { content: string; reasoning: string } {
-    return this.feed('')
+    const raw = this.buf
+    this.buf = ''
+    if (this.inThink) {
+      this.inThink = false
+      return { content: '', reasoning: raw }
+    }
+    return { content: raw, reasoning: '' }
   }
 
   /**
