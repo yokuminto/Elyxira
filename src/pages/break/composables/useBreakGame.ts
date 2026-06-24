@@ -19,6 +19,7 @@ import type {
   ShopOption,
 } from '../types/break-types'
 import { ShopBuffType, NODE_TOUGHNESS, NODE_STAR_JADE_REWARD, NODES_PER_PHASE, TOTAL_NODES, CHARACTER_RECRUIT_COST } from '../types/break-types'
+import { getNotes } from './breakStorage'
 
 // ─── 角色池（内联自 assets/data/break-characters.json）────────
 
@@ -300,14 +301,41 @@ let _bossRewardClaimedNode = -1 // 防止 Boss 奖励被反复领取
     } catch { /* ignore stats storage errors */ }
   }
 
-  /** 为节点随机选题 — 商店/补给节点返回 null */
-  function _pickQuestionForNode(
-    node: BreakNode,
-    questions: Question[],
-  ): Question | null {
-    if (node.type === 'shop' || node.type === 'supply') return null
-    if (questions.length === 0) return null
-    return questions[Math.floor(Math.random() * questions.length)]
+  /** 按 ID 从题目池中查找 */
+  function _getQuestionById(id: string): Question | null {
+    if (!id) return null
+    return gameState.allQuestions.find(q => q.id === id) ?? null
+  }
+
+  // ─── 题目池管理 ────────────────────────────────────────────
+
+  /** 本次游戏的共享题目池（开局预抽，节点消耗） */
+  let _sessionPool: string[] = []
+
+  /** 从共享池抽一题；池空时回退到全题库随机 */
+  function _drawFromPool(): Question | null {
+    // 从预抽池消费
+    while (_sessionPool.length > 0) {
+      const id = _sessionPool.shift()!
+      const q = _getQuestionById(id)
+      if (q) return _syncNotesToQuestion(q)
+    }
+    // 池空 → 全题库随机
+    if (gameState.allQuestions.length === 0) return null
+    return _syncNotesToQuestion(gameState.allQuestions[Math.floor(Math.random() * gameState.allQuestions.length)])
+  }
+
+  /** 同步 localStorage 最新笔记到题目对象上（返回新对象触发 Vue 响应式） */
+  function _syncNotesToQuestion(q: Question): Question {
+    if (!q.id) return q
+    try {
+      const notes = getNotes()
+      if (notes[q.id]) {
+        return { ...q, notes: notes[q.id] }
+      }
+      console.log('[BreakSync] ❌ no local note for:', q.id, '(total notes:', Object.keys(notes).length, ')')
+    } catch { /* ignore */ }
+    return q
   }
 
   /** 从角色池随机选取 N 个角色（所有角色等概率，不排除已有） */
@@ -408,14 +436,21 @@ let _bossRewardClaimedNode = -1 // 防止 Boss 奖励被反复领取
     if (!questions || questions.length === 0) return false
 
     const nodes = _generateNodes()
-    const firstQuestion = _pickQuestionForNode(nodes[0], questions)
+
+    // 开局预抽共享题目池：总击破值 × 1.5（含错题重答缓冲），不重复
+    const totalToughness = nodes.reduce((sum, n) =>
+      sum + (n.type === 'shop' || n.type === 'supply' ? 0 : n.toughness), 0)
+    const poolSize = Math.min(Math.ceil(totalToughness * 1.5), questions.length)
+    const shuffled = [...questions].sort(() => Math.random() - 0.5)
+    const poolIds = shuffled.slice(0, poolSize).map(q => q.id ?? '').filter(Boolean)
+    _sessionPool = [...poolIds]
 
     // 补给节点 (index 0) 自动触发 showSupply
     const isSupply = nodes[0].type === 'supply'
 
     Object.assign(gameState, {
       allQuestions: questions,
-      currentQuestion: firstQuestion,
+      currentQuestion: null, // 补给节点无题，初见时 _drawFromPool 补
       selectedAnswer: null,
       isAnswerSubmitted: false,
       isAnswerCorrect: false,
@@ -430,6 +465,7 @@ let _bossRewardClaimedNode = -1 // 防止 Boss 奖励被反复领取
         ...createDefaultProgress(),
         nodes,
         isStarted: true,
+        preDrawnQuestionIds: poolIds,
       },
     })
     _maxComboValue.value = 0
@@ -475,11 +511,6 @@ let _bossRewardClaimedNode = -1 // 防止 Boss 奖励被反复领取
 
     // 记录题目答题统计
     if (question.id) _recordQuestionStats(question.id, isCorrect)
-
-    // 记录本次见过的题目 ID
-    if (question.id && !gameState.progress.seenQuestionIds.includes(question.id)) {
-      gameState.progress.seenQuestionIds.push(question.id)
-    }
 
     const p = gameState.progress
     const idx = p.currentNodeIndex
@@ -636,9 +667,9 @@ let _bossRewardClaimedNode = -1 // 防止 Boss 奖励被反复领取
     const p = gameState.progress
     const currentNode = p.nodes[p.currentNodeIndex]
 
-    // 当前节点未完成 → 同节点新题
+    // 当前节点未完成 → 同节点新题（从共享池抽，池空则全题库随机）
     if (!currentNode.isComplete) {
-      const nextQ = _pickQuestionForNode(currentNode, gameState.allQuestions)
+      const nextQ = _drawFromPool()
       gameState.currentQuestion = nextQ
       gameState.selectedAnswer = null
       gameState.isAnswerSubmitted = false
@@ -760,8 +791,8 @@ let _bossRewardClaimedNode = -1 // 防止 Boss 奖励被反复领取
       return
     }
 
-    // 普通/精英/Boss(未击败)/奖励节点 → 出题
-    const nextQ = _pickQuestionForNode(nextNode, gameState.allQuestions)
+    // 普通/精英/Boss(未击败)/奖励节点 → 从共享池抽题
+    const nextQ = _drawFromPool()
     Object.assign(gameState, {
       progress: baseProgress,
       currentQuestion: nextQ,
@@ -1045,6 +1076,6 @@ export function createDefaultProgress(): BreakProgress {
     isNodePerfect: true,
     extraBreakCharges: 0,
     starJadeBoostActive: false,
-    seenQuestionIds: [],
+    preDrawnQuestionIds: [],
   }
 }

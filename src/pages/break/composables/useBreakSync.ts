@@ -9,6 +9,7 @@
 import { reactive, readonly } from 'vue'
 import { showToast } from '@/utils/toast'
 import type { GithubConfig } from '@/services/config-service'
+import { getNotes, setNotes, getTags, setTags, mergeNotes, mergeTags } from './breakStorage'
 
 // ─── 仓库配置接口 ─────────────────────────────────────────────
 
@@ -188,7 +189,7 @@ export function useBreakSync() {
     if (!Array.isArray(files)) return 0
 
     const mdFiles = files.filter(f => f.name.endsWith('.md'))
-    const storage = JSON.parse(localStorage.getItem('break_notes') || '{}')
+    const storage = getNotes()
     let pulled = 0
 
     for (const f of mdFiles) {
@@ -204,7 +205,7 @@ export function useBreakSync() {
     }
 
     if (pulled > 0) {
-      localStorage.setItem('break_notes', JSON.stringify(storage))
+      await setNotes(storage)
     }
     return pulled
   }
@@ -223,7 +224,7 @@ export function useBreakSync() {
     if (!Array.isArray(files)) return 0
 
     const jsonFiles = files.filter(f => f.name.endsWith('.json'))
-    const storage = JSON.parse(localStorage.getItem('break_tags') || '{}')
+    const storage = getTags()
     let pulled = 0
 
     for (const f of jsonFiles) {
@@ -238,7 +239,7 @@ export function useBreakSync() {
     }
 
     if (pulled > 0) {
-      localStorage.setItem('break_tags', JSON.stringify(storage))
+      await setTags(storage)
     }
     return pulled
   }
@@ -280,8 +281,8 @@ export function useBreakSync() {
     state.pullError = null
     try {
       // 手动拉取：清除本地标记，覆盖已有数据
-      const notesStorage = JSON.parse(localStorage.getItem('break_notes') || '{}')
-      const tagsStorage = JSON.parse(localStorage.getItem('break_tags') || '{}')
+      const notesStorage = getNotes()
+      const tagsStorage = getTags()
 
       const notesDir = `${BASE_PATH}/notes`
       const listUrl = `https://api.github.com/repos/${cfg.owner}/${cfg.repo}/contents/${notesDir}?ref=${cfg.branch}`
@@ -330,8 +331,8 @@ export function useBreakSync() {
         }
       } catch { /* tags optional */ }
 
-      localStorage.setItem('break_notes', JSON.stringify(notesStorage))
-      localStorage.setItem('break_tags', JSON.stringify(tagsStorage))
+      await setNotes(notesStorage)
+      await setTags(tagsStorage)
       state.lastPullTime = Date.now()
       showToast(`已从远程拉取 ${pulled} 项数据`, 'success')
       return pulled
@@ -382,8 +383,8 @@ export function useBreakSync() {
       state.isPushing = true
       state.pushError = null
 
-      const notesStorage = JSON.parse(localStorage.getItem('break_notes') || '{}')
-      const tagsStorage = JSON.parse(localStorage.getItem('break_tags') || '{}')
+      const notesStorage = getNotes()
+      const tagsStorage = getTags()
 
       // 收集所有待推送文件
       const files: Array<{ path: string; content: string }> = []
@@ -422,8 +423,8 @@ export function useBreakSync() {
     state.isPushing = true
     state.pushError = null
     try {
-      const notesStorage = JSON.parse(localStorage.getItem('break_notes') || '{}')
-      const tagsStorage = JSON.parse(localStorage.getItem('break_tags') || '{}')
+      const notesStorage = getNotes()
+      const tagsStorage = getTags()
       const allIds = new Set([...Object.keys(notesStorage), ...Object.keys(tagsStorage)])
 
       // 收集所有文件

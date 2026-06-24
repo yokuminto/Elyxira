@@ -6,7 +6,7 @@
  */
 
 import configService, { type Question } from '@/services/config-service'
-import { useBreakSync } from './useBreakSync'
+import { mergeNotes, mergeTags, getNotes } from './breakStorage'
 
 // ─── <think> 流式过滤器（每个 generateOneNote 有独立缓冲区）──────
 
@@ -59,28 +59,32 @@ function extractTags(note: string): Record<string, string> | null {
   return Object.keys(tags).length > 0 ? tags : null
 }
 
-// ─── 保存笔记和标签到 localStorage ───────────────────────────
+// ─── 批量累积 + 一次性落盘（避免每次读写整个 JSON 撑爆 localStorage） ───
+
+let _batchNotes: Record<string, string> = {}
+let _batchTags: Record<string, Record<string, string>> = {}
 
 function saveNoteAndTags(questionId: string, note: string): void {
-  const notes = JSON.parse(localStorage.getItem('break_notes') || '{}')
-  notes[questionId] = note
-  localStorage.setItem('break_notes', JSON.stringify(notes))
-
+  _batchNotes[questionId] = note
   const tags = extractTags(note)
-  if (tags) {
-    const tagStore = JSON.parse(localStorage.getItem('break_tags') || '{}')
-    tagStore[questionId] = tags
-    localStorage.setItem('break_tags', JSON.stringify(tagStore))
-  }
+  if (tags) _batchTags[questionId] = tags
+}
 
-  // 加入同步推送队列
-  const { pushNote } = useBreakSync()
-  pushNote(questionId)
+async function flushBatch(): Promise<void> {
+  if (Object.keys(_batchNotes).length === 0) return
+  await mergeNotes(_batchNotes)
+  if (Object.keys(_batchTags).length > 0) {
+    await mergeTags(_batchTags)
+  }
+  _batchNotes = {}
+  _batchTags = {}
 }
 
 // ═══════════════════════════════════════════════════════════════
 // 公开 API
 // ═══════════════════════════════════════════════════════════════
+
+const SINGLE_NOTE_TIMEOUT = 180_000 // 3 分钟
 
 /**
  * 为一题生成 AI 笔记（独立，不依赖组件状态）。
@@ -92,16 +96,21 @@ async function generateOneNote(question: Question): Promise<string> {
     throw new Error('API 未配置')
   }
 
-  const requestData = configService.getNotesGenerationRequestParams(question)
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), SINGLE_NOTE_TIMEOUT)
 
-  const response = await fetch(apiConfig.apiUrl, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiConfig.apiKey}`,
-    },
-    body: JSON.stringify(requestData),
-  })
+  try {
+    const requestData = configService.getNotesGenerationRequestParams(question)
+
+    const response = await fetch(apiConfig.apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiConfig.apiKey}`,
+      },
+      body: JSON.stringify(requestData),
+      signal: controller.signal,
+    })
 
   if (!response.ok) {
     const eb = await response.text().catch(() => '')
@@ -213,6 +222,14 @@ async function generateOneNote(question: Question): Promise<string> {
   } finally {
     clearInterval(heartbeat)
   }
+  } catch (e: any) {
+    if (e.name === 'AbortError') {
+      console.warn(`[BreakAI] 超时 ${question.id}: 超过 ${SINGLE_NOTE_TIMEOUT / 1000}s`)
+    }
+    throw e
+  } finally {
+    clearTimeout(timer)
+  }
 }
 
 /**
@@ -220,15 +237,21 @@ async function generateOneNote(question: Question): Promise<string> {
  * @param questionIds 要生成笔记的题目 ID 列表
  * @param questions 题目池（按 ID 查找题目）
  * @param onProgress 进度回调 (已完成数, 总数)
- * @returns 成功生成的题目数
+ * @returns 生成结果
  */
+interface BatchResult {
+  succeeded: number
+  failed: number
+  failedIds: string[]
+}
+
 export async function batchGenerateNotes(
   questionIds: string[],
   questions: Question[],
   onProgress?: (done: number, total: number) => void,
-): Promise<number> {
+): Promise<BatchResult> {
   // 1. 过滤：已有笔记的跳过，找不到题目的跳过
-  const notes = JSON.parse(localStorage.getItem('break_notes') || '{}')
+  const notes = getNotes()
   const pending = questionIds.filter(id => {
     if (notes[id]) return false
     return questions.some(q => q.id === id)
@@ -247,19 +270,29 @@ export async function batchGenerateNotes(
   const total = pending.length
   onProgress?.(0, total)
 
+  const failedIds: string[] = []
   const results = await Promise.allSettled(
     pending.map(async (id) => {
-      const q = qMap.get(id)!
-      const note = await generateOneNote(q)
-      if (note) {
+      try {
+        const q = qMap.get(id)!
+        const note = await generateOneNote(q)
+        if (!note) { failedIds.push(id); return }
         saveNoteAndTags(id, note)
+      } catch (e) {
+        console.warn(`[BreakAI] generate failed for ${id}:`, e)
+        failedIds.push(id)
       }
       completed++
       onProgress?.(completed, total)
     }),
   )
 
-  // 4. 统计成功数
-  const succeeded = results.filter(r => r.status === 'fulfilled').length
-  return succeeded
+  // 一次性落盘
+  await flushBatch()
+
+  return {
+    succeeded: pending.length - failedIds.length,
+    failed: failedIds.length,
+    failedIds,
+  }
 }

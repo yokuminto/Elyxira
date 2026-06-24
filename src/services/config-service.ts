@@ -243,6 +243,7 @@ export interface QuizConfig {
 import { showToast } from '@/utils/toast'
 import { reactive, readonly } from 'vue'
 import { quizParserService } from './service-quiz-parser'
+import { getNotes, getTags, mergeNotes, mergeTags } from '@/pages/break/composables/breakStorage'
 import MarkdownIt from 'markdown-it'
 
 const md = new MarkdownIt({ html: true, linkify: true, typographer: true, breaks: false, xhtmlOut: true })
@@ -961,10 +962,10 @@ class ConfigService {
       // 绯想击破数据
       const breakRepo = localStorage.getItem('break_repo')
       if (breakRepo) configToExport.breakRepo = JSON.parse(breakRepo)
-      const breakNotes = localStorage.getItem('break_notes')
-      if (breakNotes) configToExport.breakNotes = JSON.parse(breakNotes)
-      const breakTags = localStorage.getItem('break_tags')
-      if (breakTags) configToExport.breakTags = JSON.parse(breakTags)
+      const breakNotes = getNotes()
+      if (Object.keys(breakNotes).length > 0) configToExport.breakNotes = breakNotes as unknown as Record<string, unknown>
+      const breakTags = getTags()
+      if (Object.keys(breakTags).length > 0) configToExport.breakTags = breakTags as unknown as Record<string, unknown>
       const breakStats = localStorage.getItem('break_stats')
       if (breakStats) configToExport.breakStats = JSON.parse(breakStats)
 
@@ -1090,10 +1091,10 @@ class ConfigService {
         localStorage.setItem('break_repo', JSON.stringify(typedConfig.breakRepo))
       }
       if (typedConfig.breakNotes) {
-        _mergeLocalStorage('break_notes', typedConfig.breakNotes as Record<string, unknown>)
+        mergeNotes(typedConfig.breakNotes as Record<string, string>).catch(() => {})
       }
       if (typedConfig.breakTags) {
-        _mergeLocalStorage('break_tags', typedConfig.breakTags as Record<string, unknown>)
+        mergeTags(typedConfig.breakTags as Record<string, Record<string, string>>).catch(() => {})
       }
       if (typedConfig.breakStats) {
         _mergeLocalStorage('break_stats', typedConfig.breakStats as Record<string, unknown>)

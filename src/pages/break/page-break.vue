@@ -126,19 +126,34 @@
         <p v-else>节点击破！</p>
 
         <!-- 补给站：一键生成全部 AI 笔记 -->
-        <div v-if="currentNode?.type === 'supply' && pendingNoteCount > 0" class="break-content__batch-ai">
-          <p v-if="!batchGenerating" class="break-content__batch-info">
-            {{ pendingNoteCount }} 题待生成笔记
-          </p>
-          <p v-else class="break-content__batch-info">
-            生成中：{{ batchProgress }} / {{ batchTotal }}
-          </p>
+        <div v-if="currentNode?.type === 'supply'" class="break-content__batch-ai">
+          <template v-if="!batchGenerating">
+            <p class="break-content__batch-info">
+              {{ pendingNoteCount > 0 ? `${pendingNoteCount} 题待生成笔记` : '全部题目已有笔记' }}
+            </p>
+            <p v-if="batchFailedCount > 0" class="break-content__batch-fail">
+              上次生成：{{ batchFailedCount }} 题失败
+            </p>
+          </template>
+          <template v-else>
+            <div class="break-content__batch-ring">
+              <svg class="break-content__batch-ring-svg" viewBox="0 0 60 60">
+                <circle class="break-content__batch-ring-bg" cx="30" cy="30" r="24" />
+                <circle
+                  class="break-content__batch-ring-fill"
+                  cx="30" cy="30" r="24"
+                  :style="{ strokeDasharray: `${(batchProgress / batchTotal) * 151} 151` }"
+                />
+              </svg>
+              <span class="break-content__batch-ring-text">{{ batchProgress }}/{{ batchTotal }}</span>
+            </div>
+          </template>
           <button
             class="break-btn--primary break-btn--ai"
-            :disabled="batchGenerating"
+            :disabled="batchGenerating || pendingNoteCount === 0"
             @click="startBatchGenerate"
           >
-            {{ batchGenerating ? '生成中...' : '一键生成全部笔记' }}
+            {{ batchGenerating ? '生成中...' : (pendingNoteCount > 0 ? '一键生成全部笔记' : '无需生成') }}
           </button>
         </div>
 
@@ -221,6 +236,7 @@ import configService from '@/services/config-service'
 import { showToast } from '@/utils/toast'
 import { useBreakSync } from './composables/useBreakSync'
 import { batchGenerateNotes } from './composables/useBreakAI'
+import { getNotes, initStorage } from './composables/breakStorage'
 
 const router = useRouter()
 const loading = ref(true)
@@ -229,6 +245,8 @@ const showSettings = ref(false)
 const batchGenerating = ref(false)
 const batchProgress = ref(0)
 const batchTotal = ref(0)
+const batchFailedCount = ref(0)
+const batchRound = ref(0)
 
 const { initSync } = useBreakSync()
 
@@ -372,6 +390,7 @@ async function loadBreakQuestions() {
 
 async function startGame() {
   try {
+    await initStorage()
     const [questions] = await Promise.all([loadBreakQuestions(), loadData()])
     if (!questions || questions.length === 0) {
       initError.value = '绯想击破专属题库为空，无法开始游戏。'
@@ -392,7 +411,7 @@ async function startGame() {
     }))
     // 合并保存的笔记到题目
     try {
-      const saved = JSON.parse(localStorage.getItem('break_notes') || '{}')
+      const saved = getNotes()
       adaptedQuestions.forEach(q => { if (q.id && saved[q.id]) q.notes = saved[q.id] })
     } catch { /* ignore */ }
     if (!initGame(adaptedQuestions)) {
@@ -421,35 +440,40 @@ function goToLibrary() {
 
 // ─── 批量 AI 笔记生成 ─────────────────────────────────────────
 
-/** 本次旅行中见过但还没笔记的题目数 */
+/** 本次旅行预抽题目中还没笔记的题目数 */
 const pendingNoteCount = computed(() => {
-  const saved = (() => {
-    try { return JSON.parse(localStorage.getItem('break_notes') || '{}') }
-    catch { return {} }
-  })()
-  return gameState.progress.seenQuestionIds.filter(id => !saved[id]).length
+  void batchRound.value
+  const saved = getNotes()
+  const ids = gameState.progress.preDrawnQuestionIds.filter(Boolean)
+  return ids.filter(id => !saved[id]).length
 })
 
 async function startBatchGenerate() {
   if (batchGenerating.value) return
-  const seen = gameState.progress.seenQuestionIds
-  if (seen.length === 0) return
+  const allIds = gameState.progress.preDrawnQuestionIds.filter(Boolean)
+  if (allIds.length === 0) return
 
   batchGenerating.value = true
   batchProgress.value = 0
   batchTotal.value = 0
 
   try {
-    const count = await batchGenerateNotes(seen, gameState.allQuestions, (done, total) => {
+    const result = await batchGenerateNotes(allIds, gameState.allQuestions, (done, total) => {
       batchProgress.value = done
       batchTotal.value = total
     })
-    if (count > 0) showToast(`已生成 ${count} 题笔记`, 'success')
+    batchFailedCount.value = result.failed
+    // 诊断：检查预抽池覆盖情况
+    const postNotes = getNotes()
+    const covered = allIds.filter(id => postNotes[id]).length
+    console.log(`[BatchGen] 预抽池 ${allIds.length} 题，已有笔记: ${covered}, 缺失: ${allIds.length - covered}`)
+    if (result.succeeded > 0) showToast(`已生成 ${result.succeeded} 题笔记${result.failed > 0 ? `，${result.failed} 题失败` : ''}`, 'success')
     else showToast('所有题目已有笔记，无需生成', 'info')
   } catch (e) {
     showToast(`批量生成失败: ${e instanceof Error ? e.message : '未知错误'}`, 'error')
   } finally {
     batchGenerating.value = false
+    batchRound.value++
   }
 }
 

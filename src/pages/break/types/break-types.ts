@@ -129,8 +129,8 @@ export interface BreakProgress {
   extraBreakCharges: number
   /** 星琼加成是否激活 */
   starJadeBoostActive: boolean
-  /** 本次游戏中出现过的题目 ID 列表（供批量生成笔记使用） */
-  seenQuestionIds: string[]
+  /** 开局预抽的共享题目池 ID（供批量生成笔记 + 节点消费） */
+  preDrawnQuestionIds: string[]
 }
 
 // ─── 商店 ────────────────────────────────────────────────────

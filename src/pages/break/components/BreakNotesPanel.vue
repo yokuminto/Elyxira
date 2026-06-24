@@ -73,6 +73,7 @@ import { showToast } from '@/utils/toast'
 import ModalApiConfig from '@/modals/modal-api-config.vue'
 import ModalBreakRepo from './ModalBreakRepo.vue'
 import { useBreakSync } from '../composables/useBreakSync'
+import { getNotes, setNote, getTags, setTags } from '../composables/breakStorage'
 
 const props = defineProps<{ question: Question }>()
 
@@ -121,7 +122,7 @@ const showApiConfigModal = ref(false)
   const questionTags = computed<Record<string, string> | null>(() => {
     if (!props.question?.id) return null
     try {
-      const tagStorage = JSON.parse(localStorage.getItem('break_tags') || '{}')
+      const tagStorage = getTags()
       return tagStorage[props.question.id] || null
     } catch { return null }
   })
@@ -149,7 +150,10 @@ const syncStatusTitle = computed(() => {
 })
 
 // 初始化渲染
-watch(() => props.question, () => renderNotes(), { immediate: true })
+watch(() => props.question, (q) => {
+  console.log('[BreakNotes] watcher fired, question.id:', q?.id, 'has notes:', !!q?.notes)
+  renderNotes()
+}, { immediate: true })
 watch(reasoningContent, renderReasoning)
 
 // ─── 标签处理辅助函数（必须在 renderNotes 之前定义）───────────
@@ -204,8 +208,16 @@ function _unwrapHtmlFences(text: string): string {
 
 async function renderNotes() {
   const q = props.question
+  console.log('[BreakNotes] renderNotes: q?.id=', q?.id, 'q?.notes length=', q?.notes?.length ?? 0)
   if (!q) return
   let noteContent = q.notes || ''
+  // 对象上无笔记时从 localStorage 补（批量生成后未同步的场景）
+  if (!noteContent && q.id) {
+    try {
+      const saved = getNotes()
+      if (saved[q.id]) noteContent = saved[q.id]
+    } catch { /* ignore */ }
+  }
   // 安全网：渲染前剥离残留 <think> 标签
   noteContent = noteContent.replace(/<think>[\s\S]*?<\/think>/g, '')
   // 展开 ```html ... \`\`\` 围栏为原始 HTML，避免被 markdown-it 当作代码块转义
@@ -240,13 +252,10 @@ function toggleNotesEditor() {
 
 function saveNotes() {
   if (!props.question?.id) return
-  const storage = JSON.parse(localStorage.getItem('break_notes') || '{}')
-  storage[props.question.id] = notesEditText.value
-  localStorage.setItem('break_notes', JSON.stringify(storage))
+  setNote(props.question.id, notesEditText.value).catch(() => {})
   if (props.question) (props.question as any).notes = notesEditText.value
   isEditingNotes.value = false
   nextTick(renderNotes)
-  pushNote(props.question.id)
   showToast('笔记已保存', 'success')
 }
 
@@ -304,10 +313,7 @@ function requestNoteGeneration() {
       if (err) { showToast(err, 'error') }
       else {
         questionRef.notes = final
-        const storage = JSON.parse(localStorage.getItem('break_notes') || '{}')
-        storage[questionRef.id!] = final
-        localStorage.setItem('break_notes', JSON.stringify(storage))
-        pushNote(questionRef.id!)
+        setNote(questionRef.id!, final)
         renderNotes()
       }
     }
@@ -328,9 +334,7 @@ async function generateAINotes(question: Question, generationTargetIndex: number
     if (autoSaveTimeoutId) clearTimeout(autoSaveTimeoutId)
     autoSaveTimeoutId = window.setTimeout(() => {
       if (activeGenerationIndex.value === generationTargetIndex && questionRef && questionRef.id && questionRef.notes) {
-        const storage = JSON.parse(localStorage.getItem('break_notes') || '{}')
-        storage[questionRef.id] = questionRef.notes
-        localStorage.setItem('break_notes', JSON.stringify(storage))
+        setNote(questionRef.id, questionRef.notes).catch(() => {})
       }
     }, 2000)
   }
@@ -351,16 +355,14 @@ async function generateAINotes(question: Question, generationTargetIndex: number
 
     // 保存原始笔记（含 ```tags 块），渲染时再替换为徽章
     questionRef.notes = finalNote
-    const storage = JSON.parse(localStorage.getItem('break_notes') || '{}')
-    storage[questionRef.id!] = finalNote
-    localStorage.setItem('break_notes', JSON.stringify(storage))
+    setNote(questionRef.id!, finalNote).catch(() => {})
 
     // 提取标签到独立存储
     const tags = extractTags(finalNote)
     if (tags && questionRef.id) {
-      const tagStorage = JSON.parse(localStorage.getItem('break_tags') || '{}')
+      const tagStorage = getTags()
       tagStorage[questionRef.id] = tags
-      localStorage.setItem('break_tags', JSON.stringify(tagStorage))
+      setTags(tagStorage).catch(() => {})
       console.log('[BreakNotes] 标签已捕获:', tags)
     }
 
@@ -496,7 +498,7 @@ async function generateAINotes(question: Question, generationTargetIndex: number
   } catch (error: any) { handleCompletion(questionRef?.notes?.trim() ?? '', generationTargetIndex, `笔记生成失败: ${error.message || '未知错误'}`) }
 }
 
-const { manualPull, pushNote, hasRepoConfigured } = useBreakSync()
+const { manualPull, hasRepoConfigured } = useBreakSync()
 
 async function triggerSync() {
   if (syncStatus.value === 'pending') return

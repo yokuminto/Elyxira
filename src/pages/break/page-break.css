@@ -395,6 +395,12 @@ body:has(.break-overlay) {
   transform: none;
 }
 
+.break-btn--primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
 .break-btn--ai {
   background: var(--c-green, #059669);
 }
@@ -414,6 +420,50 @@ body:has(.break-overlay) {
   font-size: 0.85rem;
   color: var(--c-green, #059669);
   margin: 0;
+}
+
+.break-content__batch-fail {
+  font-size: 0.78rem;
+  color: var(--c-red, #e54960);
+  margin: 0;
+}
+
+/* ─── 进度环 ─── */
+.break-content__batch-ring {
+  position: relative;
+  width: 60px;
+  height: 60px;
+}
+
+.break-content__batch-ring-svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.break-content__batch-ring-bg {
+  fill: none;
+  stroke: rgba(5, 150, 105, 0.15);
+  stroke-width: 4;
+}
+
+.break-content__batch-ring-fill {
+  fill: none;
+  stroke: var(--c-green, #059669);
+  stroke-width: 4;
+  stroke-linecap: round;
+  transition: stroke-dasharray 0.3s ease;
+}
+
+.break-content__batch-ring-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--c-green, #059669);
 }
 
 /* ─── 角色迷你卡片 ────────────────────────────────────────── */
