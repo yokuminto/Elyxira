@@ -52,7 +52,7 @@
             <button class="modal__button modal__button--secondary modal__button--sm" @click="triggerImport">导入配置</button>
           </div>
         </div>
-        <input ref="importInputRef" type="file" accept=".json" style="display:none" @change="handleImport" />
+        <input ref="importInputRef" type="file" accept=".json,application/json" style="display:none" @change="handleImport" />
       </div>
     </div>
     <ModalBreakRepo :show="showRepoConfig" @close="showRepoConfig = false" />

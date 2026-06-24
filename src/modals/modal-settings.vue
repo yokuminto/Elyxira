@@ -164,7 +164,7 @@
   <BaseModal :show="isImportModalVisible" title="导入配置" @close="isImportModalVisible = false">
     <div class="modal__body">
       <p>选择要导入的配置文件：</p>
-      <input type="file" id="importFileInput" accept=".json" @change="handleImportFileSelect" />
+      <input type="file" id="importFileInput" accept=".json,application/json" @change="handleImportFileSelect" />
     </div>
     <template #footer>
       <button @click="isImportModalVisible = false" class="modal__button modal__button--secondary">取消</button>
