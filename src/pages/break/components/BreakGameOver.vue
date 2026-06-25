@@ -2,8 +2,14 @@
 <template>
   <div class="break-overlay">
     <div class="break-modal break-gameover">
+      <!-- Error -->
+      <template v-if="errorMessage">
+        <h2 class="break-gameover__title break-gameover__title--defeat">出错了</h2>
+        <p class="break-gameover__subtitle break-gameover__subtitle--defeat">{{ errorMessage }}</p>
+      </template>
+
       <!-- Victory -->
-      <template v-if="isVictory">
+      <template v-else-if="isVictory">
         <h2 class="break-gameover__title break-gameover__title--victory">
           通关成功！
         </h2>

@@ -194,15 +194,16 @@
         @skip="onBossSkip"
       />
 
-      <!-- 游戏结束面板 -->
+      <!-- 游戏结束/错误面板 -->
       <BreakGameOver
-        v-if="gameState.isGameOver || gameState.progress.isFinished"
-        :is-victory="gameState.progress.isFinished"
+        v-if="gameState.isGameOver || gameState.progress.isFinished || gameState.gameError"
+        :is-victory="gameState.progress.isFinished && !gameState.gameError"
         :completed-nodes="completedNodeCount"
         :total-nodes="TOTAL_NODES"
         :max-combo="maxCombo"
         :star-jade="gameState.progress.starJade"
         :character-count="gameState.progress.activeCharacters.length"
+        :error-message="gameState.gameError ?? undefined"
         @restart="onRestart"
         @back-to-library="onBackToLibrary"
       />
