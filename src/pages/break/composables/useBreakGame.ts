@@ -27,57 +27,57 @@ const CHARACTER_POOL: BreakCharacter[] = [
   {
     id: 'byakuren', name: '白露', source: 'hsr', starLevel: 1, bondGroup: 'xianzhou',
     starEffects: [
-      { star: 1, breakBonus: 1, scoreMultiplier: 1.0, special: { type: 'combat_resume', cooldown: 0, charges: 1 }, extraChances: 0, hpRecovery: 0, optionReveal: 0 },
-      { star: 2, breakBonus: 1, scoreMultiplier: 1.0, special: { type: 'combat_resume', cooldown: 0, charges: 2 }, extraChances: 0, hpRecovery: 2, optionReveal: 0 },
-      { star: 3, breakBonus: 2, scoreMultiplier: 1.0, special: { type: 'combat_resume', cooldown: 0, charges: 3 }, extraChances: 1, hpRecovery: 3, optionReveal: 0 },
+      { star: 1, scoreMultiplier: 1.0, special: { type: 'combat_resume', cooldown: 0, charges: 1 }, extraChances: 0, hpRecovery: 0, optionReveal: 0 },
+      { star: 2, scoreMultiplier: 1.0, special: { type: 'combat_resume', cooldown: 0, charges: 2 }, extraChances: 0, hpRecovery: 2, optionReveal: 0 },
+      { star: 3, scoreMultiplier: 1.0, special: { type: 'combat_resume', cooldown: 0, charges: 3 }, extraChances: 1, hpRecovery: 3, optionReveal: 0 },
     ],
   },
   {
     id: 'eirin', name: '八意永琳', source: 'touhou', starLevel: 1, bondGroup: 'touhou',
     starEffects: [
-      { star: 1, breakBonus: 0, scoreMultiplier: 1.0, special: { type: 'potion', cooldown: 6, charges: -1 }, extraChances: 0, hpRecovery: 3, optionReveal: 0 },
-      { star: 2, breakBonus: 0, scoreMultiplier: 1.0, special: { type: 'potion', cooldown: 5, charges: -1 }, extraChances: 0, hpRecovery: 5, optionReveal: 0 },
-      { star: 3, breakBonus: 1, scoreMultiplier: 1.0, special: { type: 'potion', cooldown: 4, charges: -1 }, extraChances: 1, hpRecovery: 7, optionReveal: 0 },
+      { star: 1, scoreMultiplier: 1.0, special: { type: 'potion', cooldown: 6, charges: -1 }, extraChances: 0, hpRecovery: 3, optionReveal: 0 },
+      { star: 2, scoreMultiplier: 1.0, special: { type: 'potion', cooldown: 5, charges: -1 }, extraChances: 0, hpRecovery: 5, optionReveal: 0 },
+      { star: 3, scoreMultiplier: 1.0, special: { type: 'potion', cooldown: 4, charges: -1 }, extraChances: 1, hpRecovery: 7, optionReveal: 0 },
     ],
   },
   {
     id: 'ruanmei', name: '阮·梅', source: 'hsr', starLevel: 1, bondGroup: 'genius',
     starEffects: [
-      { star: 1, breakBonus: 0, scoreMultiplier: 1.0, special: { type: 'shop_refresh', cooldown: 0, charges: 1 }, extraChances: 0, hpRecovery: 0, optionReveal: 0 },
-      { star: 2, breakBonus: 0, scoreMultiplier: 1.0, special: { type: 'shop_refresh', cooldown: 0, charges: 2 }, extraChances: 0, hpRecovery: 0, optionReveal: 0 },
-      { star: 3, breakBonus: 1, scoreMultiplier: 1.0, special: { type: 'shop_refresh', cooldown: 0, charges: 3 }, extraChances: 0, hpRecovery: 0, optionReveal: 0 },
+      { star: 1, scoreMultiplier: 1.0, special: { type: 'shop_refresh', cooldown: 0, charges: 1 }, extraChances: 0, hpRecovery: 0, optionReveal: 0 },
+      { star: 2, scoreMultiplier: 1.0, special: { type: 'shop_refresh', cooldown: 0, charges: 2 }, extraChances: 0, hpRecovery: 0, optionReveal: 0 },
+      { star: 3, scoreMultiplier: 1.0, special: { type: 'shop_refresh', cooldown: 0, charges: 3 }, extraChances: 0, hpRecovery: 0, optionReveal: 0 },
     ],
   },
   {
     id: 'fu_hua', name: '符华', source: 'hsr', starLevel: 1, bondGroup: 'xianzhou',
     starEffects: [
-      { star: 1, breakBonus: 1, scoreMultiplier: 1.0, special: { type: 'perfect_recovery', cooldown: 0, charges: -1 }, extraChances: 0, hpRecovery: 5, optionReveal: 0 },
-      { star: 2, breakBonus: 1, scoreMultiplier: 1.0, special: { type: 'perfect_recovery', cooldown: 0, charges: -1 }, extraChances: 0, hpRecovery: 10, optionReveal: 0 },
-      { star: 3, breakBonus: 2, scoreMultiplier: 1.0, special: { type: 'perfect_recovery', cooldown: 0, charges: -1 }, extraChances: 1, hpRecovery: 15, optionReveal: 0 },
+      { star: 1, scoreMultiplier: 1.0, special: { type: 'perfect_recovery', cooldown: 0, charges: -1 }, extraChances: 0, hpRecovery: 5, optionReveal: 0 },
+      { star: 2, scoreMultiplier: 1.0, special: { type: 'perfect_recovery', cooldown: 0, charges: -1 }, extraChances: 0, hpRecovery: 10, optionReveal: 0 },
+      { star: 3, scoreMultiplier: 1.0, special: { type: 'perfect_recovery', cooldown: 0, charges: -1 }, extraChances: 1, hpRecovery: 15, optionReveal: 0 },
     ],
   },
   {
     id: 'stelle', name: '星', source: 'hsr', starLevel: 1, bondGroup: 'genius',
     starEffects: [
-      { star: 1, breakBonus: 0, scoreMultiplier: 1.0, special: { type: 'reward_double', cooldown: 0, charges: -1 }, extraChances: 0, hpRecovery: 0, optionReveal: 0 },
-      { star: 2, breakBonus: 1, scoreMultiplier: 1.0, special: { type: 'reward_double', cooldown: 0, charges: -1 }, extraChances: 0, hpRecovery: 0, optionReveal: 0 },
-      { star: 3, breakBonus: 1, scoreMultiplier: 1.0, special: { type: 'reward_double', cooldown: 0, charges: -1 }, extraChances: 1, hpRecovery: 0, optionReveal: 0 },
+      { star: 1, scoreMultiplier: 1.0, special: { type: 'reward_double', cooldown: 0, charges: -1 }, extraChances: 0, hpRecovery: 0, optionReveal: 0 },
+      { star: 2, scoreMultiplier: 1.0, special: { type: 'reward_double', cooldown: 0, charges: -1 }, extraChances: 0, hpRecovery: 0, optionReveal: 0 },
+      { star: 3, scoreMultiplier: 1.0, special: { type: 'reward_double', cooldown: 0, charges: -1 }, extraChances: 1, hpRecovery: 0, optionReveal: 0 },
     ],
   },
   {
     id: 'reisen', name: '铃仙', source: 'touhou', starLevel: 1, bondGroup: 'touhou',
     starEffects: [
-      { star: 1, breakBonus: 0, scoreMultiplier: 1.0, special: { type: 'genki_charge', cooldown: 0, charges: 1 }, extraChances: 0, hpRecovery: 0, optionReveal: 0 },
-      { star: 2, breakBonus: 0, scoreMultiplier: 1.0, special: { type: 'genki_charge', cooldown: 0, charges: 2 }, extraChances: 0, hpRecovery: 0, optionReveal: 0 },
-      { star: 3, breakBonus: 1, scoreMultiplier: 1.0, special: { type: 'genki_charge', cooldown: 0, charges: 3 }, extraChances: 0, hpRecovery: 0, optionReveal: 0 },
+      { star: 1, scoreMultiplier: 1.0, special: { type: 'genki_charge', cooldown: 0, charges: 1 }, extraChances: 0, hpRecovery: 0, optionReveal: 0 },
+      { star: 2, scoreMultiplier: 1.0, special: { type: 'genki_charge', cooldown: 0, charges: 2 }, extraChances: 0, hpRecovery: 0, optionReveal: 0 },
+      { star: 3, scoreMultiplier: 1.0, special: { type: 'genki_charge', cooldown: 0, charges: 3 }, extraChances: 0, hpRecovery: 0, optionReveal: 0 },
     ],
   },
   {
     id: 'sakuya', name: '咲夜', source: 'touhou', starLevel: 1, bondGroup: 'touhou',
     starEffects: [
-      { star: 1, breakBonus: 0, scoreMultiplier: 1.0, special: { type: 'extra_reward_node', cooldown: 0, charges: 5 }, extraChances: 0, hpRecovery: 0, optionReveal: 0 },
-      { star: 2, breakBonus: 0, scoreMultiplier: 1.0, special: { type: 'extra_reward_node', cooldown: 0, charges: 10 }, extraChances: 0, hpRecovery: 0, optionReveal: 0 },
-      { star: 3, breakBonus: 1, scoreMultiplier: 1.0, special: { type: 'extra_reward_node', cooldown: 0, charges: 15 }, extraChances: 0, hpRecovery: 0, optionReveal: 0 },
+      { star: 1, scoreMultiplier: 1.0, special: { type: 'extra_reward_node', cooldown: 0, charges: 5 }, extraChances: 0, hpRecovery: 0, optionReveal: 0 },
+      { star: 2, scoreMultiplier: 1.0, special: { type: 'extra_reward_node', cooldown: 0, charges: 10 }, extraChances: 0, hpRecovery: 0, optionReveal: 0 },
+      { star: 3, scoreMultiplier: 1.0, special: { type: 'extra_reward_node', cooldown: 0, charges: 15 }, extraChances: 0, hpRecovery: 0, optionReveal: 0 },
     ],
   },
 ]
@@ -379,8 +379,8 @@ let _bossRewardClaimedNode = -1 // 防止 Boss 奖励被反复领取
 
   /** 聚合当前队伍所有角色的有效加成 */
   function _getActiveBonuses() {
-    let breakBonus = 0
     let hpRecovery = 0
+    let fuHuaRecovery = 0
     let hasRewardDouble = false
     let hasPerfectRecovery = false
     let genkiChargeRemaining = 0
@@ -390,21 +390,25 @@ let _bossRewardClaimedNode = -1 // 防止 Boss 奖励被反复领取
     for (const char of gameState.progress.activeCharacters) {
       const effect = char.starEffects[char.starLevel - 1]
       if (!effect) continue
-      breakBonus += effect.breakBonus
-      hpRecovery += effect.hpRecovery
+      // 符华 hpRecovery 单独追踪 — 仅完美通关时触发
+      if (effect.special?.type === 'perfect_recovery') {
+        hasPerfectRecovery = true
+        fuHuaRecovery += effect.hpRecovery
+      } else {
+        hpRecovery += effect.hpRecovery
+      }
       totalOptionReveal += effect.optionReveal
       totalExtraChances += effect.extraChances
       scoreMultiplier = Math.max(scoreMultiplier, effect.scoreMultiplier)
       if (effect.special?.type === 'reward_double') hasRewardDouble = true
-      if (effect.special?.type === 'perfect_recovery') hasPerfectRecovery = true
       if (effect.special?.type === 'genki_charge') {
         const remaining = (effect.special.currentCharges ?? effect.special.charges)
         if (remaining !== 0) genkiChargeRemaining += remaining === -1 ? 999 : remaining
       }
     }
-    // 元气层数计入击破加成
-    breakBonus += gameState.progress.genki
-    return { breakBonus, hpRecovery, hasRewardDouble, hasPerfectRecovery, genkiChargeRemaining, optionReveal: totalOptionReveal, extraChances: totalExtraChances, scoreMultiplier }
+    // 击破公式：baseBreak * breakMultiplier + breakBonus + genki + extraBreakCharges
+    //       当前默认值 1 × 1 + 0 + genki + extra → 未来技能可改全局变量
+    return { hpRecovery, fuHuaRecovery, hasRewardDouble, hasPerfectRecovery, genkiChargeRemaining, optionReveal: totalOptionReveal, extraChances: totalExtraChances, scoreMultiplier }
   }
 
   /** 生成商店选项（3个随机角色） */
@@ -461,6 +465,8 @@ let _bossRewardClaimedNode = -1 // 防止 Boss 奖励被反复领取
       shopOptions: [],
       supplyOptions: isSupply ? _generateSupplyOptions() : [],
       isGameOver: false,
+      revealedOptions: 0,
+      extraChancesRemaining: 0,
       progress: {
         ...createDefaultProgress(),
         nodes,
@@ -489,6 +495,8 @@ let _bossRewardClaimedNode = -1 // 防止 Boss 奖励被反复领取
       shopOptions: [],
       supplyOptions: [],
       isGameOver: false,
+      revealedOptions: 0,
+      extraChancesRemaining: 0,
     })
     _maxComboValue.value = 0
     _bossRewardClaimedNode = -1
@@ -518,10 +526,9 @@ let _bossRewardClaimedNode = -1 // 防止 Boss 奖励被反复领取
     let newProgress = { ...p, nodes: [...p.nodes] }
 
     if (isCorrect) {
-      // 答对：击破值 - (1 + 角色加成)
+      // 答对：击破公式 = baseBreak * breakMultiplier + breakBonus + genki + extraBreakCharges
       const bonuses = _getActiveBonuses()
-      // 应用额外击破充能（商店 Buff）
-      let baseBreak = 1 + bonuses.breakBonus
+      let baseBreak = p.baseBreak * p.breakMultiplier + p.breakBonus + p.genki
       let newToughness = currentNode.currentToughness - baseBreak
       let usedExtraCharges = 0
       if (newToughness > 0 && p.extraBreakCharges > 0) {
@@ -562,14 +569,13 @@ let _bossRewardClaimedNode = -1 // 防止 Boss 奖励被反复领取
         }
         newProgress.starJade += reward
 
-        // 完美恢复（符华）：无失误通过节点回血
-        if (bonuses.hasPerfectRecovery && p.isNodePerfect) {
-          const recovery = bonuses.hpRecovery
-          newProgress.currentHP = Math.min(p.currentHP + recovery, p.maxHP)
-        }
-        // 通用 HP 恢复
-        else if (bonuses.hpRecovery > 0) {
+        // 通用 HP 恢复（非符华角色，节点击破时始终生效）
+        if (bonuses.hpRecovery > 0) {
           newProgress.currentHP = Math.min(p.currentHP + bonuses.hpRecovery, p.maxHP)
+        }
+        // 符华·完美恢复：仅完美通关时额外回复符华自身 hpRecovery
+        if (bonuses.hasPerfectRecovery && p.isNodePerfect && bonuses.fuHuaRecovery > 0) {
+          newProgress.currentHP = Math.min(newProgress.currentHP + bonuses.fuHuaRecovery, p.maxHP)
         }
         // 基础完美通关奖励：普通/精英/Boss/奖励节点无失误通过回复5HP
         if (p.isNodePerfect && (currentNode.type === 'normal' || currentNode.type === 'elite' || currentNode.type === 'boss' || currentNode.type === 'reward')) {
@@ -811,12 +817,39 @@ let _bossRewardClaimedNode = -1 // 防止 Boss 奖励被反复领取
     const currentNode = p.nodes[idx]
     const newNodes = [...p.nodes]
 
+    // 额外答题机会：优先消耗，免罚
+    if (gameState.extraChancesRemaining && gameState.extraChancesRemaining > 0) {
+      gameState.extraChancesRemaining -= 1
+      Object.assign(gameState, {
+        progress: { ...p, combo: 0, isNodePerfect: false },
+        isAnswerSubmitted: true,
+        isAnswerCorrect: false,
+      })
+      return
+    }
+
     // 扣血 5
     let newHP = Math.max(p.currentHP - 5, 0)
 
     // 羽毛 +1
     const newFeather = currentNode.featherCount + 1
     newNodes[idx] = { ...currentNode, featherCount: newFeather }
+
+    const newProgress = { ...p, nodes: newNodes, combo: 0, isNodePerfect: false }
+
+    // 铃仙·元气充能：每次扣羽毛时获得元气
+    const bonuses = _getActiveBonuses()
+    if (bonuses.genkiChargeRemaining > 0) {
+      newProgress.genki += 1
+      for (const char of p.activeCharacters) {
+        const eff = char.starEffects[char.starLevel - 1]
+        if (eff?.special?.type === 'genki_charge' && (eff.special.currentCharges ?? eff.special.charges) !== 0) {
+          if (eff.special.charges !== -1) {
+            eff.special.currentCharges = (eff.special.currentCharges ?? eff.special.charges) - 1
+          }
+        }
+      }
+    }
 
     if (newFeather >= 3) {
       // 强制完成节点 + 额外扣 10 HP
@@ -828,13 +861,7 @@ let _bossRewardClaimedNode = -1 // 防止 Boss 奖励被反复领取
       newHP = Math.max(newHP - 10, 0)
     }
 
-    const newProgress = {
-      ...p,
-      nodes: newNodes,
-      currentHP: newHP,
-      combo: 0,
-      isNodePerfect: false,
-    }
+    newProgress.currentHP = newHP
 
     if (newHP <= 0) {
       Object.assign(gameState, {
@@ -1073,6 +1100,9 @@ export function createDefaultProgress(): BreakProgress {
     maxHP: 100,
     combatResume: 0,
     genki: 0,
+    baseBreak: 1,
+    breakMultiplier: 1,
+    breakBonus: 0,
     isNodePerfect: true,
     extraBreakCharges: 0,
     starJadeBoostActive: false,

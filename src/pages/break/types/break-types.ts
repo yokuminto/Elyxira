@@ -63,8 +63,6 @@ export interface BreakCharacterSpecial {
 export interface StarEffect {
   /** 对应星级 (1-3) */
   star: number
-  /** 额外击破值 */
-  breakBonus: number
   /** 分数倍率 */
   scoreMultiplier: number
   /** 特殊技能 */
@@ -123,6 +121,12 @@ export interface BreakProgress {
   combatResume: number
   /** 元气层数 */
   genki: number
+  /** 基础击破值（未来技能可增/减） */
+  baseBreak: number
+  /** 击破倍数（未来技能可翻倍等） */
+  breakMultiplier: number
+  /** 击破加成（flat，未来技能可累加） */
+  breakBonus: number
   /** 当前节点是否完美（0 失误） */
   isNodePerfect: boolean
   /** 额外击破充能次数 */
