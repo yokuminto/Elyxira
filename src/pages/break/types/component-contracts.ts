@@ -116,6 +116,8 @@ export interface BreakGameOverProps {
   starJade: number
   /** 招募角色数 */
   characterCount: number
+  /** 错误信息（非空时显示错误面板而非结算面板） */
+  errorMessage?: string
 }
 
 export interface BreakGameOverEmits {

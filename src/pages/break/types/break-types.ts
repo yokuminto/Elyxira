@@ -206,6 +206,8 @@ export interface BreakGameState {
   supplyOptions: BreakCharacter[]
   /** 游戏是否结束 */
   isGameOver: boolean
+  /** 游戏错误信息（null = 正常，非 null = 触发错误面板） */
+  gameError: string | null
   /** 当前节点被揭示的错误选项数 */
   revealedOptions?: number
   /** 额外答题机会（答错免罚） */
