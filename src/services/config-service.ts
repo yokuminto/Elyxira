@@ -243,7 +243,7 @@ export interface QuizConfig {
 import { showToast } from '@/utils/toast'
 import { reactive, readonly } from 'vue'
 import { quizParserService } from './service-quiz-parser'
-import { getNotes, getTags, mergeNotes, mergeTags } from '@/pages/break/composables/breakStorage'
+import { getNotes, getTags, mergeNotes, mergeTags, getStats, mergeStats } from '@/pages/break/composables/breakStorage'
 import MarkdownIt from 'markdown-it'
 
 const md = new MarkdownIt({ html: true, linkify: true, typographer: true, breaks: false, xhtmlOut: true })
@@ -966,8 +966,8 @@ class ConfigService {
       if (Object.keys(breakNotes).length > 0) configToExport.breakNotes = breakNotes as unknown as Record<string, unknown>
       const breakTags = getTags()
       if (Object.keys(breakTags).length > 0) configToExport.breakTags = breakTags as unknown as Record<string, unknown>
-      const breakStats = localStorage.getItem('break_stats')
-      if (breakStats) configToExport.breakStats = JSON.parse(breakStats)
+      const breakStats = getStats()
+      if (Object.keys(breakStats).length > 0) configToExport.breakStats = breakStats as unknown as Record<string, unknown>
 
       const dataStr = JSON.stringify(configToExport, null, 2)
       const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr)
@@ -1097,7 +1097,7 @@ class ConfigService {
         await mergeTags(typedConfig.breakTags as Record<string, Record<string, string>>)
       }
       if (typedConfig.breakStats) {
-        _mergeLocalStorage('break_stats', typedConfig.breakStats as Record<string, unknown>)
+        await mergeStats(typedConfig.breakStats as Record<string, { answerCount: number; correctCount: number; recentAnswers: { time: number; duration: number; correct: boolean }[] }>)
       }
 
       // --- 通知所有监听器 ---
