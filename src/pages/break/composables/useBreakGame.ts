@@ -19,7 +19,8 @@ import type {
   ShopOption,
 } from '../types/break-types'
 import { ShopBuffType, NODE_TOUGHNESS, NODE_STAR_JADE_REWARD, NODES_PER_PHASE, TOTAL_NODES, CHARACTER_RECRUIT_COST } from '../types/break-types'
-import { getNotes } from './breakStorage'
+import { getNotes, recordAnswer, getStats } from './breakStorage'
+import type { QuestionStats } from './breakStorage'
 
 // ─── 角色池（内联自 assets/data/break-characters.json）────────
 
@@ -171,6 +172,7 @@ export function useBreakGame(): UseBreakGameReturn {
     shopOptions: [],
     supplyOptions: [],
     isGameOver: false,
+    gameError: null,
     revealedOptions: 0,
     extraChancesRemaining: 0,
   })
@@ -178,6 +180,7 @@ export function useBreakGame(): UseBreakGameReturn {
   /** 运行时最高连击追踪（通过 ref 响应式追踪） */
   const _maxComboValue = ref(0)
 let _bossRewardClaimedNode = -1 // 防止 Boss 奖励被反复领取
+let _questionShownAt = 0 // 题目展示时间戳（用于计算做题耗时）
 
   // ═══════════════════════════════════════════════════════════
   // 计算属性
@@ -287,18 +290,9 @@ let _bossRewardClaimedNode = -1 // 防止 Boss 奖励被反复领取
     return false
   }
 
-  /** 记录题目答题统计 */
-  function _recordQuestionStats(questionId: string, isCorrect: boolean): void {
-    try {
-      const raw = localStorage.getItem('break_stats')
-      const stats: Record<string, { answerCount: number; correctCount: number; lastAnswerTime: number }> = raw ? JSON.parse(raw) : {}
-      const entry = stats[questionId] || { answerCount: 0, correctCount: 0, lastAnswerTime: 0 }
-      entry.answerCount += 1
-      if (isCorrect) entry.correctCount += 1
-      entry.lastAnswerTime = Date.now()
-      stats[questionId] = entry
-      localStorage.setItem('break_stats', JSON.stringify(stats))
-    } catch { /* ignore stats storage errors */ }
+  /** 记录题目答题统计（IndexedDB，fire-and-forget） */
+  function _recordQuestionStats(questionId: string, isCorrect: boolean, duration: number): void {
+    recordAnswer(questionId, isCorrect, duration).catch(() => { /* stats persistence is best-effort */ })
   }
 
   /** 按 ID 从题目池中查找 */
@@ -309,18 +303,183 @@ let _bossRewardClaimedNode = -1 // 防止 Boss 奖励被反复领取
 
   // ─── 题目池管理 ────────────────────────────────────────────
 
-  /** 本次游戏的共享题目池（开局预抽，节点消耗） */
-  let _sessionPool: string[] = []
+  // ═══════════════════════════════════════════════════════════
+  // 8 盒加权抽题系统
+  // ═══════════════════════════════════════════════════════════
 
-  /** 从共享池抽一题；池空时回退到全题库随机 */
-  function _drawFromPool(): Question | null {
-    // 从预抽池消费
-    while (_sessionPool.length > 0) {
-      const id = _sessionPool.shift()!
-      const q = _getQuestionById(id)
-      if (q) return _syncNotesToQuestion(q)
+  /** 阶段阈值 */
+  const PHASE_THRESHOLDS = { early: 0.3, late: 0.6 }
+
+  /** 安全阀：单盒权重上限 */
+  const MAX_BOX_WEIGHT = 0.4
+
+  /** 三阶段 × 四节点类型的权重表 [阶段][节点类型][盒1..8] */
+  const BOX_WEIGHTS: Record<number, Record<string, number[]>> = {
+    1: {
+      boss:    [15, 10, 0, 0, 0, 0, 30, 45],
+      elite:   [10, 5, 0, 0, 0, 5, 35, 45],
+      normal:  [5, 0, 0, 0, 5, 10, 35, 45],
+      reward:  [0, 0, 0, 40, 5, 10, 20, 25],
+    },
+    2: {
+      boss:    [25, 20, 10, 0, 5, 0, 20, 20],
+      elite:   [15, 15, 15, 0, 10, 10, 18, 17],
+      normal:  [8, 8, 12, 0, 12, 12, 24, 24],
+      reward:  [0, 0, 0, 50, 10, 10, 15, 15],
+    },
+    3: {
+      boss:    [30, 25, 15, 0, 5, 0, 15, 10],
+      elite:   [20, 20, 18, 0, 12, 8, 12, 10],
+      normal:  [12, 12, 15, 5, 12, 12, 16, 16],
+      reward:  [0, 0, 0, 55, 10, 10, 15, 10],
+    },
+  }
+
+  /** 兜底链 [阶段][盒序号] */
+  const FALLBACK_CHAINS: Record<number, number[]> = {
+    1: [3, 7, 8, 5, 6, 4],
+    2: [3, 7, 4, 5, 6, 8],
+    3: [3, 4, 5, 6, 7, 8],
+  }
+
+  /** 当前游戏阶段（initGame 时计算，整局不变） */
+  let _gamePhase = 1
+
+  /** 计算当前阶段（1/2/3） */
+  function _computePhase(): number {
+    const stats = getStats()
+    const doneCount = Object.keys(stats).length
+    const total = gameState.allQuestions.length
+    if (total === 0) return 1
+    const ratio = doneCount / total
+    if (ratio < PHASE_THRESHOLDS.early) return 1
+    if (ratio < PHASE_THRESHOLDS.late) return 2
+    return 3
+  }
+
+  /** 将一道题归类到盒子（1-8），s 为该题的统计数据 */
+  function _classifyBox(s: QuestionStats | undefined): number {
+    if (!s || s.answerCount === 0 || s.recentAnswers.length === 0) return 8
+
+    const count = s.answerCount
+    const recent = s.recentAnswers // [0] = 最新
+    const avgDuration = recent.length > 0
+      ? recent.reduce((sum, r) => sum + r.duration, 0) / recent.length
+      : 0
+
+    // 盒1: 难题 — 次数>3 ∧ 平均耗时>16s ∧ 最近错，或连续错≥3
+    if ((count > 3 && avgDuration > 16 && !recent[0].correct)
+        || (recent.length >= 3 && recent.slice(0, 3).every(r => !r.correct))) {
+      return 1
     }
-    // 池空 → 全题库随机
+
+    // 盒2: 顽固 — 次数>3 ∧ 最近4次错≥2
+    if (count > 3 && recent.length >= 4) {
+      if (recent.slice(0, 4).filter(r => !r.correct).length >= 2) return 2
+    }
+
+    // 盒3: 波动 — 次数>3 ∧ 最近3次错==1
+    if (count > 3 && recent.length >= 3) {
+      if (recent.slice(0, 3).filter(r => !r.correct).length === 1) return 3
+    }
+
+    // 盒4: 奖励 — 次数>5 ∧ 平均耗时≤16s ∧ 最近5次全对
+    if (count > 5 && avgDuration <= 16 && recent.length >= 5
+        && recent.slice(0, 5).every(r => r.correct)) {
+      return 4
+    }
+
+    // 盒5: 复杂 — 次数>3 ∧ 平均耗时>16s ∧ 最近3次全对
+    if (count > 3 && avgDuration > 16 && recent.length >= 3
+        && recent.slice(0, 3).every(r => r.correct)) {
+      return 5
+    }
+
+    // 盒6: 熟悉 — 次数>3 ∧ 平均耗时≤16s ∧ 最近3次全对
+    if (count > 3 && avgDuration <= 16 && recent.length >= 3
+        && recent.slice(0, 3).every(r => r.correct)) {
+      return 6
+    }
+
+    // 盒7: 陌生 — 兜底
+    return 7
+  }
+
+  /** 构建 8 个盒子的题目 ID 索引 */
+  function _buildBoxes(): Record<number, string[]> {
+    const stats = getStats()
+    const boxes: Record<number, string[]> = { 1: [], 2: [], 3: [], 4: [], 5: [], 6: [], 7: [], 8: [] }
+    for (const q of gameState.allQuestions) {
+      if (!q.id) continue
+      const box = _classifyBox(stats[q.id])
+      if (box >= 1 && box <= 8) boxes[box].push(q.id)
+    }
+    return boxes
+  }
+
+  /** 加权抽取一题（根据节点类型选择权重行） */
+  function _drawQuestion(nodeType: string): Question | null {
+    const boxes = _buildBoxes()
+
+    const rawWeights = BOX_WEIGHTS[_gamePhase]?.[nodeType]
+    if (!rawWeights) {
+      if (gameState.allQuestions.length === 0) return null
+      return _syncNotesToQuestion(gameState.allQuestions[Math.floor(Math.random() * gameState.allQuestions.length)])
+    }
+
+    const weights = [...rawWeights]
+
+    // 安全阀：非空盒子权重 > MAX_BOX_WEIGHT → 裁到上限
+    let overflow = 0
+    for (let i = 0; i < 8; i++) {
+      if (boxes[i + 1].length > 0) {
+        const maxW = Math.floor(MAX_BOX_WEIGHT * 100)
+        if (weights[i] > maxW) {
+          overflow += weights[i] - maxW
+          weights[i] = maxW
+        }
+      }
+    }
+
+    // 溢出权重分给盒子 7 和 8（按原始比例）
+    if (overflow > 0) {
+      const w7 = rawWeights[6]
+      const w8 = rawWeights[7]
+      const denom = w7 + w8 || 1
+      weights[6] += Math.floor(overflow * (w7 / denom))
+      weights[7] += overflow - Math.floor(overflow * (w7 / denom))
+    }
+
+    // 空盒子权重清零
+    for (let i = 0; i < 8; i++) {
+      if (boxes[i + 1].length === 0) weights[i] = 0
+    }
+
+    // 归一化 + 加权随机
+    const totalW = weights.reduce((s, w) => s + w, 0)
+    if (totalW > 0) {
+      let r = Math.random() * totalW
+      for (let i = 0; i < 8; i++) {
+        r -= weights[i]
+        if (r <= 0 && boxes[i + 1].length > 0) {
+          const qid = boxes[i + 1][Math.floor(Math.random() * boxes[i + 1].length)]
+          const q = _getQuestionById(qid)
+          if (q) return _syncNotesToQuestion(q)
+        }
+      }
+    }
+
+    // 全部空 → 兜底链
+    const chain = FALLBACK_CHAINS[_gamePhase] || FALLBACK_CHAINS[1]
+    for (const b of chain) {
+      if (boxes[b].length > 0) {
+        const qid = boxes[b][Math.floor(Math.random() * boxes[b].length)]
+        const q = _getQuestionById(qid)
+        if (q) return _syncNotesToQuestion(q)
+      }
+    }
+
+    // 全题库兜底
     if (gameState.allQuestions.length === 0) return null
     return _syncNotesToQuestion(gameState.allQuestions[Math.floor(Math.random() * gameState.allQuestions.length)])
   }
@@ -441,20 +600,19 @@ let _bossRewardClaimedNode = -1 // 防止 Boss 奖励被反复领取
 
     const nodes = _generateNodes()
 
-    // 开局预抽共享题目池：总击破值 × 1.5（含错题重答缓冲），不重复
+    // 开局预抽共享题目池：总击破值 × 1.5（仅用于补给站批量 AI 生成，不用于抽题）
     const totalToughness = nodes.reduce((sum, n) =>
       sum + (n.type === 'shop' || n.type === 'supply' ? 0 : n.toughness), 0)
     const poolSize = Math.min(Math.ceil(totalToughness * 1.5), questions.length)
     const shuffled = [...questions].sort(() => Math.random() - 0.5)
     const poolIds = shuffled.slice(0, poolSize).map(q => q.id ?? '').filter(Boolean)
-    _sessionPool = [...poolIds]
 
     // 补给节点 (index 0) 自动触发 showSupply
     const isSupply = nodes[0].type === 'supply'
 
     Object.assign(gameState, {
       allQuestions: questions,
-      currentQuestion: null, // 补给节点无题，初见时 _drawFromPool 补
+      currentQuestion: null,
       selectedAnswer: null,
       isAnswerSubmitted: false,
       isAnswerCorrect: false,
@@ -465,6 +623,7 @@ let _bossRewardClaimedNode = -1 // 防止 Boss 奖励被反复领取
       shopOptions: [],
       supplyOptions: isSupply ? _generateSupplyOptions() : [],
       isGameOver: false,
+    gameError: null,
       revealedOptions: 0,
       extraChancesRemaining: 0,
       progress: {
@@ -474,6 +633,21 @@ let _bossRewardClaimedNode = -1 // 防止 Boss 奖励被反复领取
         preDrawnQuestionIds: poolIds,
       },
     })
+
+    // 计算游戏阶段（跨局累积统计）
+    _gamePhase = _computePhase()
+
+    // 补给节点无题；其他节点抽首题
+    if (!isSupply) {
+      const firstQ = _drawQuestion(nodes[0].type)
+      if (!firstQ) {
+        gameState.gameError = '题库加载失败，请检查题库数据'
+        return true
+      }
+      gameState.currentQuestion = firstQ
+      _questionShownAt = Date.now()
+    }
+
     _maxComboValue.value = 0
     _bossRewardClaimedNode = -1
     return true
@@ -495,30 +669,34 @@ let _bossRewardClaimedNode = -1 // 防止 Boss 奖励被反复领取
       shopOptions: [],
       supplyOptions: [],
       isGameOver: false,
+    gameError: null,
       revealedOptions: 0,
       extraChancesRemaining: 0,
     })
     _maxComboValue.value = 0
     _bossRewardClaimedNode = -1
+    _questionShownAt = 0
+    _gamePhase = 1
   }
 
   /** 选择答案（仅记录，不判定正误） */
   function selectAnswer(answerKey: string): void {
-    if (gameState.isAnswerSubmitted) return
+    if (!gameState.progress.isStarted || gameState.isAnswerSubmitted || gameState.isGameOver || gameState.gameError) return
     gameState.selectedAnswer = answerKey
   }
 
   /** 提交当前答案：判定正误，更新 HP/击破/羽毛/连击/星琼 */
   function submitAnswer(): void {
-    if (gameState.selectedAnswer === null || gameState.isAnswerSubmitted) return
+    if (!gameState.progress.isStarted || gameState.selectedAnswer === null || gameState.isAnswerSubmitted || gameState.isGameOver || gameState.gameError) return
 
     const question = gameState.currentQuestion
     if (!question) return
 
     const isCorrect = _checkAnswer(question, gameState.selectedAnswer)
 
-    // 记录题目答题统计
-    if (question.id) _recordQuestionStats(question.id, isCorrect)
+    // 记录题目答题统计（含耗时）
+    const duration = _questionShownAt > 0 ? Math.round((Date.now() - _questionShownAt) / 1000) : 0
+    if (question.id) _recordQuestionStats(question.id, isCorrect, duration)
 
     const p = gameState.progress
     const idx = p.currentNodeIndex
@@ -673,10 +851,12 @@ let _bossRewardClaimedNode = -1 // 防止 Boss 奖励被反复领取
     const p = gameState.progress
     const currentNode = p.nodes[p.currentNodeIndex]
 
-    // 当前节点未完成 → 同节点新题（从共享池抽，池空则全题库随机）
+    // 当前节点未完成 → 同节点新题（8盒加权抽题）
     if (!currentNode.isComplete) {
-      const nextQ = _drawFromPool()
+      const nextQ = _drawQuestion(currentNode.type)
+      if (!nextQ) { gameState.gameError = '题库加载失败'; return }
       gameState.currentQuestion = nextQ
+      _questionShownAt = Date.now()
       gameState.selectedAnswer = null
       gameState.isAnswerSubmitted = false
       gameState.isAnswerCorrect = false
@@ -797,8 +977,9 @@ let _bossRewardClaimedNode = -1 // 防止 Boss 奖励被反复领取
       return
     }
 
-    // 普通/精英/Boss(未击败)/奖励节点 → 从共享池抽题
-    const nextQ = _drawFromPool()
+    // 普通/精英/Boss(未击败)/奖励节点 → 8盒加权抽题
+    const nextQ = _drawQuestion(nextNode.type)
+    if (!nextQ) { gameState.gameError = '题库加载失败'; return }
     Object.assign(gameState, {
       progress: baseProgress,
       currentQuestion: nextQ,
@@ -806,11 +987,12 @@ let _bossRewardClaimedNode = -1 // 防止 Boss 奖励被反复领取
       isAnswerSubmitted: false,
       isAnswerCorrect: false,
     })
+    _questionShownAt = Date.now()
   }
 
   /** 投降（放弃当前题目） */
   function surrender(): void {
-    if (gameState.isAnswerSubmitted) return
+    if (!gameState.progress.isStarted || gameState.isAnswerSubmitted || gameState.isGameOver || gameState.gameError) return
 
     const p = gameState.progress
     const idx = p.currentNodeIndex
