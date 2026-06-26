@@ -405,14 +405,15 @@ export function useBreakGame(): UseBreakGameReturn {
     return 7
   }
 
-  /** 构建 8 个盒子的题目 ID 索引 */
+  /** 构建 8 个盒子的题目 ID 索引（仅限预抽池，保证 AI 笔记覆盖） */
   function _buildBoxes(): Record<number, string[]> {
     const stats = getStats()
     const boxes: Record<number, string[]> = { 1: [], 2: [], 3: [], 4: [], 5: [], 6: [], 7: [], 8: [] }
-    for (const q of gameState.allQuestions) {
-      if (!q.id) continue
-      const box = _classifyBox(stats[q.id])
-      if (box >= 1 && box <= 8) boxes[box].push(q.id)
+    const poolIds = gameState.progress.preDrawnQuestionIds
+    for (const id of poolIds) {
+      if (!id) continue
+      const box = _classifyBox(stats[id])
+      if (box >= 1 && box <= 8) boxes[box].push(id)
     }
     return boxes
   }
