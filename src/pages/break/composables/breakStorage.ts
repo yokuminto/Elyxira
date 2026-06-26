@@ -7,7 +7,7 @@
  */
 
 const DB_NAME = 'elyxira_break'
-const DB_VERSION = 1
+const DB_VERSION = 2
 const NOTES_KEY = 'notes'
 const TAGS_KEY = 'tags'
 const STATS_KEY = 'stats'
