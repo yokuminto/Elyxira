@@ -35,24 +35,56 @@ let _notes: Record<string, string> | null = null
 let _tags: Record<string, Record<string, string>> | null = null
 let _stats: BreakStats | null = null
 
-// ─── IndexedDB ────────────────────────────────────────────────
+// ─── IndexedDB（自动升迁）───────────────────────────────────────
 
-function _openDB(): Promise<IDBDatabase> {
+/** 运行时版本号；首次缺失 store 时自动 +1 */
+let _dbVersion = DB_VERSION
+/** 当前打开的数据库实例 */
+let _db: IDBDatabase | null = null
+
+function _openDB(version?: number): Promise<IDBDatabase> {
+  const ver = version ?? _dbVersion
   return new Promise((resolve, reject) => {
-    const req = indexedDB.open(DB_NAME, DB_VERSION)
+    const req = indexedDB.open(DB_NAME, ver)
     req.onupgradeneeded = () => {
       const db = req.result
-      if (!db.objectStoreNames.contains(NOTES_KEY)) db.createObjectStore(NOTES_KEY)
-      if (!db.objectStoreNames.contains(TAGS_KEY)) db.createObjectStore(TAGS_KEY)
-      if (!db.objectStoreNames.contains(STATS_KEY)) db.createObjectStore(STATS_KEY)
+      for (const store of [NOTES_KEY, TAGS_KEY, STATS_KEY]) {
+        if (!db.objectStoreNames.contains(store)) db.createObjectStore(store)
+      }
     }
-    req.onsuccess = () => resolve(req.result)
+    req.onsuccess = () => {
+      _db = req.result
+      _dbVersion = ver
+      resolve(_db)
+    }
     req.onerror = () => reject(req.error)
+    req.onblocked = () => {
+      // 旧连接未关闭时触发；尝试强制关旧连接后重试
+      _db?.close()
+      _db = null
+    }
   })
 }
 
+/** 保活获取数据库实例；遇到缺失 store 时自动升级重连 */
+async function _ensureDB(): Promise<IDBDatabase> {
+  if (_db) return _db
+
+  let db = await _openDB()
+
+  // 检查所有需要的 store 是否都存在
+  const missing = [NOTES_KEY, TAGS_KEY, STATS_KEY].filter(s => !db.objectStoreNames.contains(s))
+  if (missing.length === 0) return db
+
+  // 缺失 store → 关闭旧库，版本 +1，重新打开
+  db.close()
+  _db = null
+  _dbVersion += 1
+  return _openDB(_dbVersion)
+}
+
 function _dbGet(store: string, key: string): Promise<any> {
-  return _openDB().then(db => new Promise((resolve, reject) => {
+  return _ensureDB().then(db => new Promise((resolve, reject) => {
     const tx = db.transaction(store, 'readonly')
     const req = tx.objectStore(store).get(key)
     req.onsuccess = () => resolve(req.result)
@@ -61,7 +93,7 @@ function _dbGet(store: string, key: string): Promise<any> {
 }
 
 function _dbSet(store: string, key: string, value: any): Promise<void> {
-  return _openDB().then(db => new Promise((resolve, reject) => {
+  return _ensureDB().then(db => new Promise((resolve, reject) => {
     const tx = db.transaction(store, 'readwrite')
     tx.objectStore(store).put(value, key)
     tx.oncomplete = () => resolve()
