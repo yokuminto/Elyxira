@@ -345,6 +345,9 @@ export function useBreakGame(): UseBreakGameReturn {
   /** 当前游戏阶段（initGame 时计算，整局不变） */
   let _gamePhase = 1
 
+  /** 8 盒预抽池（initGame 时按预期抽题量 ×1.5 预抽，节点消耗） */
+  let _preDrawnBoxes: Record<number, string[]> = { 1: [], 2: [], 3: [], 4: [], 5: [], 6: [], 7: [], 8: [] }
+
   /** 计算当前阶段（1/2/3） */
   function _computePhase(): number {
     const stats = getStats()
@@ -405,22 +408,40 @@ export function useBreakGame(): UseBreakGameReturn {
     return 7
   }
 
-  /** 构建 8 个盒子的题目 ID 索引（仅限预抽池，保证 AI 笔记覆盖） */
-  function _buildBoxes(): Record<number, string[]> {
+  /** 构建 8 个盒子的题目 ID 索引（全题库分类） */
+  function _buildFullBoxes(): Record<number, string[]> {
     const stats = getStats()
     const boxes: Record<number, string[]> = { 1: [], 2: [], 3: [], 4: [], 5: [], 6: [], 7: [], 8: [] }
-    const poolIds = gameState.progress.preDrawnQuestionIds
-    for (const id of poolIds) {
-      if (!id) continue
-      const box = _classifyBox(stats[id])
-      if (box >= 1 && box <= 8) boxes[box].push(id)
+    for (const q of gameState.allQuestions) {
+      if (!q.id) continue
+      const box = _classifyBox(stats[q.id])
+      if (box >= 1 && box <= 8) boxes[box].push(q.id)
     }
     return boxes
   }
 
-  /** 加权抽取一题（根据节点类型选择权重行） */
+  /** 从指定盒抽一题：先预抽、再全量 */
+  function _drawFromBox(boxNum: number, fullBoxes: Record<number, string[]>): Question | null {
+    // 一级：预抽盒
+    const preDrawn = _preDrawnBoxes[boxNum]
+    if (preDrawn && preDrawn.length > 0) {
+      const qid = preDrawn[Math.floor(Math.random() * preDrawn.length)]
+      const q = _getQuestionById(qid)
+      if (q) return _syncNotesToQuestion(q)
+    }
+    // 二级：同号全量盒
+    const full = fullBoxes[boxNum]
+    if (full && full.length > 0) {
+      const qid = full[Math.floor(Math.random() * full.length)]
+      const q = _getQuestionById(qid)
+      if (q) return _syncNotesToQuestion(q)
+    }
+    return null
+  }
+
+  /** 加权抽取一题（三级回退：预抽 → 同号全量 → 兜底链 → 全题库随机） */
   function _drawQuestion(nodeType: string): Question | null {
-    const boxes = _buildBoxes()
+    const fullBoxes = _buildFullBoxes()
 
     const rawWeights = BOX_WEIGHTS[_gamePhase]?.[nodeType]
     if (!rawWeights) {
@@ -430,10 +451,10 @@ export function useBreakGame(): UseBreakGameReturn {
 
     const weights = [...rawWeights]
 
-    // 安全阀：非空盒子权重 > MAX_BOX_WEIGHT → 裁到上限
+    // 安全阀：预抽盒权重 > 40% → 裁到上限
     let overflow = 0
     for (let i = 0; i < 8; i++) {
-      if (boxes[i + 1].length > 0) {
+      if (_preDrawnBoxes[i + 1].length > 0) {
         const maxW = Math.floor(MAX_BOX_WEIGHT * 100)
         if (weights[i] > maxW) {
           overflow += weights[i] - maxW
@@ -442,12 +463,14 @@ export function useBreakGame(): UseBreakGameReturn {
       }
     }
 
-    // 空盒子权重清零
+    // 双重空盒权重清零（预抽 + 全量都空才清）
     for (let i = 0; i < 8; i++) {
-      if (boxes[i + 1].length === 0) weights[i] = 0
+      if (_preDrawnBoxes[i + 1].length === 0 && fullBoxes[i + 1].length === 0) {
+        weights[i] = 0
+      }
     }
 
-    // 溢出权重按比例分给剩余非空盒子
+    // 溢出权重按原始比例重分配给剩余非空盒
     if (overflow > 0) {
       const remaining = weights.reduce((s, w) => s + w, 0)
       if (remaining > 0) {
@@ -465,25 +488,21 @@ export function useBreakGame(): UseBreakGameReturn {
       let r = Math.random() * totalW
       for (let i = 0; i < 8; i++) {
         r -= weights[i]
-        if (r <= 0 && boxes[i + 1].length > 0) {
-          const qid = boxes[i + 1][Math.floor(Math.random() * boxes[i + 1].length)]
-          const q = _getQuestionById(qid)
-          if (q) return _syncNotesToQuestion(q)
+        if (r <= 0) {
+          const q = _drawFromBox(i + 1, fullBoxes)
+          if (q) return q
         }
       }
     }
 
-    // 全部空 → 兜底链
+    // 兜底链（先预抽、再全量）
     const chain = FALLBACK_CHAINS[_gamePhase] || FALLBACK_CHAINS[1]
     for (const b of chain) {
-      if (boxes[b].length > 0) {
-        const qid = boxes[b][Math.floor(Math.random() * boxes[b].length)]
-        const q = _getQuestionById(qid)
-        if (q) return _syncNotesToQuestion(q)
-      }
+      const q = _drawFromBox(b, fullBoxes)
+      if (q) return q
     }
 
-    // 全题库兜底
+    // 全题库随机
     if (gameState.allQuestions.length === 0) return null
     return _syncNotesToQuestion(gameState.allQuestions[Math.floor(Math.random() * gameState.allQuestions.length)])
   }
@@ -593,6 +612,36 @@ export function useBreakGame(): UseBreakGameReturn {
     return _getRandomCharacters(count)
   }
 
+  /** 从全题库分类中，按预期抽题量 ×1.5 预抽 8 盒题目 */
+  function _preDrawFromFullBoxes(fullBoxes: Record<number, string[]>, nodes: BreakNode[]): Record<number, string[]> {
+    const weights = BOX_WEIGHTS[_gamePhase]
+    const expectedPerBox = new Array(8).fill(0)
+
+    for (const node of nodes) {
+      if (node.type === 'shop' || node.type === 'supply') continue
+      const w = weights[node.type]
+      if (!w) continue
+      // 每节点预期抽题次数 = 击破值（答对最少次数）
+      for (let i = 0; i < 8; i++) {
+        expectedPerBox[i] += node.toughness * (w[i] / 100)
+      }
+    }
+
+    const preDrawnBoxes: Record<number, string[]> = { 1: [], 2: [], 3: [], 4: [], 5: [], 6: [], 7: [], 8: [] }
+    const usedIds = new Set<string>()
+
+    for (let i = 0; i < 8; i++) {
+      const needed = Math.ceil(expectedPerBox[i] * 1.5)
+      const available = fullBoxes[i + 1].filter(id => !usedIds.has(id))
+      const shuffled = [...available].sort(() => Math.random() - 0.5)
+      const selected = shuffled.slice(0, Math.min(needed, shuffled.length))
+      for (const id of selected) usedIds.add(id)
+      preDrawnBoxes[i + 1] = selected
+    }
+
+    return preDrawnBoxes
+  }
+
   // ═══════════════════════════════════════════════════════════
   // 公开方法
   // ═══════════════════════════════════════════════════════════
@@ -602,13 +651,6 @@ export function useBreakGame(): UseBreakGameReturn {
     if (!questions || questions.length === 0) return false
 
     const nodes = _generateNodes()
-
-    // 开局预抽共享题目池：总击破值 × 1.5（仅用于补给站批量 AI 生成，不用于抽题）
-    const totalToughness = nodes.reduce((sum, n) =>
-      sum + (n.type === 'shop' || n.type === 'supply' ? 0 : n.toughness), 0)
-    const poolSize = Math.min(Math.ceil(totalToughness * 1.5), questions.length)
-    const shuffled = [...questions].sort(() => Math.random() - 0.5)
-    const poolIds = shuffled.slice(0, poolSize).map(q => q.id ?? '').filter(Boolean)
 
     // 补给节点 (index 0) 自动触发 showSupply
     const isSupply = nodes[0].type === 'supply'
@@ -633,12 +675,20 @@ export function useBreakGame(): UseBreakGameReturn {
         ...createDefaultProgress(),
         nodes,
         isStarted: true,
-        preDrawnQuestionIds: poolIds,
+        preDrawnQuestionIds: [], // 稍后填充
       },
     })
 
     // 计算游戏阶段（跨局累积统计）
     _gamePhase = _computePhase()
+
+    // 全题库分类 → 按预期抽题量 ×1.5 预抽 8 盒题目
+    const fullBoxes = _buildFullBoxes()
+    _preDrawnBoxes = _preDrawFromFullBoxes(fullBoxes, nodes)
+
+    // 预抽池 ID 扁平列表（供补给站批量 AI 生成用）
+    const allDrawnIds = Object.values(_preDrawnBoxes).flat()
+    gameState.progress.preDrawnQuestionIds = allDrawnIds
 
     // 补给节点无题；其他节点抽首题
     if (!isSupply) {
@@ -680,6 +730,7 @@ export function useBreakGame(): UseBreakGameReturn {
     _bossRewardClaimedNode = -1
     _questionShownAt = 0
     _gamePhase = 1
+    _preDrawnBoxes = { 1: [], 2: [], 3: [], 4: [], 5: [], 6: [], 7: [], 8: [] }
   }
 
   /** 选择答案（仅记录，不判定正误） */
