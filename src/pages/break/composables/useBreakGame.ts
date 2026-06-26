@@ -179,8 +179,8 @@ export function useBreakGame(): UseBreakGameReturn {
 
   /** 运行时最高连击追踪（通过 ref 响应式追踪） */
   const _maxComboValue = ref(0)
-let _bossRewardClaimedNode = -1 // 防止 Boss 奖励被反复领取
-let _questionShownAt = 0 // 题目展示时间戳（用于计算做题耗时）
+  let _bossRewardClaimedNode = -1 // 防止 Boss 奖励被反复领取
+  let _questionShownAt = 0 // 题目展示时间戳（用于计算做题耗时）
 
   // ═══════════════════════════════════════════════════════════
   // 计算属性
@@ -364,7 +364,7 @@ let _questionShownAt = 0 // 题目展示时间戳（用于计算做题耗时）
     const count = s.answerCount
     const recent = s.recentAnswers // [0] = 最新
     const avgDuration = recent.length > 0
-      ? recent.reduce((sum, r) => sum + r.duration, 0) / recent.length
+      ? recent.reduce((sum, r) => sum + (r.duration || 0), 0) / recent.length
       : 0
 
     // 盒1: 难题 — 次数>3 ∧ 平均耗时>16s ∧ 最近错，或连续错≥3
@@ -441,18 +441,21 @@ let _questionShownAt = 0 // 题目展示时间戳（用于计算做题耗时）
       }
     }
 
-    // 溢出权重分给盒子 7 和 8（按原始比例）
-    if (overflow > 0) {
-      const w7 = rawWeights[6]
-      const w8 = rawWeights[7]
-      const denom = w7 + w8 || 1
-      weights[6] += Math.floor(overflow * (w7 / denom))
-      weights[7] += overflow - Math.floor(overflow * (w7 / denom))
-    }
-
     // 空盒子权重清零
     for (let i = 0; i < 8; i++) {
       if (boxes[i + 1].length === 0) weights[i] = 0
+    }
+
+    // 溢出权重按比例分给剩余非空盒子
+    if (overflow > 0) {
+      const remaining = weights.reduce((s, w) => s + w, 0)
+      if (remaining > 0) {
+        for (let i = 0; i < 8; i++) {
+          if (weights[i] > 0) {
+            weights[i] += Math.floor(overflow * (rawWeights[i] / remaining))
+          }
+        }
+      }
     }
 
     // 归一化 + 加权随机
@@ -492,7 +495,6 @@ let _questionShownAt = 0 // 题目展示时间戳（用于计算做题耗时）
       if (notes[q.id]) {
         return { ...q, notes: notes[q.id] }
       }
-      console.log('[BreakSync] ❌ no local note for:', q.id, '(total notes:', Object.keys(notes).length, ')')
     } catch { /* ignore */ }
     return q
   }
@@ -623,7 +625,7 @@ let _questionShownAt = 0 // 题目展示时间戳（用于计算做题耗时）
       shopOptions: [],
       supplyOptions: isSupply ? _generateSupplyOptions() : [],
       isGameOver: false,
-    gameError: null,
+      gameError: null,
       revealedOptions: 0,
       extraChancesRemaining: 0,
       progress: {
@@ -669,7 +671,7 @@ let _questionShownAt = 0 // 题目展示时间戳（用于计算做题耗时）
       shopOptions: [],
       supplyOptions: [],
       isGameOver: false,
-    gameError: null,
+      gameError: null,
       revealedOptions: 0,
       extraChancesRemaining: 0,
     })
@@ -848,6 +850,7 @@ let _questionShownAt = 0 // 题目展示时间戳（用于计算做题耗时）
 
   /** 进入下一题或下一节点 */
   function nextQuestion(): void {
+    if (!gameState.progress.isStarted || gameState.isGameOver || gameState.gameError) return
     const p = gameState.progress
     const currentNode = p.nodes[p.currentNodeIndex]
 

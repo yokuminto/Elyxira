@@ -137,10 +137,27 @@ async function _migrateFromLocalStorage(): Promise<void> {
   }
 
   if (_notes) {
-    await _dbSet(NOTES_KEY, 'data', _notes)
+    try { await _dbSet(NOTES_KEY, 'data', _notes) } catch { /* migration write best-effort */ }
   }
   if (_tags) {
-    await _dbSet(TAGS_KEY, 'data', _tags)
+    try { await _dbSet(TAGS_KEY, 'data', _tags) } catch { /* migration write best-effort */ }
+  }
+
+  // ── stats 迁移（保留 aggregate 数据，recentAnswers 从零开始）──
+  const statsRaw = localStorage.getItem('break_stats')
+  if (statsRaw) {
+    try {
+      const oldStats: Record<string, { answerCount: number; correctCount: number; lastAnswerTime?: number }> = JSON.parse(statsRaw)
+      _stats = {}
+      for (const [qid, old] of Object.entries(oldStats)) {
+        _stats[qid] = {
+          answerCount: old.answerCount ?? 0,
+          correctCount: old.correctCount ?? 0,
+          recentAnswers: [],
+        }
+      }
+      await _dbSet(STATS_KEY, 'data', _stats)
+    } catch { /* skip */ }
   }
 
   // 清理旧数据
