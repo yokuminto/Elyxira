@@ -348,6 +348,9 @@ export function useBreakGame(): UseBreakGameReturn {
   /** 8 盒预抽池（initGame 时按预期抽题量 ×1.5 预抽，节点消耗） */
   let _preDrawnBoxes: Record<number, string[]> = { 1: [], 2: [], 3: [], 4: [], 5: [], 6: [], 7: [], 8: [] }
 
+  /** 本局已抽题目 ID（跨盒去重） */
+  let _drawnIds = new Set<string>()
+
   /** 计算当前阶段（1/2/3） */
   function _computePhase(): number {
     const stats = getStats()
@@ -420,33 +423,44 @@ export function useBreakGame(): UseBreakGameReturn {
     return boxes
   }
 
-  /** 从指定盒抽一题：先预抽、再全量 */
+  /** 从指定盒抽一题：先预抽（splice 消费）、再全量（过滤已抽） */
   function _drawFromBox(boxNum: number, fullBoxes: Record<number, string[]>): Question | null {
-    // 一级：预抽盒
+    // 一级：预抽盒（跳过已抽过的 → splice 取走）
     const preDrawn = _preDrawnBoxes[boxNum]
     if (preDrawn && preDrawn.length > 0) {
-      const qid = preDrawn[Math.floor(Math.random() * preDrawn.length)]
-      const q = _getQuestionById(qid)
-      if (q) return _syncNotesToQuestion(q)
+      for (let i = 0; i < preDrawn.length; i++) {
+        if (!_drawnIds.has(preDrawn[i])) {
+          const [qid] = preDrawn.splice(i, 1)
+          _drawnIds.add(qid)
+          const q = _getQuestionById(qid)
+          if (q) return _syncNotesToQuestion(q)
+        }
+      }
     }
-    // 二级：同号全量盒
+    // 二级：同号全量盒（过滤已抽过的）
     const full = fullBoxes[boxNum]
     if (full && full.length > 0) {
-      const qid = full[Math.floor(Math.random() * full.length)]
-      const q = _getQuestionById(qid)
-      if (q) return _syncNotesToQuestion(q)
+      const available = full.filter(id => !_drawnIds.has(id))
+      if (available.length > 0) {
+        const qid = available[Math.floor(Math.random() * available.length)]
+        _drawnIds.add(qid)
+        const q = _getQuestionById(qid)
+        if (q) return _syncNotesToQuestion(q)
+      }
     }
     return null
   }
 
-  /** 加权抽取一题（三级回退：预抽 → 同号全量 → 兜底链 → 全题库随机） */
+  /** 加权抽取一题（三级回退，_drawnIds 跨盒去重） */
   function _drawQuestion(nodeType: string): Question | null {
     const fullBoxes = _buildFullBoxes()
 
     const rawWeights = BOX_WEIGHTS[_gamePhase]?.[nodeType]
     if (!rawWeights) {
       if (gameState.allQuestions.length === 0) return null
-      return _syncNotesToQuestion(gameState.allQuestions[Math.floor(Math.random() * gameState.allQuestions.length)])
+      const undrawn = gameState.allQuestions.filter(q => q.id && !_drawnIds.has(q.id))
+      const pool = undrawn.length > 0 ? undrawn : gameState.allQuestions
+      return _syncNotesToQuestion(pool[Math.floor(Math.random() * pool.length)])
     }
 
     const weights = [...rawWeights]
@@ -495,16 +509,18 @@ export function useBreakGame(): UseBreakGameReturn {
       }
     }
 
-    // 兜底链（先预抽、再全量）
+    // 兜底链（先预抽、再全量，_drawFromBox 内已去重）
     const chain = FALLBACK_CHAINS[_gamePhase] || FALLBACK_CHAINS[1]
     for (const b of chain) {
       const q = _drawFromBox(b, fullBoxes)
       if (q) return q
     }
 
-    // 全题库随机
+    // 全题库随机（优先未抽过的）
     if (gameState.allQuestions.length === 0) return null
-    return _syncNotesToQuestion(gameState.allQuestions[Math.floor(Math.random() * gameState.allQuestions.length)])
+    const undrawn = gameState.allQuestions.filter(q => q.id && !_drawnIds.has(q.id))
+    const pool = undrawn.length > 0 ? undrawn : gameState.allQuestions
+    return _syncNotesToQuestion(pool[Math.floor(Math.random() * pool.length)])
   }
 
   /** 同步 localStorage 最新笔记到题目对象上（返回新对象触发 Vue 响应式） */
@@ -703,6 +719,7 @@ export function useBreakGame(): UseBreakGameReturn {
 
     _maxComboValue.value = 0
     _bossRewardClaimedNode = -1
+    _drawnIds = new Set()
     return true
   }
 
@@ -731,6 +748,7 @@ export function useBreakGame(): UseBreakGameReturn {
     _questionShownAt = 0
     _gamePhase = 1
     _preDrawnBoxes = { 1: [], 2: [], 3: [], 4: [], 5: [], 6: [], 7: [], 8: [] }
+    _drawnIds = new Set()
   }
 
   /** 选择答案（仅记录，不判定正误） */
