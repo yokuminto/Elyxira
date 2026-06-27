@@ -645,14 +645,30 @@ export function useBreakGame(): UseBreakGameReturn {
 
     const preDrawnBoxes: Record<number, string[]> = { 1: [], 2: [], 3: [], 4: [], 5: [], 6: [], 7: [], 8: [] }
     const usedIds = new Set<string>()
+    const chain = FALLBACK_CHAINS[_gamePhase] || FALLBACK_CHAINS[1]
 
     for (let i = 0; i < 8; i++) {
-      const needed = Math.ceil(expectedPerBox[i] * 1.5)
-      const available = fullBoxes[i + 1].filter(id => !usedIds.has(id))
-      const shuffled = [...available].sort(() => Math.random() - 0.5)
-      const selected = shuffled.slice(0, Math.min(needed, shuffled.length))
+      const boxNum = i + 1
+      const target = Math.ceil(expectedPerBox[i] * 1.5)
+      const own = fullBoxes[boxNum].filter(id => !usedIds.has(id))
+      const selected: string[] = [...own].sort(() => Math.random() - 0.5).slice(0, Math.min(target, own.length))
+
+      // 缺口：沿兜底链从其他盒借题补充
+      let gap = target - selected.length
+      if (gap > 0) {
+        for (const b of chain) {
+          if (gap <= 0) break
+          if (b === boxNum) continue
+          const pool = fullBoxes[b].filter(id => !usedIds.has(id))
+          if (pool.length === 0) continue
+          const borrow = [...pool].sort(() => Math.random() - 0.5).slice(0, Math.min(gap, pool.length))
+          for (const id of borrow) selected.push(id)
+          gap -= borrow.length
+        }
+      }
+
       for (const id of selected) usedIds.add(id)
-      preDrawnBoxes[i + 1] = selected
+      preDrawnBoxes[boxNum] = selected
     }
 
     return preDrawnBoxes
