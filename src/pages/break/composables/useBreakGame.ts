@@ -706,6 +706,8 @@ export function useBreakGame(): UseBreakGameReturn {
     const allDrawnIds = Object.values(_preDrawnBoxes).flat()
     gameState.progress.preDrawnQuestionIds = allDrawnIds
 
+    _drawnIds = new Set()
+
     // 补给节点无题；其他节点抽首题
     if (!isSupply) {
       const firstQ = _drawQuestion(nodes[0].type)
@@ -719,7 +721,6 @@ export function useBreakGame(): UseBreakGameReturn {
 
     _maxComboValue.value = 0
     _bossRewardClaimedNode = -1
-    _drawnIds = new Set()
     return true
   }
 
