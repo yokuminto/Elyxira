@@ -384,13 +384,13 @@ function nodeTypeShort(type: string): string {
 }
 
 const NODE_COLORS: Record<string, string> = {
-  normal: '#42a5f5',
-  elite: '#ab47bc',
-  boss: '#ef5350',
+  normal: 'var(--c-sky, #42a5f5)',
+  elite: 'var(--c-purple, #ab47bc)',
+  boss: 'var(--c-red, #ef5350)',
 }
 
 const nodeTypeColor = computed(() => {
-  return NODE_COLORS[currentNode.value?.type ?? ''] ?? '#42a5f5'
+  return NODE_COLORS[currentNode.value?.type ?? ''] ?? 'var(--c-sky, #42a5f5)'
 })
 
 async function loadBreakQuestions() {

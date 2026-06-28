@@ -667,7 +667,7 @@ async function renderNotesForCurrentQuestion() {
       htmlContent = md.render(preprocessedContent);
     }
     // 括号内容自动蓝色着色（跳过已有背景色的）
-    htmlContent = htmlContent.replace(/（[^）]*）/g, (m: string) => m.includes('background') ? m : '<span style="color: #2c8aed;">' + m + '</span>');
+    htmlContent = htmlContent.replace(/（[^）]*）/g, (m: string) => m.includes('background') ? m : '<span style="color: var(--c-sky, #3dacf7);">' + m + '</span>');
     renderedNotesHtml.value = htmlContent || '<p class="page-quiz__notes-placeholder">暂无笔记，可点击编辑或AI生成。</p>';
 
   } catch (error) {

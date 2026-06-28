@@ -36,13 +36,12 @@
 
 <script setup lang="ts">
 import type { BreakBossRewardProps, BreakBossRewardEmits } from '../types/component-contracts'
+import { bondColor } from '../composables/bondColors'
 defineProps<BreakBossRewardProps>()
 defineEmits<BreakBossRewardEmits>()
 
 const BOND_LABELS: Record<string, string> = { xianzhou: '仙舟同盟', touhou: '幻想乡', genius: '天才俱乐部' }
-const BOND_COLORS: Record<string, string> = { xianzhou: '#5c6bc0', touhou: '#ef5350', genius: '#26a69a' }
 function bondLabel(c: { bondGroup: string }) { return BOND_LABELS[c.bondGroup] ?? c.bondGroup }
-function bondColor(c: { bondGroup: string }) { return BOND_COLORS[c.bondGroup] ?? '#7a7a9a' }
 </script>
 
 <style scoped>
@@ -77,7 +76,7 @@ function bondColor(c: { bondGroup: string }) { return BOND_COLORS[c.bondGroup] ?
   align-items: center;
   gap: 0.3rem;
   padding: 1.25rem 0.75rem 1rem;
-  background: #fff;
+  background: var(--card, #fff);
   border: 1px solid var(--c-yellow, #f5a623);
   border-radius: 10px;
   cursor: pointer;
@@ -140,7 +139,7 @@ function bondColor(c: { bondGroup: string }) { return BOND_COLORS[c.bondGroup] ?
 
 .break-reward__btn--submit {
   background: var(--c-blue, #4468ee);
-  color: #fff;
+  color: var(--color-white, #fff);
 }
 
 .break-reward__btn--submit:disabled {

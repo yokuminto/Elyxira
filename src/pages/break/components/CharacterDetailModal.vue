@@ -64,6 +64,7 @@
 import { computed } from 'vue'
 import type { BreakCharacter } from '../types/break-types'
 import type { BondGroup } from '../types/break-types'
+import { bondColor as getBondColor } from '../composables/bondColors'
 
 const props = defineProps<{
   character: BreakCharacter
@@ -89,9 +90,8 @@ const hasPrev = computed(() => props.characterIndex > 0)
 const hasNext = computed(() => props.characterIndex < props.totalCharacters - 1)
 
 const BOND_LABELS: Record<string, string> = { xianzhou: '仙舟同盟', touhou: '幻想乡', genius: '天才俱乐部' }
-const BOND_COLORS: Record<string, string> = { xianzhou: '#5c6bc0', touhou: '#ef5350', genius: '#26a69a' }
 const bondLabel = computed(() => BOND_LABELS[props.character.bondGroup] ?? props.character.bondGroup)
-const bondColor = computed(() => BOND_COLORS[props.character.bondGroup] ?? '#7a7a9a')
+const bondColor = computed(() => getBondColor(props.character.bondGroup))
 </script>
 
 <style scoped>
@@ -118,7 +118,7 @@ const bondColor = computed(() => BOND_COLORS[props.character.bondGroup] ?? '#7a7
   justify-content: center;
 }
 .char-detail__close:hover {
-  background: rgba(68,104,238,0.08);
+  background: var(--color-primary-light, rgba(68,104,238,0.08));
   color: var(--c-blue, #4468ee);
 }
 
@@ -181,7 +181,7 @@ const bondColor = computed(() => BOND_COLORS[props.character.bondGroup] ?? '#7a7
   margin: 0.6rem auto 0;
   padding: 0.4rem 1.25rem;
   background: var(--c-blue, #4468ee);
-  color: #fff;
+  color: var(--color-white, #fff);
   border: none;
   border-radius: var(--radius, 12px);
   font-size: 0.85rem;

@@ -142,7 +142,7 @@ async function pushAll() {
 
 .break-repo__mode-option--active {
   border-color: var(--c-blue, #4468ee);
-  background: rgba(68, 104, 238, 0.05);
+  background: var(--color-primary-light, rgba(68, 104, 238, 0.05));
 }
 
 .break-repo__mode-label {
@@ -160,7 +160,7 @@ async function pushAll() {
   flex-direction: column;
   gap: 0.35rem;
   padding: 0.75rem;
-  background: rgba(68, 104, 238, 0.04);
+  background: var(--color-primary-light, rgba(68, 104, 238, 0.04));
   border-radius: var(--radius, 8px);
 }
 
@@ -193,8 +193,8 @@ async function pushAll() {
 .modal__form-control:focus { outline: none; border-color: var(--c-blue, #4468ee); }
 .modal__form-actions { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
 .modal__button { padding: 0.45rem 1rem; font-size: 0.85em; border: none; border-radius: var(--radius, 6px); cursor: pointer; font-weight: 500; }
-.modal__button--primary { background: var(--c-blue, #4468ee); color: #fff; }
+.modal__button--primary { background: var(--c-blue, #4468ee);   color: var(--color-white, #fff); }
 .modal__button--secondary { background: var(--card, #fff); color: var(--text-secondary, #5a5a68); border: 1px solid var(--border, #e5e7eb); }
-.modal__button--success { background: var(--c-green, #059669); color: #fff; }
+.modal__button--success { background: var(--c-green, #059669);   color: var(--color-white, #fff); }
 .modal__button:disabled { opacity: 0.5; cursor: not-allowed; }
 </style>

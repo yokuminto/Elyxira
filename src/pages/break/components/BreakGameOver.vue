@@ -144,7 +144,7 @@ defineEmits<BreakGameOverEmits>()
 
 .break-gameover__btn--primary {
   background: var(--c-blue, #4468ee);
-  color: #fff;
+  color: var(--color-white, #fff);
   border: none;
 }
 

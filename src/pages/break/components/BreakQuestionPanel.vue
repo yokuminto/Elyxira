@@ -216,13 +216,13 @@ function handleSelect(key: string) {
 
 /* 选中状态 */
 .break-qp__option--selected {
-  background: rgba(68, 104, 238, 0.08);
+  background: var(--color-primary-light, rgba(68, 104, 238, 0.08));
   border-color: var(--c-blue, #4468ee);
 }
 
 /* 提交后正确答案（绿色） */
 .break-qp__option--correct {
-  background: rgba(54, 185, 145, 0.08) !important;
+  background: var(--bg-green, rgba(54, 185, 145, 0.08)) !important;
   border-color: var(--c-green, #36b991) !important;
   animation: qp-flash-correct 0.5s ease-out;
 }
@@ -234,7 +234,7 @@ function handleSelect(key: string) {
 
 /* 提交后选错的选项 */
 .break-qp__option--wrong {
-  background: rgba(229, 73, 96, 0.08) !important;
+  background: var(--bg-red, rgba(229, 73, 96, 0.08)) !important;
   border-color: var(--c-red, #e54960) !important;
   animation: qp-shake 0.4s ease-out;
 }
@@ -246,7 +246,7 @@ function handleSelect(key: string) {
 
 /* 提交后透露正确答案（用户没选的那个正确选项） */
 .break-qp__option--reveal-correct {
-  background: rgba(54, 185, 145, 0.04);
+  background: var(--bg-green, rgba(54, 185, 145, 0.04));
   border-color: var(--c-green, #36b991);
   border-style: dashed;
 }
@@ -262,7 +262,7 @@ function handleSelect(key: string) {
   opacity: 0.35;
   cursor: not-allowed;
   pointer-events: none;
-  background: rgba(229, 73, 96, 0.04);
+  background: var(--bg-red, rgba(229, 73, 96, 0.04));
   border-color: rgba(229, 73, 96, 0.12);
 }
 
@@ -292,19 +292,19 @@ function handleSelect(key: string) {
 }
 
 .break-qp__option--selected .break-qp__option-key {
-  background: rgba(68, 104, 238, 0.15);
+  background: var(--color-primary-light, rgba(68, 104, 238, 0.15));
   border-color: var(--c-blue, #4468ee);
   color: var(--c-blue, #4468ee);
 }
 
 .break-qp__option--correct .break-qp__option-key {
-  background: rgba(54, 185, 145, 0.15);
+  background: var(--bg-green, rgba(54, 185, 145, 0.15));
   border-color: var(--c-green, #36b991);
   color: var(--c-green, #36b991);
 }
 
 .break-qp__option--wrong .break-qp__option-key {
-  background: rgba(229, 73, 96, 0.15);
+  background: var(--bg-red, rgba(229, 73, 96, 0.15));
   border-color: var(--c-red, #e54960);
   color: var(--c-red, #e54960);
 }
@@ -395,7 +395,7 @@ function handleSelect(key: string) {
 /* 提交按钮 — 蓝色 */
 .break-qp__btn--submit {
   background: var(--c-blue, #4468ee);
-  color: #fff;
+  color: var(--color-white, #fff);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   flex: 1;
 }
@@ -403,7 +403,7 @@ function handleSelect(key: string) {
 /* 继续按钮（正确）— 绿色 */
 .break-qp__btn--next {
   background: var(--c-green, #36b991);
-  color: #fff;
+  color: var(--color-white, #fff);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   flex: 1;
 }
@@ -411,7 +411,7 @@ function handleSelect(key: string) {
 /* 下一题按钮（错误）— 红色 */
 .break-qp__btn--retry {
   background: var(--c-red, #e54960);
-  color: #fff;
+  color: var(--color-white, #fff);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   flex: 1;
 }
@@ -428,7 +428,7 @@ function handleSelect(key: string) {
 .break-qp__btn--surrender:hover:not(:disabled) {
   border-color: var(--c-blue, #4468ee);
   color: var(--c-blue, #4468ee);
-  background: rgba(68, 104, 238, 0.04);
+  background: var(--color-primary-light, rgba(68, 104, 238, 0.04));
 }
 
 /* ══════════════════════════════════════════════════════════════

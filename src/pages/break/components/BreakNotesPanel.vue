@@ -233,7 +233,7 @@ async function renderNotes() {
           html = md.render(preprocessed)
     }
     // 括号内容自动蓝色着色（跳过已有背景色的）
-    html = html.replace(/（[^）]*）/g, (m) => m.includes('background') ? m : '<span style="color: #2c8aed;">' + m + '</span>')
+    html = html.replace(/（[^）]*）/g, (m) => m.includes('background') ? m : '<span style="color: var(--c-sky, #3dacf7);">' + m + '</span>')
     renderedNotesHtml.value = html || '<p class="break-notes__placeholder">暂无笔记，可点击编辑或AI生成。</p>'
   } catch (e) {
     console.error('[BreakNotes] render error:', e)
@@ -595,7 +595,7 @@ function addBrTags(lines: string[]): string[] {
 .break-notes__actions { display: flex; gap: 4px; }
 
 .break-notes__btn { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: var(--card, #fff); border: 1px solid var(--border, #e5e7eb); border-radius: var(--radius, 8px); cursor: pointer; color: var(--text-secondary, #5a5a68); transition: all 0.1s; padding: 0; }
-.break-notes__btn:hover { background: rgba(68,104,238,0.08); color: var(--c-blue, #4468ee); border-color: var(--c-blue, #4468ee); transform: translateY(-1px); }
+.break-notes__btn:hover {   background: var(--color-primary-light, rgba(68,104,238,0.08)); color: var(--c-blue, #4468ee); border-color: var(--c-blue, #4468ee); transform: translateY(-1px); }
 .break-notes__btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; }
 .break-notes__btn.sync-pending { animation: break-spin 1s linear infinite; }
 
@@ -612,7 +612,7 @@ function addBrTags(lines: string[]): string[] {
 .break-notes__toolbar button { padding: 2px 10px; font-size: 0.8em; background: var(--card, #fff); border: 1px solid var(--border, #e5e7eb); border-radius: 4px; cursor: pointer; color: var(--text-secondary, #5a5a68); }
 .break-notes__textarea { width: 100%; min-height: 80px; padding: 0.5rem; font-size: 0.9em; line-height: 1.5; border: 1px solid var(--border, #e5e7eb); border-radius: var(--radius, 8px); resize: vertical; font-family: inherit; }
 .break-notes__textarea:focus { outline: none; border-color: var(--c-blue, #4468ee); }
-.break-notes__save-btn { align-self: flex-end; padding: 0.4rem 1rem; background: var(--c-blue, #4468ee); color: #fff; border: none; border-radius: var(--radius, 8px); cursor: pointer; font-size: 0.85em; font-weight: 500; }
+.break-notes__save-btn { align-self: flex-end; padding: 0.4rem 1rem; background: var(--c-blue, #4468ee);   color: var(--color-white, #fff); border: none; border-radius: var(--radius, 8px); cursor: pointer; font-size: 0.85em; font-weight: 500; }
 .break-notes__save-btn:hover { transform: translateY(-1px); }
 
 .loading-spinner { display: inline-block; width: 12px; height: 12px; border: 2px solid var(--border, #e5e7eb); border-top-color: var(--c-blue, #4468ee); border-radius: 50%; animation: break-spin 0.6s linear infinite; }

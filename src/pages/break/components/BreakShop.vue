@@ -122,7 +122,7 @@ defineEmits<BreakShopEmits>()
   align-items: center;
   justify-content: space-between;
   padding: 0.75rem 1rem;
-  background: #fff;
+  background: var(--card, #fff);
   border: 1px solid var(--border, #e5e7eb);
   border-radius: 8px;
   cursor: pointer;
@@ -220,7 +220,7 @@ defineEmits<BreakShopEmits>()
 .break-shop__refresh-btn {
   display: block;
   width: 100%;
-  background: rgba(68, 104, 238, 0.08);
+  background: var(--color-primary-light, rgba(68, 104, 238, 0.08));
   color: var(--c-blue, #4468ee);
   border: 1px dashed var(--c-blue, #4468ee);
   border-radius: var(--radius, 12px);
@@ -233,7 +233,7 @@ defineEmits<BreakShopEmits>()
 }
 
 .break-shop__refresh-btn:hover {
-  background: rgba(68, 104, 238, 0.12);
+  background: var(--color-primary-light, rgba(68, 104, 238, 0.12));
   transform: translateY(-1px);
 }
 
