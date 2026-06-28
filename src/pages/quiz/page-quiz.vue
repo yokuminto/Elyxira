@@ -230,7 +230,6 @@ import ModalQuizSync from '@/modals/modal-quiz-sync.vue'
 import ModalApiConfig from '@/modals/modal-api-config.vue'
 import './page-quiz.css'
 import '../../styles/variables.css'
-import '../../styles/quiz-medical.css'
 
 const md = new MarkdownIt({
   html: true,
