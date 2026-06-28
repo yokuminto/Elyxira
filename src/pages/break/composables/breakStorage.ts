@@ -70,7 +70,7 @@ function _openDB(version?: number): Promise<IDBDatabase> {
 async function _ensureDB(): Promise<IDBDatabase> {
   if (_db) return _db
 
-  let db = await _openDB()
+  const db = await _openDB()
 
   // 检查所有需要的 store 是否都存在
   const missing = [NOTES_KEY, TAGS_KEY, STATS_KEY].filter(s => !db.objectStoreNames.contains(s))
@@ -83,7 +83,7 @@ async function _ensureDB(): Promise<IDBDatabase> {
   return _openDB(_dbVersion)
 }
 
-function _dbGet(store: string, key: string): Promise<any> {
+function _dbGet(store: string, key: string): Promise<unknown> {
   return _ensureDB().then(db => new Promise((resolve, reject) => {
     const tx = db.transaction(store, 'readonly')
     const req = tx.objectStore(store).get(key)
@@ -92,7 +92,7 @@ function _dbGet(store: string, key: string): Promise<any> {
   }))
 }
 
-function _dbSet(store: string, key: string, value: any): Promise<void> {
+function _dbSet(store: string, key: string, value: unknown): Promise<void> {
   return _ensureDB().then(db => new Promise((resolve, reject) => {
     const tx = db.transaction(store, 'readwrite')
     tx.objectStore(store).put(value, key)
@@ -110,10 +110,10 @@ async function _migrateFromLocalStorage(): Promise<void> {
 
   // 旧单 key 格式
   if (notesRaw) {
-    try { _notes = JSON.parse(notesRaw) } catch { /* skip */ }
+    try { _notes = JSON.parse(notesRaw) } catch (e) { console.warn('[breakStorage] failed to parse notes from localStorage:', e) }
   }
   if (tagsRaw) {
-    try { _tags = JSON.parse(tagsRaw) } catch { /* skip */ }
+    try { _tags = JSON.parse(tagsRaw) } catch (e) { console.warn('[breakStorage] failed to parse tags from localStorage:', e) }
   }
 
   // 旧分片格式（break_notes_0, break_notes_1, ...）
@@ -124,7 +124,7 @@ async function _migrateFromLocalStorage(): Promise<void> {
     try {
       if (!_notes) _notes = {}
       Object.assign(_notes, JSON.parse(chunk))
-    } catch { /* skip */ }
+    } catch (e) { console.warn('[breakStorage] failed to parse notes chunk:', e) }
   }
   for (let i = 0; ; i++) {
     const tk = `break_tags_${i}`
@@ -133,14 +133,14 @@ async function _migrateFromLocalStorage(): Promise<void> {
     try {
       if (!_tags) _tags = {}
       Object.assign(_tags, JSON.parse(chunk))
-    } catch { /* skip */ }
+    } catch (e) { console.warn('[breakStorage] failed to parse tags chunk:', e) }
   }
 
   if (_notes) {
-    try { await _dbSet(NOTES_KEY, 'data', _notes) } catch { /* migration write best-effort */ }
+    try { await _dbSet(NOTES_KEY, 'data', _notes) } catch (e) { console.warn('[breakStorage] migration notes write failed:', e) }
   }
   if (_tags) {
-    try { await _dbSet(TAGS_KEY, 'data', _tags) } catch { /* migration write best-effort */ }
+    try { await _dbSet(TAGS_KEY, 'data', _tags) } catch (e) { console.warn('[breakStorage] migration tags write failed:', e) }
   }
 
   // ── stats 迁移（保留 aggregate 数据，recentAnswers 从零开始）──
@@ -157,7 +157,7 @@ async function _migrateFromLocalStorage(): Promise<void> {
         }
       }
       await _dbSet(STATS_KEY, 'data', _stats)
-    } catch { /* skip */ }
+    } catch (e) { console.warn('[breakStorage] stats migration failed:', e) }
   }
 
   // 清理旧数据
@@ -172,11 +172,11 @@ async function _migrateFromLocalStorage(): Promise<void> {
 }
 
 async function _loadFromDB(): Promise<void> {
-  const notes = await _dbGet(NOTES_KEY, 'data')
+  const notes = await _dbGet(NOTES_KEY, 'data') as Record<string, string> | undefined
   _notes = notes || {}
-  const tags = await _dbGet(TAGS_KEY, 'data')
+  const tags = await _dbGet(TAGS_KEY, 'data') as Record<string, Record<string, string>> | undefined
   _tags = tags || {}
-  const stats = await _dbGet(STATS_KEY, 'data')
+  const stats = await _dbGet(STATS_KEY, 'data') as BreakStats | undefined
   _stats = stats || {}
 }
 
@@ -268,7 +268,7 @@ export async function recordAnswer(questionId: string, correct: boolean, duratio
   }
 
   // 异步落盘，fire-and-forget
-  _dbSet(STATS_KEY, 'data', _stats).catch(() => { /* stats persistence is best-effort */ })
+  _dbSet(STATS_KEY, 'data', _stats).catch(e => console.warn('[breakStorage] stats persist failed:', e))
 }
 
 /** 批量设置统计（导入用），异步落盘 */

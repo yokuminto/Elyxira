@@ -183,7 +183,6 @@ const loadPresets = () => {
   activePresetName.value = configService.getActiveApiPresetName();
   // 确保 localConfig 反映当前的活动预设
   updateLocalConfigFromPreset(activePresetName.value);
-  // console.log('Presets loaded:', apiPresets.value, 'Active:', activePresetName.value);
 };
 
 // 根据预设名称更新 localConfig
@@ -194,7 +193,6 @@ const updateLocalConfigFromPreset = (presetName: string) => {
     const { name, ...config } = preset;
     localConfig.value = { ...config };
     // 确保新字段也被正确加载
-    // console.log('Local config updated from preset:', presetName, localConfig.value);
   } else {
     console.warn(`Preset "${presetName}" not found when updating local config.`);
     // 可以选择加载默认值或第一个预设的值
@@ -215,7 +213,6 @@ const updateLocalConfigFromPreset = (presetName: string) => {
 
 // 配置变更监听器
 const configChangeListener = () => {
-  // console.log('API config change detected by listener');
   loadPresets(); // 重新加载预设列表和活动预设
 };
 
@@ -237,7 +234,6 @@ watch(() => props.show, (newVal) => {
 
 // 监听活动预设名称的变化，自动更新表单内容
 watch(activePresetName, (newName) => {
-  // console.log('Active preset name changed:', newName);
   updateLocalConfigFromPreset(newName);
 });
 
@@ -247,7 +243,6 @@ watch(activePresetName, (newName) => {
 // 切换预设
 const handlePresetChange = () => {
   if (activePresetName.value) {
-    // console.log('Preset changed via select:', activePresetName.value);
     configService.setActiveApiPreset(activePresetName.value);
     // setActiveApiPreset 会触发 listener，listener 会调用 loadPresets，
     // loadPresets 会调用 updateLocalConfigFromPreset，所以这里不需要手动调用 update

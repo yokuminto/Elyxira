@@ -119,7 +119,7 @@ async function generateOneNote(question: Question): Promise<string> {
     })
 
   if (!response.ok) {
-    const eb = await response.text().catch(() => '')
+    const eb = await response.text().catch(e => { console.warn('[useBreakAI] failed to read error body:', e); return '' })
     throw new Error(`API 请求失败 (${response.status}): ${eb || response.statusText}`)
   }
 
@@ -144,7 +144,7 @@ async function generateOneNote(question: Question): Promise<string> {
   const heartbeat = setInterval(() => {
     if (Date.now() - lastDataTime > 30000) {
       clearInterval(heartbeat)
-      reader.cancel('timeout').catch(() => {})
+      reader.cancel('timeout').catch(e => console.warn('[useBreakAI] reader cancel failed:', e))
     }
   }, 10000)
 
@@ -179,7 +179,7 @@ async function generateOneNote(question: Question): Promise<string> {
             const ft = filter.feed(content)
             fullContent += ft.content
           }
-        } catch { /* skip malformed JSON */ }
+        } catch (e) { console.warn('[useBreakAI] SSE parse failed:', e) }
       }
     }
 
@@ -202,7 +202,7 @@ async function generateOneNote(question: Question): Promise<string> {
             const ft = filter.feed(content)
             fullContent += ft.content
           }
-        } catch { /* skip */ }
+        } catch (e) { console.warn('[useBreakAI] SSE parse failed:', e) }
       }
     }
 
@@ -217,7 +217,7 @@ async function generateOneNote(question: Question): Promise<string> {
           const ft = filter.feed(content)
           fullContent += ft.content
         }
-      } catch { /* skip */ }
+      } catch (e) { console.warn('[useBreakAI] SSE parse failed:', e) }
     }
 
     // 排空 think filter 缓冲区
@@ -228,8 +228,8 @@ async function generateOneNote(question: Question): Promise<string> {
   } finally {
     clearInterval(heartbeat)
   }
-  } catch (e: any) {
-    if (e.name === 'AbortError') {
+  } catch (e: unknown) {
+    if (e instanceof Error && e.name === 'AbortError') {
       console.warn(`[BreakAI] 超时 ${question.id}: 超过 ${SINGLE_NOTE_TIMEOUT / 1000}s`)
     }
     throw e
@@ -357,7 +357,7 @@ export async function regenerateMissingTags(
           } else {
             failed++
           }
-        } catch { failed++ }
+        } catch (e) { console.warn('[useBreakAI] tag regeneration failed:', e); failed++ }
         done++
         onProgress?.(done, total)
       }),

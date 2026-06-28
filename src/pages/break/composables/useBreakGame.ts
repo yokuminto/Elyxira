@@ -292,7 +292,7 @@ export function useBreakGame(): UseBreakGameReturn {
 
   /** 记录题目答题统计（IndexedDB，fire-and-forget） */
   function _recordQuestionStats(questionId: string, isCorrect: boolean, duration: number): void {
-    recordAnswer(questionId, isCorrect, duration).catch(() => { /* stats persistence is best-effort */ })
+    recordAnswer(questionId, isCorrect, duration).catch(e => console.warn('[useBreakGame] stats persist failed:', e))
   }
 
   /** 按 ID 从题目池中查找 */
@@ -531,7 +531,7 @@ export function useBreakGame(): UseBreakGameReturn {
       if (notes[q.id]) {
         return { ...q, notes: notes[q.id] }
       }
-    } catch { /* ignore */ }
+    } catch (e) { console.warn('[useBreakGame] getNotes failed:', e) }
     return q
   }
 
@@ -790,12 +790,12 @@ export function useBreakGame(): UseBreakGameReturn {
     const p = gameState.progress
     const idx = p.currentNodeIndex
     const currentNode = p.nodes[idx]
-    let newProgress = { ...p, nodes: [...p.nodes] }
+    const newProgress = { ...p, nodes: [...p.nodes] }
 
     if (isCorrect) {
       // 答对：击破公式 = baseBreak * breakMultiplier + breakBonus + genki + extraBreakCharges
       const bonuses = _getActiveBonuses()
-      let baseBreak = p.baseBreak * p.breakMultiplier + p.breakBonus + p.genki
+      const baseBreak = p.baseBreak * p.breakMultiplier + p.breakBonus + p.genki
       let newToughness = currentNode.currentToughness - baseBreak
       let usedExtraCharges = 0
       if (newToughness > 0 && p.extraBreakCharges > 0) {
@@ -1189,7 +1189,7 @@ export function useBreakGame(): UseBreakGameReturn {
     if (gameState.progress.starJade < option.cost) return false
 
     const p = gameState.progress
-    let newProgress = { ...p, starJade: p.starJade - option.cost }
+    const newProgress = { ...p, starJade: p.starJade - option.cost }
 
     if (option.type === 'character' && option.character) {
       gameState.progress = newProgress
@@ -1357,7 +1357,7 @@ export function useBreakGame(): UseBreakGameReturn {
 // ─── 工厂函数 ────────────────────────────────────────────────
 
 /** 创建默认进度对象 */
-export function createDefaultProgress(): BreakProgress {
+function createDefaultProgress(): BreakProgress {
   return {
     currentNodeIndex: 0,
     nodes: [],

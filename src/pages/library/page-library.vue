@@ -1296,7 +1296,6 @@ const handleAppSettingsSave = () => { // 移除 settings 参数
 
 // 保持原有 handleGeneralSettingsSave 的引用（如果其他地方还在用）
 // 或者，如果确定不再需要，可以完全移除
-// const handleGeneralSettingsSave = handleAppSettingsSave;
 
 // 返回主页方法
 const goToHome = () => {

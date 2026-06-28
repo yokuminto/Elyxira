@@ -62,7 +62,7 @@
 
 .modal__title {
   margin: 0;
-  font-size: 1.2rem;
+  font-size: 1.2em;
   color: var(--text-heading, #7684ef);
   font-weight: 600;
 }
@@ -126,7 +126,7 @@
 }
 
 .modal__form-description {
-  font-size: 0.875rem;
+  font-size: 0.875em;
   color: var(--text-secondary, #5a5a68);
   margin-bottom: 0.5rem;
   white-space: normal;
@@ -144,7 +144,7 @@
   color: var(--text-main);
   transition: all 0.2s ease;
   font-family: inherit;
-  font-size: 0.95rem;
+  font-size: 0.95em;
   box-sizing: border-box;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -203,7 +203,7 @@ textarea.modal__form-control {
 
 .modal__settings-group-title {
   margin-bottom: 15px;
-  font-size: 1rem;
+  font-size: 1em;
   font-weight: 600;
   color: var(--text-secondary);
 }
@@ -217,7 +217,7 @@ textarea.modal__form-control {
 }
 
 .modal__setting-item-name {
-  font-size: 0.9rem;
+  font-size: 0.9em;
   color: var(--text-main);
   margin-right: 10px;
 }
@@ -386,7 +386,7 @@ textarea.modal__form-control {
   background-color: var(--color-background-soft);
   color: var(--color-text-primary);
   min-width: 180px;
-  font-size: 0.9rem;
+  font-size: 0.9em;
 }
 
 .modal__select-styled:focus {
@@ -416,7 +416,7 @@ textarea.modal__form-control {
   background: none;
   border: none;
   color: var(--color-danger);
-  font-size: 1.2rem;
+  font-size: 1.2em;
   cursor: pointer;
 }
 
@@ -563,7 +563,7 @@ textarea.modal__form-control {
 
 .modal__statistics-results-title {
   margin-bottom: 0.5rem;
-  font-size: 1.2rem;
+  font-size: 1.2em;
   font-weight: 600;
   color: var(--text-color);
 }
@@ -576,7 +576,7 @@ textarea.modal__form-control {
 }
 
 .modal__statistics-results-score-display {
-  font-size: 2.5rem;
+  font-size: 2.5em;
   font-weight: 700;
   color: var(--primary-color);
   margin-bottom: 0.5rem;
@@ -632,7 +632,7 @@ textarea.modal__form-control {
 
 .modal__debug-info h3 {
   margin: 1.5rem 0 0.5rem;
-  font-size: 1rem;
+  font-size: 1em;
   color: var(--text-color-secondary);
   font-weight: 600;
   border-bottom: 1px solid var(--border-light);
@@ -715,7 +715,7 @@ textarea.modal__form-control {
 }
 
 .modal__section-title {
-  font-size: 1.1rem;
+  font-size: 1.1em;
   margin-bottom: 15px;
   color: var(--text-main, #2a2a30);
   font-weight: 500;
@@ -730,7 +730,7 @@ textarea.modal__form-control {
 }
 
 .modal__info-title {
-  font-size: 1rem;
+  font-size: 1em;
   margin-top: 0;
   margin-bottom: 10px;
   color: var(--text-heading, #7684ef);
@@ -888,7 +888,7 @@ textarea.modal__form-control {
 }
 
 .modal__statistics-results-title {
-  font-size: 1.1rem;
+  font-size: 1.1em;
   color: var(--color-primary);
   margin-bottom: 15px;
   font-weight: 600;
@@ -903,7 +903,7 @@ textarea.modal__form-control {
 }
 
 .modal__statistics-results-score-display {
-  font-size: 2.5rem;
+  font-size: 2.5em;
   font-weight: 700;
   margin-bottom: 10px;
   color: var(--color-primary);
@@ -911,7 +911,7 @@ textarea.modal__form-control {
 
 .modal__statistics-results-score-detail {
   color: var(--text-secondary);
-  font-size: 0.95rem;
+  font-size: 0.95em;
 }
 
 /* 编辑题目模态框 */
@@ -936,7 +936,7 @@ textarea.modal__form-control {
   color: var(--text-main);
   transition: all 0.2s ease;
   font-family: inherit;
-  font-size: 0.95rem;
+  font-size: 0.95em;
 }
 
 .modal__form-control:focus {
@@ -1029,7 +1029,7 @@ textarea.modal__form-control {
 }
 
 .modal__section-title {
-  font-size: 1.1rem;
+  font-size: 1.1em;
   margin-bottom: 15px;
   color: var(--text-main);
 }
@@ -1043,7 +1043,7 @@ textarea.modal__form-control {
 }
 
 .modal__info-title {
-  font-size: 1rem;
+  font-size: 1em;
   margin-top: 0;
   margin-bottom: 10px;
   color: var(--text-heading);
@@ -1163,7 +1163,7 @@ textarea.modal__form-control {
 }
 
 .modal__prompt-preset-desc {
-  font-size: 0.85rem;
+  font-size: 0.85em;
   color: var(--text-secondary, #6b7280);
 }
 

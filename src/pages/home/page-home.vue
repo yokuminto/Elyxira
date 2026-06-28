@@ -168,50 +168,16 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
 import { onMounted, ref, computed } from 'vue'
+import configService from '@/services/config-service'
 
-// Define the toggleTheme function
+const isDarkTheme = computed(() => configService.getUiSettings().darkMode)
+
 const toggleTheme = () => {
+  configService.toggleDarkMode()
+  // 视觉切换动画
   const themeToggle = document.querySelector('.page-home__navbar-theme-toggle') as HTMLElement
-  if (themeToggle) {
-    themeToggle.classList.toggle('dark')
-    const isDark = themeToggle.classList.contains('dark')
-
-    if (isDark) {
-      document.body.classList.add('dark-theme')
-      localStorage.setItem('theme', 'dark')
-    } else {
-      document.body.classList.remove('dark-theme')
-      localStorage.setItem('theme', 'light')
-    }
-
-    // 同步所有主题状态
-    syncThemeState()
-  }
+  if (themeToggle) themeToggle.classList.toggle('dark', isDarkTheme.value)
 }
-
-// 同步主题状态的函数
-const syncThemeState = () => {
-  const isDark = document.body.classList.contains('dark-theme')
-  isDarkTheme.value = isDark
-
-  // 更新导航栏样式
-  const navbar = document.querySelector('.page-home__navbar') as HTMLElement
-  if (navbar) {
-    if (isDark) {
-      navbar.classList.add('dark')
-    } else {
-      navbar.classList.remove('dark')
-    }
-
-    // 如果已经滚动，保持scrolled类
-    if (window.scrollY > 10) {
-      navbar.classList.add('page-home__navbar--scrolled')
-    }
-  }
-}
-
-// 添加logo计算属性
-const isDarkTheme = ref(false)
 const themedLogo = computed(() => {
   // 直接返回 public 目录下的路径
   return isDarkTheme.value
@@ -270,24 +236,9 @@ onMounted(() => {
     document.body.style.opacity = '1'
   }, 100)
 
-  // 初始化主题
-  const savedTheme = localStorage.getItem('theme')
-  if (savedTheme === 'dark') {
-    isDarkTheme.value = true
-    const themeToggle = document.querySelector('.page-home__navbar-theme-toggle') as HTMLElement
-    if (themeToggle) {
-      themeToggle.classList.add('dark')
-      document.body.classList.add('dark-theme')
-      // 确保导航栏也添加dark类
-      const navbar = document.querySelector('.page-home__navbar') as HTMLElement
-      if (navbar) {
-        navbar.classList.add('dark')
-      }
-    }
-  }
-
-  // 初始化后同步所有主题状态
-  syncThemeState()
+  // 初始化主题 toggle 视觉状态
+  const themeToggle = document.querySelector('.page-home__navbar-theme-toggle') as HTMLElement
+  if (themeToggle) themeToggle.classList.toggle('dark', isDarkTheme.value)
 
   // 导航栏滚动效果
   const navbar = document.querySelector('.page-home__navbar') as HTMLElement

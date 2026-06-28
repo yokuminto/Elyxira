@@ -203,12 +203,12 @@
       </div>
     </div>
     <!-- 模态框 -->
-    <ModalQuestionOverview :show="showOverviewModal" :questions="localQuestions as any" :current-index="currentIndex"
+    <ModalQuestionOverview :show="showOverviewModal" :questions="localQuestions" :current-index="currentIndex"
       @close="showOverviewModal = false" @jump-to="jumpToQuestion" />
     <ModalStatistics :show="showModalStatistics" :stats="quizStats" @close="showModalStatistics = false"
       @view-wrong="viewWrongQuestions" @continue="showModalStatistics = false" @back-home="navigateBack" />
     <ModalSettings :show="showModalSettings" @close="showModalSettings = false" />
-    <ModalQuestionEdit :show="showEditModal" :question="questionToEdit as any" @close="closeEditModal"
+    <ModalQuestionEdit :show="showEditModal" :question="questionToEdit" @close="closeEditModal"
       @save="handleSaveQuestion" />
     <ModalQuizSync :show="showSyncConfigModal" @close="showSyncConfigModal = false" @save="handleSyncConfigSave"
       :current-quiz="currentQuizInfo" @sync-complete="handleSyncComplete" />
@@ -654,9 +654,6 @@ async function renderNotesForCurrentQuestion() {
   noteContent = noteContent.replace(/<think>[\s\S]*?<\/think>/g, '');
   const isGeneratingThisQuestion = isGenerating.value && activeGenerationIndex.value === currentIndex.value;
   console.log(`[DEBUG] renderNotes: Index=${currentIndex.value}, isGeneratingThis=${isGeneratingThisQuestion}, Note Length=${noteContent.length}`);
-  // --- 新增日志: 原始笔记内容 ---
-  // console.log('[DEBUG] Original Note Content:\n', noteContent);
-  // --- 结束新增日志 ---
 
   try {
     let htmlContent = '';
@@ -664,21 +661,15 @@ async function renderNotesForCurrentQuestion() {
       htmlContent = noteContent
         ? md.render(noteContent) // Directly render if generating, assuming it's Markdown
         : '<p class="page-quiz__notes-placeholder">思考中...</p>';
-      // console.log('[DEBUG] Rendered HTML Output (Generating):\n', htmlContent);
     }
     else if (noteContent) {
       // Render raw content directly, letting markdown-it handle paragraphs and lists
-      const preprocessedContent = preprocessLineBreaks(noteContent); // Apply preprocessing
-      // console.log('[DEBUG] Preprocessed Content for Rendering:\n', preprocessedContent);
-      htmlContent = md.render(preprocessedContent); // Render preprocessed content
-      // console.log('[DEBUG] Rendered HTML Output (Raw Note Rendered):\n', htmlContent);
+      const preprocessedContent = preprocessLineBreaks(noteContent);
+      htmlContent = md.render(preprocessedContent);
     }
     // 括号内容自动蓝色着色（跳过已有背景色的）
     htmlContent = htmlContent.replace(/（[^）]*）/g, (m: string) => m.includes('background') ? m : '<span style="color: #2c8aed;">' + m + '</span>');
     renderedNotesHtml.value = htmlContent || '<p class="page-quiz__notes-placeholder">暂无笔记，可点击编辑或AI生成。</p>';
-    // --- 新增日志: 最终渲染的HTML ---
-    // console.log('[DEBUG] Final Rendered HTML Output:\n', renderedNotesHtml.value);
-    // --- 结束新增日志 ---
 
   } catch (error) {
     console.error('笔记 Markdown 渲染失败:', error);

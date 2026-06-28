@@ -1,3 +1,4 @@
+<!-- eslint-disable vue/multi-word-component-names -->
 <template>
   <!-- 特殊处理GitHub图标 -->
   <svg v-if="props.name === 'github'" viewBox="0 0 24 24" :width="size" :height="size"
@@ -11,6 +12,7 @@
   </i>
 </template>
 
+<!-- eslint-disable vue/multi-word-component-names -->
 <script setup lang="ts">
 import { computed } from 'vue';
 

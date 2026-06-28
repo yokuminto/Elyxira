@@ -26,12 +26,12 @@
   --color-purple-dark: #5b2c6f;
   --color-purple-very-dark: #3b1a45;
 
-  /* Gray */
-  --color-gray-very-light: #f3f4f6;
-  --color-gray-light: #d1d5db;
-  --color-gray: #9ca3af;
-  --color-gray-dark: #4b5563;
-  --color-gray-very-dark: #1f2937;
+  /* Gray — 暖灰系（Claude-inspired warmer neutrals） */
+  --color-gray-very-light: #efede9;
+  --color-gray-light: #d9d7d1;
+  --color-gray: #a8a59e;
+  --color-gray-dark: #5c5a54;
+  --color-gray-very-dark: #2d2c28;
 
   /* White & Black */
   --color-white: #ffffff;
@@ -42,15 +42,15 @@
   /* Transparent */
   --color-transparent: transparent;
 
-  /* 功能色 */
-  --color-primary-light: rgba(68, 104, 238, 0.12);
-  --color-primary: #5164f4;
-  --color-secondary: #5a6bf2;
-  --color-success: #36b991;
-  --color-success-dark: #31a983;
-  --color-warning: #f5a623;
-  --color-tertiary: rgba(155, 175, 245, 0.12);
-  --color-danger: #ef4444;
+  /* 功能色 — 暖调微调 */
+  --color-primary-light: rgba(74, 108, 247, 0.10);
+  --color-primary: #4a6cf7;
+  --color-secondary: #5568e8;
+  --color-success: #2da88a;
+  --color-success-dark: #249178;
+  --color-warning: #ed9e1c;
+  --color-tertiary: rgba(155, 175, 245, 0.10);
+  --color-danger: #e5595a;
 
   /* 主色调 */
   --c-blue: #4468ee; /* 品蓝 */
@@ -66,11 +66,11 @@
   --c-gray: #607d8b; /* 石墨灰 */
   --c-cyan: #00acc1; /* 青色 */
 
-  /* 文本颜色 */
-  --t-dark: #2a2a30; /* 深灰 */
-  --t-medium: #5a5a68; /* 中灰 */
-  --t-light: #9ca3af; /* 浅灰 */
-  --t-accent: #4468ee; /* 强调色(品蓝) */
+  /* 文本颜色 — 暖灰调，避免纯黑 */
+  --t-dark: #3d3d38;
+  --t-medium: #6b6a64;
+  --t-light: #8a8983;
+  --t-accent: #4a6cf7;
 
   /* 背景颜色 */
   --bg-blue: rgba(68, 104, 238, 0.1); /* 品蓝(浅) */
@@ -86,9 +86,9 @@
   --bg-gray: rgba(96, 125, 139, 0.08); /* 石墨灰(浅) */
   --bg-cyan: rgba(0, 172, 193, 0.08); /* 青色(浅) */
 
-  /* 基础背景色 */
-  --bg-white: #f9faff;
-  --bg-white-light: #f3f4f6;
+  /* 基础背景色 — 微暖 off-white */
+  --bg-white: #f8f7f4;
+  --bg-white-light: #efede9;
   --bg-white-transparent: rgba(255, 255, 255, 0.01);
   --bg-black-transparent: rgba(0, 0, 0, 0.01);
 
@@ -103,21 +103,35 @@
   --bg-danger: rgba(239, 68, 68, 0.1);
   --bg-success: rgba(54, 185, 145, 0.12);
 
-  /* 边框颜色 */
-  --border: #9ca3af;
-  --border-gray-transparent: rgba(0, 0, 0, 0.1);
+  /* 边框颜色 — 柔和暖调 */
+  --border: #c5c2bb;
+  --border-gray-transparent: rgba(0, 0, 0, 0.07);
 
-  /* 文字颜色 */
-  --text: #1f2937;
-  --text-light: #6b7280;
-  --text-main: #2a2a30;
-  --text-secondary: #5a5a68;
-  --text-heading: #7684ef;
+  /* 文字颜色 — 暖调 */
+  --text: #3d3d38;
+  --text-light: #8a8983;
+  --text-main: #3d3d38;
+  --text-secondary: #6b6a64;
+  --text-heading: #5a6cf7;
 
   /* 交互状态 */
-  --hover-primary: #6366f1;
-  --hover-tertiary: #e2e8f0;
-  --hover-danger: #ef4444;
+  --hover-primary: #5a78f8;
+  --hover-tertiary: #e8e5df;
+  --hover-danger: #e5595a;
+
+  /* ── 补全全局缺失变量（light 默认值） ── */
+  --primary-color: #5164f4;
+  --primary-color-dark: #3a4ad4;
+  --color-danger-dark: #dc2626;
+  --color-danger-bg: rgba(239, 68, 68, 0.1);
+  --c-blue-darker: #2c4ad4;
+  --text-color: #1f2937;
+  --text-color-secondary: #6b7280;
+  --bg-light: #f3f4f6;
+  --border-light: #e5e7eb;
+  --bg-mute: #f9faff;
+  --code-background-dark: #343a40;
+  --note-border: #e0e0e0;
 
   /* ==================== 渐变效果 (Gradients) ==================== */
   --gradient-primary: linear-gradient(135deg, var(--color-cyan), var(--color-purple));
@@ -131,41 +145,41 @@
   --radius-lg: 16px;
   --radius-full: 50%;
 
-  /* 阴影 */
-  --shadow-light: 0 0px 4px rgba(0, 0, 0, 0.02);
-  --shadow: 0 0px 6px rgba(0, 0, 0, 0.15);
-  --shadow-dark: 0 0px 12px rgba(0, 0, 0, 0.15);
-  --shadow-very-dark: 0 0px 16px rgba(0, 0, 0, 0.15);
+  /* 阴影 — 暖色调，克制深度 */
+  --shadow-light: 1px 2px 4px hsl(30 10% 15% / 0.04);
+  --shadow: 2px 3px 6px hsl(30 10% 15% / 0.08);
+  --shadow-dark: 2px 4px 10px hsl(30 10% 15% / 0.10);
+  --shadow-very-dark: 2px 6px 14px hsl(30 10% 15% / 0.12);
 
-  /* 卡片颜色 */
-  --card: white;
-  --card-dark: #f5f5f5;
+  /* 卡片颜色 — 微暖 */
+  --card: #fdfcf9;
+  --card-dark: #f3f1ec;
 
   /* ==================== Markdown渲染相关 (Markdown Related) ==================== */
   /* 基础背景与文本 */
-  --note-bg: #fcfefe; /* 替换原有的 --note__bg */
-  --note-text: #2a2a30;
+  --note-bg: #faf9f5;
+  --note-text: #3d3d38;
 
   /* 表格样式 */
-  --note-table-border: #80ddff;
-  --note-table-header-bg: #d6eef9;
+  --note-table-border: #b8dce8;
+  --note-table-header-bg: #e8f2f6;
   --note-table-header-text: var(--color-black);
-  --note-table-row-odd: #ffffff;
-  --note-table-row-even: #eef7fb;
+  --note-table-row-odd: #fdfcf9;
+  --note-table-row-even: #f3f1ec;
 
   /* 代码块样式 */
-  --note-code-bg: #f7f9fc;
-  --note-code-text: #2d2d35;
-  --note-code-border: #edf0f7;
+  --note-code-bg: #f3f1ec;
+  --note-code-text: #3d3d38;
+  --note-code-border: #e8e5df;
 
   /* mermaid图表样式 */
   --note-mermaid-bg: transparent;
   --note-mermaid-border: rgba(0, 172, 193, 0.2);
-  --note-mermaid-node-bg: #f9faff;
+  --note-mermaid-node-bg: #f8f7f4;
   --note-mermaid-node-border: #3daed7;
-  --note-mermaid-cluster-bg: rgba(0, 172, 193, 0.08);
+  --note-mermaid-cluster-bg: rgba(0, 172, 193, 0.06);
   --note-mermaid-edge-color: #607d8b;
-  --note-mermaid-label-bg: #eef7fb;
+  --note-mermaid-label-bg: #f3f1ec;
   --note-mermaid-font: var(--family-font);
 
   /* 引用块样式 */
@@ -183,10 +197,8 @@
   --note-mark-purple: rgba(58, 66, 213, 0.3);
 
   /* 水平线样式 */
-  --note-hr: rgba(0, 0, 0, 0.2);
-
-  /* 标题样式 */
-  --note-h3: #04aeef;
+  --note-hr: rgba(0, 0, 0, 0.12);
+  --note-h3: #0098b0;
 
   /* ==================== 动画相关 (Animation Related) ==================== */
   --transition-duration: 0.2s;
@@ -207,5 +219,117 @@
   --navbar__height: 64px;
 
   /* ==================== 字体 (Font) ==================== */
+  --font-mono: 'JetBrains Mono', monospace;
   --family-font: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+}
+
+/* ==========================================================================
+   暗黑主题 (Dark Theme) — 统一通过 [data-theme="dark"] 切换
+   ========================================================================== */
+
+[data-theme="dark"] {
+  /* ── 基础背景/文字 — 暖调暗色 ── */
+  --color-white: #262624;
+  --bg-white: #1d1d1b;
+  --bg-white-light: #222220;
+  --card: #262624;
+  --card-dark: #2d2d2a;
+
+  /* ── 文字颜色 — 暖调 off-white ── */
+  --text: #e8e7e2;
+  --text-light: #a09e97;
+  --text-main: #e8e7e2;
+  --text-secondary: #b0aea8;
+  --text-heading: #8a9cf8;
+  --t-dark: #e8e7e2;
+  --t-medium: #b0aea8;
+  --t-light: #7c7a74;
+
+  /* ── 边框 — 暖调暗色 ── */
+  --border: #3e3d3a;
+  --border-gray-transparent: rgba(255, 255, 255, 0.06);
+
+  /* ── 阴影（暗底上更克制） ── */
+  --shadow-light: 1px 2px 4px hsl(30 5% 5% / 0.3);
+  --shadow: 2px 3px 6px hsl(30 5% 5% / 0.4);
+  --shadow-dark: 2px 4px 10px hsl(30 5% 5% / 0.5);
+  --shadow-very-dark: 2px 6px 14px hsl(30 5% 5% / 0.5);
+
+  /* ── 背景色调整 ── */
+  --bg-gray-transparent: rgba(255, 255, 255, 0.05);
+
+  /* ── 交互状态 ── */
+  --hover-primary: #7a8ef8;
+  --hover-tertiary: #2e2e2c;
+  --hover-danger: #f07070;
+
+  /* ── 主色调微调（暗底适配） ── */
+  --c-blue: #6b8af8;
+  --c-indigo: #5b6af0;
+  --c-green: #34d399;
+  --c-red: #f87171;
+  --c-yellow: #fbbf24;
+  --c-sky: #60c8f8;
+  --c-pink: #f472b6;
+  --c-purple: #c084fc;
+  --c-orange: #fb923c;
+  --c-brown: #a89880;
+  --c-gray: #8899a6;
+  --c-cyan: #38bdf8;
+
+  /* ── 功能色 ── */
+  --color-primary: #6b8af8;
+  --color-primary-light: rgba(107, 138, 248, 0.15);
+  --color-success: #34d399;
+  --color-success-dark: #2eb88a;
+  --color-warning: #fbbf24;
+  --color-danger: #f87171;
+
+  /* ── 导航栏 ── */
+  --navbar__bg: rgba(29, 29, 27, 0.92);
+  --navbar__bg-search: rgba(255, 255, 255, 0.04);
+  --navbar__border: rgba(255, 255, 255, 0.05);
+
+  /* ── 主题切换 ── */
+  --theme-toggle__bg-white: #2e2e2c;
+  --theme-toggle__bg-black: #52514e;
+  --theme-toggle__border: rgba(255, 255, 255, 0.06);
+
+  /* ── Markdown / 笔记渲染 — 暖调暗色 ── */
+  --note-bg: #222220;
+  --note-text: #e8e7e2;
+  --note-table-border: #3a3936;
+  --note-table-header-bg: #2a2926;
+  --note-table-header-text: #e8e7e2;
+  --note-table-row-odd: #222220;
+  --note-table-row-even: #282724;
+  --note-code-bg: #1b1b19;
+  --note-code-text: #d8d7d2;
+  --note-code-border: #302f2c;
+  --note-mermaid-bg: transparent;
+  --note-mermaid-border: rgba(56, 189, 248, 0.2);
+  --note-mermaid-node-bg: #1e1e2a;
+  --note-mermaid-node-border: #38bdf8;
+  --note-mermaid-cluster-bg: rgba(56, 189, 248, 0.08);
+  --note-mermaid-edge-color: #8899a6;
+  --note-mermaid-label-bg: #252535;
+  --note-quote-border: #6b8af8;
+  --note-quote-bg: rgba(107, 138, 248, 0.12);
+  --note-link: #8ba8f8;
+  --note-hr: rgba(255, 255, 255, 0.10);
+  --note-h3: #38bdf8;
+
+  /* ── 补全变量（暗色版） ── */
+  --primary-color: #7a8ef8;
+  --primary-color-dark: #6a7de8;
+  --color-danger-dark: #e05050;
+  --color-danger-bg: rgba(240, 112, 112, 0.10);
+  --c-blue-darker: #5a7ae8;
+  --text-color: #e8e7e2;
+  --text-color-secondary: #a09e97;
+  --bg-light: #222220;
+  --border-light: #3a3936;
+  --bg-mute: #1d1d1b;
+  --code-background-dark: #1b1b19;
+  --note-border: #3a3936;
 }

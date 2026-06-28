@@ -86,7 +86,7 @@
     </div>
 
     <!-- ─── 笔记区（完整复制自 page-quiz） ───────────────────── -->
-    <BreakNotesPanel :question="(question as any)" />
+    <BreakNotesPanel :question="question" />
   </div>
 </template>
 

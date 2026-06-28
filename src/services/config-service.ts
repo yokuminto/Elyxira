@@ -88,11 +88,11 @@ export interface ConfigExportData {
   timestamp: string
   version: string
   exportDate: string
-  generalSettings: Record<string, unknown>
-  quizSettings: Record<string, unknown>
+  generalSettings: { uiSettings: UiSettings; debugEnabled: boolean }
+  quizSettings: QuizSettings
   apiPresets?: ApiPreset[]
   activeApiPresetName?: string
-  repoSettings: Record<string, unknown>
+  repoSettings: GithubConfig
   stats: Record<string, unknown>
   statisticsData?: Record<string, unknown>
   userAnswers?: Record<string, unknown>
@@ -487,7 +487,7 @@ class ConfigService {
    */
   private applyTheme(): void {
     const { darkMode, fontSize, fontFamily } = this.settings.uiSettings
-    document.documentElement.setAttribute('theme', darkMode ? 'dark' : 'light')
+    document.documentElement.setAttribute('data-theme', darkMode ? 'dark' : 'light')
     document.documentElement.style.setProperty('--font-size', `${fontSize}px`)
     document.documentElement.style.setProperty('--font-family', fontFamily)
     // 注意：音效不在这里应用，而是在播放时读取设置
@@ -940,11 +940,11 @@ class ConfigService {
         generalSettings: {
           uiSettings: this.settings.uiSettings,
           debugEnabled: this.settings.debugEnabled,
-        } as Record<string, unknown>,
-        quizSettings: this.settings.quizSettings as unknown as Record<string, unknown>,
+        },
+        quizSettings: this.settings.quizSettings,
         apiPresets: this.settings.apiPresets,
         activeApiPresetName: this.settings.activeApiPresetName,
-        repoSettings: this.settings.githubConfig as unknown as Record<string, unknown>,
+        repoSettings: this.settings.githubConfig,
         stats: {},
       }
 
@@ -1024,7 +1024,7 @@ class ConfigService {
       if (typedConfig.quizSettings) {
         newSettings.quizSettings = {
           ...this.settings.quizSettings,
-          ...(typedConfig.quizSettings as unknown as QuizSettings),
+          ...(typedConfig.quizSettings),
         }
       }
 
@@ -1064,7 +1064,7 @@ class ConfigService {
       if (typedConfig.repoSettings) {
         newSettings.githubConfig = {
           ...this.settings.githubConfig,
-          ...(typedConfig.repoSettings as unknown as GithubConfig),
+          ...(typedConfig.repoSettings),
         }
       }
 
@@ -1131,10 +1131,6 @@ class ConfigService {
       typeof config.version === 'string'
     if (!basicValid) return false
 
-    // 可选：更严格的验证，检查是否存在 apiPresets 或旧的 apiSettings
-    // const hasApiSettings = 'apiPresets' in config || 'apiSettings' in config;
-    // return hasApiSettings; // 如果要求必须有API设置
-
     return true // 目前只做基本验证
   }
 
@@ -1142,9 +1138,6 @@ class ConfigService {
    * 重置所有配置
    */
   public resetAllSettings(): void {
-    // 保留 GitHub 配置和其他可能不希望重置的设置（如果需要）
-    // const githubConfig = this.settings.githubConfig;
-
     // 重置为默认值，这现在包含了默认的预设列表和活动名称
     this.settings = { ...DEFAULT_SETTINGS }
     // 如果需要保留特定配置： this.settings.githubConfig = githubConfig;

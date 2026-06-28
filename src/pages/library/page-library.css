@@ -90,7 +90,7 @@
 .page-library__filter-select {
   border-radius: var(--radius);
   background-color: var(--card);
-  font-size: 0.9rem;
+  font-size: 0.9em;
   transition: all var(--transition-duration) var(--transition-timing);
 }
 
@@ -119,7 +119,7 @@
   top: 50%;
   transform: translateY(-50%);
   color: var(--text-light);
-  font-size: 1rem;
+  font-size: 1em;
   pointer-events: none; /* 防止图标干扰输入 */
 }
 
@@ -131,7 +131,7 @@
 }
 
 .page-library__filter-label {
-  font-size: 0.85rem;
+  font-size: 0.85em;
   font-weight: 500;
   color: var(--text-light);
 }
@@ -199,7 +199,7 @@
   padding: 0.5rem 0.75rem;
   background-color: var(--color-blue-light);
   color: var(--text);
-  font-size: 0.85rem;
+  font-size: 0.85em;
 }
 .page-library__filter-button:hover {
   background-color: var(--color-blue);
@@ -245,7 +245,7 @@
   border-radius: var(--radius-sm);
   background-color: var(--color-blue-light);
   color: var(--color-black);
-  font-size: 0.8rem;
+  font-size: 0.8em;
 }
 .page-library__table-button:hover {
   background-color: var(--color-blue);
@@ -255,7 +255,7 @@
 /* Card Action Button Specifics */
 .page-library__card-action {
   padding: 0.4rem 0.75rem;
-  font-size: 0.85rem;
+  font-size: 0.85em;
   background-color: var(--color-blue);
   color: var(--color-white);
 }
@@ -292,7 +292,7 @@
   table-layout: fixed;
   border-collapse: separate;
   border-spacing: 0;
-  font-size: 0.9rem;
+  font-size: 0.9em;
   background-color: var(--card);
   box-shadow: var(--shadow);
   border-radius: var(--radius);
@@ -464,7 +464,7 @@
 }
 
 .page-library__card-title {
-  font-size: 1rem;
+  font-size: 1em;
   font-weight: 600;
   color: var(--color-blue);
   margin-bottom: 0.25rem;
@@ -473,7 +473,7 @@
 }
 
 .page-library__card-subtitle {
-  font-size: 0.85rem;
+  font-size: 0.85em;
   color: var(--text-light);
   display: -webkit-box;
   overflow: hidden;
@@ -504,7 +504,7 @@
   background-color: var(--bg-white-light);
   color: var(--text-light);
   border-radius: var(--radius-sm);
-  font-size: 0.75rem;
+  font-size: 0.75em;
   font-weight: 500;
 }
 
@@ -518,7 +518,7 @@
 }
 
 .page-library__card-info {
-  font-size: 0.8rem;
+  font-size: 0.8em;
   color: var(--text-light);
 }
 
@@ -527,7 +527,7 @@
      ========================================================================== */
 
 .page-library__section-title {
-  font-size: 1rem;
+  font-size: 1em;
   font-weight: 600;
   color: var(--text);
   margin-bottom: 0;
@@ -566,7 +566,7 @@
   border-radius: 8px;
   margin-right: 10px;
   color: var(--color-blue);
-  font-size: 1.2rem;
+  font-size: 1.2em;
 }
 
 .page-library__stat-info {
@@ -615,7 +615,7 @@
 }
 
 .page-library__quiz-title {
-  font-size: 1.4rem;
+  font-size: 1.4em;
   font-weight: 600;
   color: var(--text);
   margin: 0;
@@ -623,7 +623,7 @@
 }
 
 .page-library__quiz-desc {
-  font-size: 0.9rem;
+  font-size: 0.9em;
   color: var(--text-light);
   margin: 0.5rem 0 0;
   line-height: 1.5;
@@ -650,7 +650,7 @@
   color: var(--text);
 }
 .form-description {
-  font-size: 0.85rem;
+  font-size: 0.85em;
   color: var(--text-light);
   margin-bottom: 0.5rem;
 }
@@ -696,12 +696,12 @@
   border: none;
 }
 .mode-label {
-  font-size: 1.1rem;
+  font-size: 1.1em;
   font-weight: 600;
   color: var(--text);
 }
 .mode-desc {
-  font-size: 0.9rem;
+  font-size: 0.9em;
   color: var(--text-light);
   line-height: 1.5;
 }
@@ -726,7 +726,7 @@
 }
 .range-separator {
   color: var(--text-light);
-  font-size: 0.9rem;
+  font-size: 0.9em;
   font-weight: 500;
 }
 
@@ -737,7 +737,7 @@
   display: inline-block;
   padding: 0.25rem 0.5rem;
   border-radius: var(--radius-sm);
-  font-size: 0.75rem;
+  font-size: 0.75em;
   font-weight: 500;
   white-space: nowrap;
 }
@@ -790,19 +790,19 @@
   margin: 1rem 0;
 }
 .page-library__empty-icon {
-  font-size: 3rem;
+  font-size: 3em;
   color: var(--color-text-light);
   margin-bottom: 1.5rem;
   opacity: 0.3;
 }
 .page-library__empty-title {
-  font-size: 1.2rem;
+  font-size: 1.2em;
   font-weight: 600;
   color: var(--color-text);
   margin-bottom: 0.5rem;
 }
 .page-library__empty-subtitle {
-  font-size: 0.9rem;
+  font-size: 0.9em;
   color: var(--color-text-light);
   max-width: 400px;
   margin: 0 auto 1.5rem;
@@ -889,7 +889,7 @@
   background-color: rgba(0, 0, 0, 0.01); /* 微妙的背景色差异 */
 }
 .page-library__modal-title {
-  font-size: 1.25rem;
+  font-size: 1.25em;
   font-weight: 600;
   color: var(--color-text);
   margin: 0; /* 确保无外边距 */
@@ -902,7 +902,7 @@
 .page-library__modal-close {
   background: none;
   cursor: pointer;
-  font-size: 1.5rem;
+  font-size: 1.5em;
   color: var(--color-text-light);
   width: 32px;
   height: 32px;
@@ -970,7 +970,7 @@
   align-items: center;
   gap: 0.5rem;
   transition: background-color var(--transition-duration) var(--transition-timing);
-  font-size: 0.9rem; /* Consistent font size */
+  font-size: 0.9em; /* Consistent font size */
   color: var(--color-text);
 }
 .menu-item:hover {
@@ -1154,7 +1154,7 @@
 
 .page-library__loading-text {
   color: var(--color-text-light);
-  font-size: 0.9rem;
+  font-size: 0.9em;
 }
 
 /* 统计区域加载状态 */
@@ -1227,7 +1227,7 @@
 
 .import-option-desc {
   color: var(--text-light);
-  font-size: 0.85rem;
+  font-size: 0.85em;
   margin-left: 1.65rem;
 }
 
@@ -1400,7 +1400,7 @@
   .page-library__table td {
     padding: 0.75rem 0.5rem;
     white-space: normal; /* 允许单元格内容换行 */
-    font-size: 0.85rem;
+    font-size: 0.85em;
   }
   .page-library__table td {
     white-space: nowrap; /* 覆盖上面的 normal，保持单行，但允许省略 */
@@ -1457,7 +1457,7 @@
   .page-library__start-button {
     min-width: 120px;
     padding: 0.6rem 1.2rem;
-    font-size: 0.9rem;
+    font-size: 0.9em;
   }
   .page-library__grid {
     grid-template-columns: 1fr; /* 单列显示卡片 */
@@ -1475,14 +1475,14 @@
     padding: 2rem 1rem;
   }
   .page-library__empty-icon {
-    font-size: 2.5rem;
+    font-size: 2.5em;
     margin-bottom: 1rem;
   }
   .page-library__empty-title {
-    font-size: 1.1rem;
+    font-size: 1.1em;
   }
   .page-library__empty-subtitle {
-    font-size: 0.85rem;
+    font-size: 0.85em;
     margin-bottom: 1rem;
   }
 }

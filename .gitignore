@@ -48,17 +48,14 @@ requirements.txt
 .temp-*
 
 # 项目内部文件（不影响发布）
-.agent/
 .omo/
 .playwright-mcp/
 agent-reference/
 agent-reference.zip
-docs/
-GUIDE.md
-AGENTS.md
 
-# pnpm（项目使用 npm）
-pnpm-lock.yaml
+# Session 交接文件
+.handoff/
+session-*.md
 
 # 截图
 api-config-icons.png

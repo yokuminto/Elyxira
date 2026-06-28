@@ -58,7 +58,8 @@ export function useBreakSync() {
       const raw = localStorage.getItem(REPO_KEY)
       if (!raw) return { ...DEFAULT_REPO }
       return { ...DEFAULT_REPO, ...JSON.parse(raw) }
-    } catch {
+    } catch (e) {
+      console.warn('[useBreakSync] failed to parse repo config:', e)
       return { ...DEFAULT_REPO }
     }
   }
@@ -112,7 +113,7 @@ export function useBreakSync() {
     // 1. 获取分支最新 commit
     const refRes = await fetch(`${apiBase}/git/ref/heads/${cfg.branch}`, { headers })
     if (!refRes.ok) {
-      const err = await refRes.json().catch(() => ({}))
+      const err = await refRes.json().catch(e => { console.warn('[useBreakSync] failed to parse error response:', e); return {} })
       throw new Error(`获取分支引用失败 (${refRes.status}): ${err.message || ''}`)
     }
     const refData = await refRes.json()
@@ -138,7 +139,7 @@ export function useBreakSync() {
       body: JSON.stringify({ base_tree: baseTreeSha, tree: treeEntries }),
     })
     if (!treeRes.ok) {
-      const err = await treeRes.json().catch(() => ({}))
+      const err = await treeRes.json().catch(e => { console.warn('[useBreakSync] failed to parse error response:', e); return {} })
       throw new Error(`创建 tree 失败 (${treeRes.status}): ${err.message || ''}`)
     }
     const newTree = await treeRes.json()
@@ -154,7 +155,7 @@ export function useBreakSync() {
       }),
     })
     if (!newCommitRes.ok) {
-      const err = await newCommitRes.json().catch(() => ({}))
+      const err = await newCommitRes.json().catch(e => { console.warn('[useBreakSync] failed to parse error response:', e); return {} })
       throw new Error(`创建 commit 失败 (${newCommitRes.status}): ${err.message || ''}`)
     }
     const newCommit = await newCommitRes.json()
@@ -166,7 +167,7 @@ export function useBreakSync() {
       body: JSON.stringify({ sha: newCommit.sha, force: false }),
     })
     if (!updateRefRes.ok) {
-      const err = await updateRefRes.json().catch(() => ({}))
+      const err = await updateRefRes.json().catch(e => { console.warn('[useBreakSync] failed to parse error response:', e); return {} })
       throw new Error(`更新分支引用失败 (${updateRefRes.status}): ${err.message || ''}`)
     }
   }
@@ -201,7 +202,7 @@ export function useBreakSync() {
         if (!contentRes.ok) continue
         storage[qid] = await contentRes.text()
         pulled++
-      } catch { /* skip individual file errors */ }
+      } catch (e) { console.warn('[useBreakSync] individual note download failed:', e) }
     }
 
     if (pulled > 0) {
@@ -235,7 +236,7 @@ export function useBreakSync() {
         if (!contentRes.ok) continue
         storage[qid] = JSON.parse(await contentRes.text())
         pulled++
-      } catch { /* skip */ }
+      } catch (e) { console.warn('[useBreakSync] individual tag download failed:', e) }
     }
 
     if (pulled > 0) {
@@ -308,7 +309,7 @@ export function useBreakSync() {
           if (!contentRes.ok) continue
           notesStorage[qid] = await contentRes.text()
           pulled++
-        } catch { /* skip */ }
+        } catch (e) { console.warn('[useBreakSync] note download failed:', e) }
       }
 
       // Also pull tags
@@ -325,11 +326,11 @@ export function useBreakSync() {
               try {
                 const tc = await fetch(f.download_url)
                 if (tc.ok) { tagsStorage[f.name.replace('.json', '')] = JSON.parse(await tc.text()); pulled++ }
-              } catch { /* skip */ }
+              } catch (e) { console.warn('[useBreakSync] tag download failed:', e) }
             }
           }
         }
-      } catch { /* tags optional */ }
+      } catch (e) { console.warn('[useBreakSync] tags directory optional, skipped:', e) }
 
       await setNotes(notesStorage)
       await setTags(tagsStorage)
@@ -363,7 +364,7 @@ export function useBreakSync() {
       }
       state.pushQueue = queue
       processPushQueue()
-    } catch { /* ignore */ }
+    } catch (e) { console.warn('[useBreakSync] pushNote failed:', e) }
   }
 
   /** 处理推送队列 */
@@ -405,6 +406,7 @@ export function useBreakSync() {
       showToast(`已推送 ${queue.length} 项数据到 GitHub`, 'success')
     } catch (e) {
       state.pushError = (e as Error).message
+      console.warn('[useBreakSync] processPushQueue failed:', e)
       // 保留队列以便重试
     } finally {
       _isPushing = false

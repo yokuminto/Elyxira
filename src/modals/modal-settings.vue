@@ -104,6 +104,11 @@
           <label class="modal__toggle-switch"><input type="checkbox"
               v-model="localSettings.uiSettings.animationEnabled"><span class="modal__toggle-slider"></span></label>
         </div>
+        <div class="modal__setting-item">
+          <span class="modal__setting-item-name">暗黑模式</span>
+          <label class="modal__toggle-switch"><input type="checkbox"
+              v-model="localSettings.uiSettings.darkMode"><span class="modal__toggle-slider"></span></label>
+        </div>
       </div>
 
       <!-- 新增：音效设置组 -->
@@ -239,7 +244,6 @@ const localSettings = reactive<{
 
 // 设置变更监听器 - 保持不变
 const settingsChangeListener = () => {
-  // console.log("Settings changed externally, updating local state in modal.");
   Object.assign(localSettings.uiSettings, configService.getUiSettings());
   Object.assign(localSettings.quizSettings, configService.getQuizSettings());
   localSettings.debugEnabled = configService.isDebugEnabled();
@@ -259,7 +263,6 @@ onBeforeUnmount(() => {
 watch(() => props.show, (newVal) => {
   if (newVal) {
     // 当模态框显示时，从 configService 获取最新的设置
-    // console.log("Settings modal opened, loading fresh settings from service.");
     const currentSettings = configService.getSettings(); // 获取完整的 AppSettings
     Object.assign(localSettings.uiSettings, currentSettings.uiSettings);
     Object.assign(localSettings.quizSettings, currentSettings.quizSettings);

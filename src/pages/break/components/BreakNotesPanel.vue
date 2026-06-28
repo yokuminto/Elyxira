@@ -250,10 +250,9 @@ function toggleNotesEditor() {
   }
 }
 
-function saveNotes() {
+async function saveNotes() {
   if (!props.question?.id) return
-  setNote(props.question.id, notesEditText.value).catch(() => {})
-  if (props.question) (props.question as any).notes = notesEditText.value
+  await setNote(props.question.id, notesEditText.value)
   isEditingNotes.value = false
   nextTick(renderNotes)
   showToast('笔记已保存', 'success')
@@ -495,7 +494,7 @@ async function generateAINotes(question: Question, generationTargetIndex: number
       if (questionRef) questionRef.notes = note
       handleCompletion(questionRef?.notes?.trim() ?? '', generationTargetIndex)
     }
-  } catch (error: any) { handleCompletion(questionRef?.notes?.trim() ?? '', generationTargetIndex, `笔记生成失败: ${error.message || '未知错误'}`) }
+  } catch (error) { handleCompletion(questionRef?.notes?.trim() ?? '', generationTargetIndex, `笔记生成失败: ${error instanceof Error ? error.message : '未知错误'}`) }
 }
 
 const { manualPull, hasRepoConfigured } = useBreakSync()

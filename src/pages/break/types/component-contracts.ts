@@ -128,27 +128,53 @@ export interface BreakGameOverEmits {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// CharacterCard.vue — 角色卡片（可复用子组件）
+// CharacterDetailModal.vue — 角色详情弹窗
 // ═══════════════════════════════════════════════════════════════
 
-export interface CharacterCardProps {
-  /** 角色数据 */
+export interface CharacterDetailModalProps {
   character: BreakCharacter
-  /** 显示模式 */
-  mode?: 'compact' | 'full'
-  /** 是否显示技能描述 */
-  showSkill?: boolean
-  /** 技能描述文本（外部传入） */
-  skillDescription?: string
-  /** 是否显示价格（商店中使用） */
-  price?: number
-  /** 是否可选（高亮状态） */
-  selectable?: boolean
-  /** 是否已选中 */
-  selected?: boolean
+  characterIndex: number
+  totalCharacters: number
+  skillDescription: string
+  canActivate: boolean
+  bondInfo: { name: string; currentCount: number; nextThreshold?: { count: number; desc: string } } | null
 }
 
-export interface CharacterCardEmits {
-  /** 点击角色卡片 */
-  (e: 'click', character: BreakCharacter): void
+export interface CharacterDetailModalEmits {
+  (e: 'close'): void
+  (e: 'prev'): void
+  (e: 'next'): void
+  (e: 'use-skill', characterId: string): void
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ModalBreakSettings.vue — 绯想击破独立设置弹窗
+// ═══════════════════════════════════════════════════════════════
+
+export interface ModalBreakSettingsProps {
+  show: boolean
+}
+
+export interface ModalBreakSettingsEmits {
+  (e: 'close'): void
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ModalBreakRepo.vue — 仓库配置弹窗
+// ═══════════════════════════════════════════════════════════════
+
+export interface ModalBreakRepoProps {
+  show: boolean
+}
+
+export interface ModalBreakRepoEmits {
+  (e: 'close'): void
+}
+
+// ═══════════════════════════════════════════════════════════════
+// BreakNotesPanel.vue — 笔记面板（AI 生成 + 编辑 + 同步）
+// ═══════════════════════════════════════════════════════════════
+
+export interface BreakNotesPanelProps {
+  question: Question
 }
