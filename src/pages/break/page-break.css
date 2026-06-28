@@ -73,7 +73,7 @@
 }
 
 .page-break__back-button:hover {
-  background: rgba(68, 104, 238, 0.08);
+  background: var(--color-primary-light, rgba(68, 104, 238, 0.08));
   color: var(--c-blue, #4468ee);
   border-color: var(--c-blue, #4468ee);
 }
@@ -100,7 +100,7 @@
   padding: 0;
 }
 .page-break__theme-toggle:hover {
-  background: rgba(68, 104, 238, 0.08);
+  background: var(--color-primary-light, rgba(68, 104, 238, 0.08));
   border-color: var(--c-blue, #4468ee);
 }
 .page-break__theme-toggle .sun-icon,
@@ -117,7 +117,7 @@
   align-items: center;
   gap: 0.6rem;
   padding: 0.5rem 0.75rem;
-  background: var(--color-blue-light, #e8edfd);
+  background: var(--color-blue-very-light, rgba(68, 104, 238, 0.06));
   border-radius: var(--radius-lg, 16px);
   font-size: 0.82em;
   font-weight: 500;
@@ -150,7 +150,7 @@
   border-radius: 2px;
   flex-shrink: 0;
 }
-.break-feather--empty { background: #ff8f00; }
+.break-feather--empty { background: var(--c-orange, #ff9800); }
 .break-feather--used  { background: var(--color-gray-light, #d1d5db); }
 
 /* ── 击破值（块状点） ── */
@@ -168,7 +168,7 @@
   flex-shrink: 0;
 }
 .break-toughness-dot--live   { background: var(--dot-color, var(--c-blue)); }
-.break-toughness-dot--broken { background: var(--color-gray-light, #d1d5db); }
+.break-toughness-dot--broken { background: var(--color-gray, #a8a59e); }
 
 /* ── 节点路线 ── */
 .break-route {
@@ -192,22 +192,23 @@
 
 .break-route__node--current {
   background: var(--c-green, #36b991);
-  color: #fff;
-  box-shadow: 0 0 0 2px rgba(54, 185, 145, 0.25);
+  color: var(--color-white, #fff);
+  box-shadow: 0 0 0 2px var(--bg-green, rgba(54, 185, 145, 0.25));
 }
 
 .break-route__node--past {
-  background: var(--color-gray-light, #d1d5db);
-  color: var(--text-secondary, #5a5a68);
+  background: var(--color-gray, #a8a59e);
+  color: var(--color-white, #fff);
 }
 
 .break-route__node--future {
   background: transparent;
-  color: var(--text-main, #2a2a30);
+  color: var(--text-secondary, #a09e97);
+  border: 1px dashed var(--border, #c5c2bb);
 }
 
 .break-route__arrow {
-  color: var(--color-gray-light, #d1d5db);
+  color: var(--color-gray, #a8a59e);
   font-size: 0.65em;
   flex-shrink: 0;
 }
@@ -441,9 +442,9 @@ body:has(.break-overlay) {
   align-items: center;
   gap: 0.5rem;
   padding: 1rem;
-  background: rgba(5, 150, 105, 0.06);
+  background: var(--bg-green, rgba(5, 150, 105, 0.06));
   border-radius: var(--radius, 12px);
-  border: 1px dashed rgba(5, 150, 105, 0.3);
+  border: 1px dashed var(--c-green, rgba(5, 150, 105, 0.3));
 }
 
 .break-content__batch-info {
@@ -473,7 +474,7 @@ body:has(.break-overlay) {
 
 .break-content__batch-ring-bg {
   fill: none;
-  stroke: rgba(5, 150, 105, 0.15);
+  stroke: var(--bg-green, rgba(5, 150, 105, 0.15));
   stroke-width: 4;
 }
 
@@ -504,7 +505,7 @@ body:has(.break-overlay) {
   gap: 2px;
   padding: 1px 6px;
   border-radius: 6px;
-  background: rgba(68, 104, 238, 0.06);
+  background: var(--color-primary-light, rgba(68, 104, 238, 0.06));
   cursor: pointer;
   font-size: 0.75em;
   border: 1px solid transparent;
@@ -526,7 +527,7 @@ body:has(.break-overlay) {
   letter-spacing: -1px;
 }
 .break-char-mini--more {
-  background: rgba(68, 104, 238, 0.12);
+  background: var(--color-primary-light, rgba(68, 104, 238, 0.12));
   font-weight: 600;
   color: var(--c-blue, #4468ee);
   padding: 1px 6px;
