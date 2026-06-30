@@ -1,10 +1,18 @@
 /**
  * breakStorage.ts — IndexedDB 存储层
- * 
+ *
  * 替换 localStorage（5MB 上限），使用 IndexedDB（浏览器配额 ~50% 磁盘空间）。
  * 首次加载自动迁移旧 localStorage 数据。
  * 内存缓存读取，写入同步更新缓存 + 异步落盘。
+ *
+ * P2P 集成（@/services/p2p-sync）：
+ * - 每次 set/merge 后 mirrorToYjs 把最新值塞 CRDT 文档（未配对时 skip）
+ * - subscribe 远端 update → 同步更新内存缓存 + 异步写 IndexedDB
+ * - addSnapshotProvider 让 host 启动时把 break 数据注入 Yjs 文档
+ * - 反环阻断：mirrorToYjs 检查 _isApplyingRemote 自动 skip
  */
+
+import { mirrorToYjs, subscribe, addSnapshotProvider, MIRROR_KEYS } from '@/services/p2p-sync'
 
 const DB_NAME = 'elyxira_break'
 const DB_VERSION = 2
@@ -184,11 +192,39 @@ async function _loadFromDB(): Promise<void> {
 
 let _ready: Promise<void> | null = null
 
+/** 注册 P2P 远端更新回调 + 快照提供器；initStorage 完成时调一次 */
+let _registerP2pHooks = (): void => {
+  // 监听远端 break_notes 变化 → 同步更新内存 + fire-and-forget 写 IndexedDB
+  subscribe(MIRROR_KEYS.BREAK_NOTES, (val) => {
+    const obj = val as Record<string, string> | null
+    _notes = obj || {}
+    _dbSet(NOTES_KEY, 'data', _notes).catch(e => console.warn('[breakStorage] remote notes write failed:', e))
+  })
+  subscribe(MIRROR_KEYS.BREAK_TAGS, (val) => {
+    const obj = val as Record<string, Record<string, string>> | null
+    _tags = obj || {}
+    _dbSet(TAGS_KEY, 'data', _tags).catch(e => console.warn('[breakStorage] remote tags write failed:', e))
+  })
+  subscribe(MIRROR_KEYS.BREAK_STATS, (val) => {
+    const obj = val as BreakStats | null
+    _stats = obj || {}
+    _dbSet(STATS_KEY, 'data', _stats).catch(e => console.warn('[breakStorage] remote stats write failed:', e))
+  })
+
+  // host 启动时把本地 break 数据塞入 Yjs 文档
+  addSnapshotProvider(() => ({
+    [MIRROR_KEYS.BREAK_NOTES]: _notes ?? {},
+    [MIRROR_KEYS.BREAK_TAGS]: _tags ?? {},
+    [MIRROR_KEYS.BREAK_STATS]: _stats ?? {},
+  }))
+}
+
 export function initStorage(): Promise<void> {
   if (_ready) return _ready
   _ready = (async () => {
     await _migrateFromLocalStorage()
     if (!_notes || !_stats) await _loadFromDB()
+    _registerP2pHooks()
   })()
   return _ready
 }
@@ -203,18 +239,21 @@ export async function setNotes(notes: Record<string, string>): Promise<void> {
   await initStorage()
   _notes = { ...notes }
   await _dbSet(NOTES_KEY, 'data', _notes)
+  mirrorToYjs(MIRROR_KEYS.BREAK_NOTES, _notes)
 }
 
 export async function setNote(id: string, content: string): Promise<void> {
   await initStorage()
   _notes![id] = content
   await _dbSet(NOTES_KEY, 'data', _notes)
+  mirrorToYjs(MIRROR_KEYS.BREAK_NOTES, _notes)
 }
 
 export async function mergeNotes(incoming: Record<string, string>): Promise<void> {
   await initStorage()
   Object.assign(_notes!, incoming)
   await _dbSet(NOTES_KEY, 'data', _notes)
+  mirrorToYjs(MIRROR_KEYS.BREAK_NOTES, _notes)
 }
 
 // ─── 公开 API — Tags ──────────────────────────────────────────
@@ -228,6 +267,7 @@ export async function setTags(tags: Record<string, Record<string, string>>): Pro
   await initStorage()
   _tags = JSON.parse(JSON.stringify(tags))
   await _dbSet(TAGS_KEY, 'data', _tags)
+  mirrorToYjs(MIRROR_KEYS.BREAK_TAGS, _tags)
 }
 
 export async function mergeTags(incoming: Record<string, Record<string, string>>): Promise<void> {
@@ -235,6 +275,7 @@ export async function mergeTags(incoming: Record<string, Record<string, string>>
   if (!_tags) _tags = {}
   Object.assign(_tags, incoming)
   await _dbSet(TAGS_KEY, 'data', _tags)
+  mirrorToYjs(MIRROR_KEYS.BREAK_TAGS, _tags)
 }
 
 // ─── 公开 API — Stats ─────────────────────────────────────────
@@ -269,6 +310,8 @@ export async function recordAnswer(questionId: string, correct: boolean, duratio
 
   // 异步落盘，fire-and-forget
   _dbSet(STATS_KEY, 'data', _stats).catch(e => console.warn('[breakStorage] stats persist failed:', e))
+  // ponytail: 镜像整条 stats 记录；CRDT 合并算法会按 questionId 走 LWW
+  mirrorToYjs(MIRROR_KEYS.BREAK_STATS, _stats)
 }
 
 /** 批量设置统计（导入用），异步落盘 */
@@ -276,6 +319,7 @@ export async function setStats(stats: BreakStats): Promise<void> {
   await initStorage()
   _stats = { ...stats }
   await _dbSet(STATS_KEY, 'data', _stats)
+  mirrorToYjs(MIRROR_KEYS.BREAK_STATS, _stats)
 }
 
 /** 合并统计（导入用），异步落盘 */
@@ -284,4 +328,5 @@ export async function mergeStats(incoming: BreakStats): Promise<void> {
   if (!_stats) _stats = {}
   Object.assign(_stats, incoming)
   await _dbSet(STATS_KEY, 'data', _stats)
+  mirrorToYjs(MIRROR_KEYS.BREAK_STATS, _stats)
 }

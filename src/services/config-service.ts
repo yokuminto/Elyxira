@@ -245,11 +245,55 @@ import { reactive, readonly } from 'vue'
 import { quizParserService } from './service-quiz-parser'
 import { getNotes, getTags, mergeNotes, mergeTags, getStats, mergeStats } from '@/pages/break/composables/breakStorage'
 import MarkdownIt from 'markdown-it'
+import { mirrorToYjs, subscribe, addSnapshotProvider, MIRROR_KEYS } from '@/services/p2p-sync'
 
 const md = new MarkdownIt({ html: true, linkify: true, typographer: true, breaks: false, xhtmlOut: true })
 
 // 配置存储的唯一键名
 const SETTINGS_KEY = 'app_settings'
+
+// ─── P2P 同步辅助 ─────────────────────────────────────────
+
+/**
+ * 把 AppSettings 脱敏后取出，便于通过 P2P 通道广播。
+ * - githubConfig.token 设为空串（每设备持有自有 PAT）
+ * - apiPresets[].apiKey 设为空串（同理）
+ * Yjs 远端合并时由 subscribe 回调保留本地的敏感字段。
+ */
+function _sanitizeSettingsForP2P(s: AppSettings): Omit<AppSettings, 'githubConfig' | 'apiPresets'> & {
+  githubConfig: Omit<GithubConfig, 'token'> & { token: string }
+  apiPresets: Array<Omit<ApiPreset, 'apiKey'> & { apiKey: string }>
+} {
+  return {
+    uiSettings: { ...s.uiSettings },
+    quizSettings: { ...s.quizSettings },
+    debugEnabled: s.debugEnabled,
+    activeApiPresetName: s.activeApiPresetName,
+    lastSyncTimestamp: s.lastSyncTimestamp,
+    githubConfig: { ...s.githubConfig, token: '' },
+    apiPresets: (s.apiPresets || []).map(p => ({ ...p, apiKey: '' })),
+  }
+}
+
+/** 把远端脱敏后的 settings 合并回本地，保留本地敏感字段 */
+function _mergeRemoteSettingsIntoLocal(local: AppSettings, remote: Partial<AppSettings> | null): AppSettings {
+  if (!remote) return local
+  // apiPresets 按 name 对齐：本地保留 apiKey，远端覆盖其余字段
+  const remotePresets = remote.apiPresets ?? local.apiPresets
+  const mergedPresets: ApiPreset[] = remotePresets.map(rp => {
+    const localMatch = local.apiPresets.find(lp => lp.name === rp.name)
+    return { ...rp, apiKey: localMatch?.apiKey ?? rp.apiKey ?? '' }
+  })
+  return {
+    uiSettings: remote.uiSettings ?? local.uiSettings,
+    quizSettings: remote.quizSettings ?? local.quizSettings,
+    debugEnabled: remote.debugEnabled ?? local.debugEnabled,
+    activeApiPresetName: remote.activeApiPresetName ?? local.activeApiPresetName,
+    lastSyncTimestamp: remote.lastSyncTimestamp ?? local.lastSyncTimestamp,
+    githubConfig: { ...local.githubConfig, ...(remote.githubConfig ?? {}), token: local.githubConfig.token },
+    apiPresets: mergedPresets,
+  }
+}
 
 // 默认UI设置
 const DEFAULT_UI_SETTINGS: UiSettings = {
@@ -404,6 +448,82 @@ class ConfigService {
     this.settings = reactive(loadedSettings)
     this.applyTheme()
     this.initQuizFromStorage()
+    this._registerP2PHooks()
+  }
+
+  /**
+   * 注册 P2P 同步钩子：远端 settings/stats/config 变化写回本地（保留敏感字段）；
+   * host 启动时把脱敏后的 settings 镜像入 Yjs 文档。
+   */
+  private _registerP2PHooks = (): void => {
+    subscribe(MIRROR_KEYS.APP_SETTINGS, (val) => {
+      const remote = val as Partial<AppSettings> | null
+      const merged = _mergeRemoteSettingsIntoLocal(this.settings, remote)
+      // 在 _isApplyingRemote 内重写 this.settings + localStorage；saveSettings 会跳过 mirror
+      this.settings = reactive(merged)
+      try {
+        localStorage.setItem(SETTINGS_KEY, JSON.stringify(this.settings))
+        this.notifyListeners('settings')
+      } catch (e) {
+        console.warn('[config-service] remote settings write failed:', e)
+      }
+    })
+
+    subscribe(MIRROR_KEYS.QUIZ_STATS, (val) => {
+      const remote = val as Record<string, unknown> | null
+      if (!remote) return
+      try {
+        const existing = localStorage.getItem('quizStats')
+        const existingObj = existing ? JSON.parse(existing) : {}
+        const merged = { ...existingObj, ...remote }
+        localStorage.setItem('quizStats', JSON.stringify(merged))
+        // 同步进运行时 state
+        this.quizState.stats = { ...this.quizState.stats, ...merged }
+      } catch (e) {
+        console.warn('[config-service] remote quizStats write failed:', e)
+      }
+    })
+
+    subscribe(MIRROR_KEYS.QUIZ_CONFIG, (val) => {
+      const remote = val as {
+        selectedChapter?: string
+        quizMode?: string
+        rangeStart?: string
+        rangeEnd?: string
+      } | null
+      if (!remote) return
+      try {
+        if (remote.selectedChapter !== undefined) {
+          localStorage.setItem('selectedChapter', remote.selectedChapter)
+          this.quizState.config.chapterIndex = remote.selectedChapter
+        }
+        if (remote.quizMode !== undefined) {
+          localStorage.setItem('quizMode', remote.quizMode)
+          this.quizState.config.mode = remote.quizMode as QuizMode
+        }
+        if (remote.rangeStart !== undefined) {
+          localStorage.setItem('rangeStart', remote.rangeStart)
+          this.quizState.config.rangeStart = Number(remote.rangeStart)
+        }
+        if (remote.rangeEnd !== undefined) {
+          localStorage.setItem('rangeEnd', remote.rangeEnd)
+          this.quizState.config.rangeEnd = Number(remote.rangeEnd)
+        }
+      } catch (e) {
+        console.warn('[config-service] remote quizConfig write failed:', e)
+      }
+    })
+
+    addSnapshotProvider(() => ({
+      [MIRROR_KEYS.APP_SETTINGS]: _sanitizeSettingsForP2P(this.settings),
+      [MIRROR_KEYS.QUIZ_STATS]: this.quizState.stats,
+      [MIRROR_KEYS.QUIZ_CONFIG]: {
+        selectedChapter: this.quizState.config.chapterIndex,
+        quizMode: this.quizState.config.mode,
+        rangeStart: this.quizState.config.rangeStart.toString(),
+        rangeEnd: this.quizState.config.rangeEnd.toString(),
+      },
+    }))
   }
 
   /**
@@ -476,6 +596,8 @@ class ConfigService {
     try {
       localStorage.setItem(SETTINGS_KEY, JSON.stringify(this.settings))
       this.notifyListeners('settings')
+      // P2P：脱敏后镜像勉强入 Yjs；未配对时 mirrorToYjs 自动 skip
+      mirrorToYjs(MIRROR_KEYS.APP_SETTINGS, _sanitizeSettingsForP2P(this.settings))
     } catch (error) {
       console.error('保存配置失败:', error)
       showToast('保存配置失败: ' + (error as Error).message, 'error')
@@ -1397,6 +1519,13 @@ class ConfigService {
     localStorage.setItem('quizMode', this.quizState.config.mode)
     localStorage.setItem('rangeStart', this.quizState.config.rangeStart.toString())
     localStorage.setItem('rangeEnd', this.quizState.config.rangeEnd.toString())
+    // P2P：复合成单个 quizConfig 对象镜像（远端 apply 时按字段拆开落地）
+    mirrorToYjs(MIRROR_KEYS.QUIZ_CONFIG, {
+      selectedChapter: this.quizState.config.chapterIndex,
+      quizMode: this.quizState.config.mode,
+      rangeStart: this.quizState.config.rangeStart.toString(),
+      rangeEnd: this.quizState.config.rangeEnd.toString(),
+    })
   }
 
   /**
@@ -1480,6 +1609,8 @@ class ConfigService {
    */
   private saveQuizStatsToStorage(): void {
     localStorage.setItem('quizStats', JSON.stringify(this.quizState.stats))
+    // P2P：镜像 quizStats 让多设备看到的答题进度一致
+    mirrorToYjs(MIRROR_KEYS.QUIZ_STATS, this.quizState.stats)
   }
 
   /**
