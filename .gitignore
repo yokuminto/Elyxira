@@ -54,5 +54,9 @@ requirements.txt
 .handoff/
 session-*.md
 
+# Agent 引导文档（本地开发用，不推送）
+.agent/
+AGENTS.md
+
 # 截图
 api-config-icons.png
