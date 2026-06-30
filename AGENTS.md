@@ -4,11 +4,25 @@
 
 ## 1. 项目上下文
 
-每次会话开始，阅读以下文件了解项目状态：
-- `.agent/memory/project_memory.md` — 项目概述、技术栈、关键设计
-- `.agent/memory/code_conventions.md` — 编码规范（命名、CSS 变量、组件结构）
-- `.agent/memory/design_decisions.md` — 架构决策记录（为什么会这样设计）
-- `.agent/memory/current_tasks.md` — 当前任务进度 + 已知问题
+每次会话开始，按 stage-gate 顺序加载（冻结快照模式——session 开始后只读）：
+
+### Stage 0 — 身份（必读，10 行）
+- `.agent/BOOT.md` — 项目名、版本、技术栈、仓库
+
+### Stage 1 — 约束（必读，≤4KB）
+- `.agent/CONTEXT.md` — 架构约束、编码硬约束、CSS token、关键设计原则
+
+### Stage 2 — 状态（必读）
+- `.agent/TASKS.md` — 当前任务进度 + 已知问题（每次 session 重写顶部状态栏）
+
+### Stage 3 — 记忆（必读，如有内容）
+- `.agent/MEMORY.md` — agent 自学习事实。硬上限 2,200 chars；若超出，必须先 consolidate 再执行任务
+
+### 按需加载
+- `.agent/DECISIONS.md` — 做架构决策时查阅（21 条 ADR，含 supersession 标记）
+- `session_search(query="关键词")` — 需要历史上下文时搜索跨 session，替代翻阅旧回顾文件
+- `.agent/HISTORY.md` — 版本历史（6 个版本的关键事实）
+- `.agent/SKILLS/retrospect/SKILL.md` — "沉淀"/"回顾"触发词时加载
 
 ## 2. 技术栈
 
@@ -18,7 +32,8 @@
 | 框架 | Vue 3 (Composition API + `<script setup>`) |
 | 构建 | Vite 6 |
 | 样式 | CSS 自定义变量 + scoped |
-| 依赖 | markdown-it, vue-toastification, vue-router, Font Awesome 6 |
+| 依赖 | markdown-it, vue-toastification, vue-router, yjs, y-webrtc, y-indexeddb, qrcode, Font Awesome 6 |
+| P2P | Yjs CRDT + y-webrtc（PIN=AES-GCM）+ Cloudflare Worker 信令（`cloudflare-worker/`） |
 
 ## 3. 绯想击破模块规则
 
@@ -69,5 +84,6 @@
 
 | 目录 | 用途 |
 |------|------|
-| `.agent/memory/` | 项目记忆（编码规范、架构决策、任务进度） |
-| `.agent/memory/retrospectives/` | 回顾归档（只追加） |
+| `.agent/` | Hermes 风格分层记忆——BOOT(身份) / CONTEXT(冻结快照) / MEMORY(自学习) / DECISIONS(ADR) / TASKS(状态) / HISTORY(版本) / PRUNE_LOG(审计) |
+| `.agent/SKILLS/` | 可复用技能（retrospect 等），"沉淀"等触发词时加载 |
+| `cloudflare-worker/` | 自部署 P2P 信令服务器（wrangler deploy） |

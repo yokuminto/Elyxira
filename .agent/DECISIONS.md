@@ -10,9 +10,10 @@
 **决策**: 废除最初设计的暗黑科幻主题，与刷题模式共用同一套 CSS 变量体系。
 **理由**: 用户反馈暗黑风格与平台整体不协调。统一视觉减少认知负担和维护成本。
 
-### 3. 笔记存储使用独立 localStorage key
+### 3. 笔记存储使用独立 localStorage key **[SUPERSEDED by §13 (2026-06-25)]**
 **日期**: 2026-06-17
-**决策**: break 模式的笔记用 `localStorage.break_notes` 键存取，不使用 `configService.saveNoteToQuestion()`。
+**决策**: ~~break 模式的笔记用 `localStorage.break_notes` 键存取，不使用 `configService.saveNoteToQuestion()`。~~
+**当前**: 已迁移至 IndexedDB（见 §13）。
 
 ### 4. 角色系统简化：移除稀有度、科目亲和
 **日期**: 2026-06-17
@@ -21,13 +22,13 @@
 ### 5. 使用 npm 作为统一包管理器
 **日期**: 2026-06-17 / 修订 2026-06-18
 **决策**: 全局使用 npm，CI 和本地开发统一。
-**理由**: 项目使用 npm + package-lock.json 管理依赖。npm 11.x 有已知 bug（exit handler never called），建议使用 npm 10.x 或更新版本。
+**理由**: 项目使用 npm + package-lock.json 管理依赖。npm 11.x 的 exit handler never called bug 已在 npm 11.18 修复；当前项目 npm 11.11，建议 `npm i -g npm@11.18`。
 
 ### 6. 代码搬迁必须逐行复制
 **日期**: 2026-06-17
 **决策**: 从参考源搬迁代码时，禁止精简、简化。做最小化的适配修改。
 
-### 7. 移除帕秋莉角色（已保留）
+### 7. 保留帕秋莉角色（移除 knowledge_card 技能接入）
 **日期**: 2026-06-18 / 修订 2026-06-28
 **决策**: 原定移除帕秋莉及其 knowledge_card 技能。实际数据文件 `break-characters.json` 中仍保留帕秋莉（8 角色总数）。
 **理由**: 知识卡片效果（阅读笔记）与现有笔记面板功能重叠，但角色数据已配置完整，保留不破坏游戏平衡。
@@ -87,7 +88,7 @@ expectedPerBox[i] = Σ(每个非商店/补给节点 toughness × weight[i] / 100
 
 **影响**: `_sessionPool` / `_drawFromPool()` 完全移除。新增 `_buildFullBoxes()`、`_preDrawFromFullBoxes()`、`_drawFromBox()`。`_drawQuestion()` 重写为三级回退版本。
 
-### 18. 8 盒分类规则与三阶段动态权重
+### 15. 8 盒分类规则与三阶段动态权重
 **日期**: 2026-06-27
 **决策**: 引入基于答题统计的 8 题盒分类和跨局累积进度自动切换的三阶段权重表。
 
@@ -111,19 +112,19 @@ expectedPerBox[i] = Σ(每个非商店/补给节点 toughness × weight[i] / 100
 
 **理由**: 静态权重表 + 自动阶段切换让抽题策略随玩家进度自然演进，不必每次手动调参。40% 安全阀防止单一盒子垄断抽题（如三期 Boss 难题权重 35，不触发安全阀；若人为调到 50 则被裁）。兜底链的阶段差异化保证奖励题在一期当调剂、三期当主菜。
 
-### 15. GitHub 同步使用 Git Data API 批量提交
+### 16. GitHub 同步使用 Git Data API 批量提交
 **日期**: 2026-06-25
 **决策**: 推送使用 Git Data API 一次性创建 tree + commit（5 次请求），而非逐文件 PUT（2N 次请求）。
 **理由**: 逐文件 PUT 对已存在文件必先 GET SHA→422 重试，慢且产生大量 422 错误。Git Data API 的 base_tree 机制自动保留不相关文件。
 **影响**: useBreakSync._githubBatchPush() 替代 _githubUpsert()。
 
-### 16. AI 提示词板块职责分离
+### 17. AI 提示词板块职责分离
 **日期**: 2026-06-25
 **决策**: 知识点精讲只讲知识不讲本题，答案分析放入独立的 📌答案/锁定答案板块，考点速记只出脱离题目的记忆卡片。
 **理由**: 旧提示词在知识点精讲里写"为什么选这个不选那个"，混淆了知识教学和题目分析。学生在知识板块看到选项讨论会困惑。
 **影响**: medical_professor.txt 全面重构，新增板块职责定义表 + 各板块禁止项。
 
-### 17. 击破字段从角色数据迁移到全局状态
+### 18. 击破字段从角色数据迁移到全局状态
 **日期**: 2026-06-25
 **决策**: 将 `StarEffect.breakBonus`（每个角色的击破加成）删除，改为 `BreakProgress` 上的三个全局字段：`baseBreak`（基础击破, 默认 1）、`breakMultiplier`（击破倍数, 默认 1）、`breakBonus`（击破加成 flat, 默认 0）。击破公式变更为 `baseBreak * breakMultiplier + breakBonus + genki + extraBreakCharges`。
 **理由**: 当前所有角色击破倍数均为 1，无技能修改击破值。旧 `breakBonus` 字段语义模糊（是 flat 还是 multiplier？取 max 还是 sum？），且角色数据中 0/1/2 的值无技能描述对应。新设计将击破参数集中到全局运行时状态，未来技能通过修改 `gameState.progress` 上的全局变量生效，不碰角色数据。

@@ -50,9 +50,6 @@ requirements.txt
 # 项目内部文件（不影响发布）
 .omo/
 .playwright-mcp/
-agent-reference/
-agent-reference.zip
-
 # Session 交接文件
 .handoff/
 session-*.md
