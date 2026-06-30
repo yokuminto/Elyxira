@@ -279,7 +279,7 @@ function _sanitizeSettingsForP2P(s: AppSettings): Omit<AppSettings, 'githubConfi
 function _mergeRemoteSettingsIntoLocal(local: AppSettings, remote: Partial<AppSettings> | null): AppSettings {
   if (!remote) return local
   // apiPresets 按 name 对齐：本地保留 apiKey，远端覆盖其余字段
-  const remotePresets = remote.apiPresets ?? local.apiPresets
+  const remotePresets = (remote.apiPresets && remote.apiPresets.length > 0) ? remote.apiPresets : local.apiPresets
   const mergedPresets: ApiPreset[] = remotePresets.map(rp => {
     const localMatch = local.apiPresets.find(lp => lp.name === rp.name)
     return { ...rp, apiKey: localMatch?.apiKey ?? rp.apiKey ?? '' }

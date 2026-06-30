@@ -178,7 +178,7 @@ async function handleJoin(): Promise<void> {
 
   try {
     await joinPairing(qrStr)
-    showToast('配对成功', 'success')
+    // "配对成功" toast 由 p2p-sync 的 lastEvent 机制触发（实际连接建立时），此处不再重复
   } catch (e) {
     showToast(`配对失败：${(e as Error).message}`, 'error')
   }
@@ -227,6 +227,15 @@ watch(qrPayload, async () => {
     await nextTick()
     await renderQR()
   }
+})
+
+// 监听 p2p-sync 的 lastEvent，在 UI 层显示 toast（解决 p2p-sync 模块无 Vue 上下文的问题）
+watch(() => state.lastEvent, (evt) => {
+  if (!evt) return
+  const typeMap: Record<string, 'info' | 'success' | 'warning' | 'error'> = {
+    info: 'info', success: 'success', warning: 'warning', error: 'error',
+  }
+  showToast(evt.message, typeMap[evt.type] || 'info', evt.type === 'error' ? 5000 : 3000)
 })
 </script>
 

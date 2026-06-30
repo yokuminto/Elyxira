@@ -26,6 +26,7 @@ declare module 'y-webrtc' {
     connect(): void
     disconnect(): void
     readonly awareness: {
+      clientID: number
       setLocalStateField(key: string, value: unknown): void
       setLocalState(state: unknown): void
       getLocalState(): unknown
