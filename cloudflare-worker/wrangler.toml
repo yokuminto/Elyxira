@@ -1,0 +1,18 @@
+name = "elyxira-signal"
+main = "worker.mjs"
+compatibility_date = "2024-12-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Durable Object 绑定：每个 PIN 对应一个 PairingRoom 实例
+[[durable_objects.bindings]]
+name = "PAIRING_ROOM"
+class_name = "PairingRoom"
+
+# 迁移：首次声明 DO 类
+[[migrations]]
+tag = "v1"
+new_classes = ["PairingRoom"]
+
+# 仅用于本地开发测试（生产部署后删除或改为你的域名）
+# [vars]
+# PUBLIC_URL = "wss://elyxira-signal.your-subdomain.workers.dev"
