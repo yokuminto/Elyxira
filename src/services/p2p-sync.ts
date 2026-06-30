@@ -47,7 +47,7 @@ export const MIRROR_KEYS = {
 export type SyncKeyType = (typeof MIRROR_KEYS)[keyof typeof MIRROR_KEYS]
 
 /** 信令 URL 默认值（部署后用户改写为自有域名） */
-const DEFAULT_SIGNALING_URL = 'wss://elyxira-signal.workers.dev'
+const DEFAULT_SIGNALING_URL = 'wss://elyxira-signal.yokuminto-107.workers.dev/ws'
 
 const DEVICE_ID_KEY = 'elyxira_device_id'
 const DEVICE_NAME_KEY = 'elyxira_device_name'

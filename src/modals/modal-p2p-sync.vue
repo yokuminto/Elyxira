@@ -51,7 +51,7 @@
           <input type="text" v-model="joinPin" placeholder="6 位数字 PIN" class="modal__form-control" maxlength="6" />
         </div>
         <div style="margin-top:12px;">
-          <button class="modal__button modal__button--primary" @click="handleJoin" :disabled="state.status === 'hosting' || state.status === 'joining' || (!joinInput.trim() && !joinPin.trim())">
+          <button class="modal__button modal__button--primary" @click="handleJoin" :disabled="state.status === 'joining' || (!joinInput.trim() && !joinPin.trim())">
             加入
           </button>
         </div>
