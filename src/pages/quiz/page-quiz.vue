@@ -159,6 +159,10 @@
                       <font-awesome-icon :icon="['fab', 'github']" /> <!-- 使用 brands 图标 -->
                     </button>
                     <button class="page-quiz__button page-quiz__button--icon page-quiz__settings-button"
+                      @click="showP2pSyncModal = true" title="P2P 配对同步">
+                      <font-awesome-icon icon="qrcode" />
+                    </button>
+                    <button class="page-quiz__button page-quiz__button--icon page-quiz__settings-button"
                       @click="showApiConfigModal = true" title="API设置">
                       <!-- <i data-feather="sliders"></i> -->
                       <font-awesome-icon icon="sliders-h" />
@@ -212,6 +216,7 @@
       @save="handleSaveQuestion" />
     <ModalQuizSync :show="showSyncConfigModal" @close="showSyncConfigModal = false" @save="handleSyncConfigSave"
       :current-quiz="currentQuizInfo" @sync-complete="handleSyncComplete" />
+    <ModalP2pSync :show="showP2pSyncModal" @close="showP2pSyncModal = false" />
     <ModalApiConfig :show="showApiConfigModal" @close="showApiConfigModal = false"
       :current-config="getCompleteApiConfig()" />
   </div>
@@ -227,6 +232,7 @@ import ModalStatistics from '@/modals/modal-statistics.vue'
 import ModalSettings from '@/modals/modal-settings.vue'
 import ModalQuestionEdit from '@/modals/modal-question-edit.vue'
 import ModalQuizSync from '@/modals/modal-quiz-sync.vue'
+import ModalP2pSync from '@/modals/modal-p2p-sync.vue'
 import ModalApiConfig from '@/modals/modal-api-config.vue'
 import './page-quiz.css'
 import '../../styles/variables.css'
@@ -300,6 +306,7 @@ const showModalStatistics = ref(false);
 const showModalSettings = ref(false);
 const showEditModal = ref(false);
 const showSyncConfigModal = ref(false);
+const showP2pSyncModal = ref(false);
 const showApiConfigModal = ref(false);
 const questionToEdit = ref<Question | null>(null);
 const toast = reactive<{ show: boolean; message: string; type: 'info' | 'success' | 'warning' | 'error' }>({
@@ -1239,6 +1246,7 @@ function handleKeyPress(e: KeyboardEvent) {
     showModalSettings.value = false;
     closeEditModal();
     showSyncConfigModal.value = false;
+    showP2pSyncModal.value = false;
     showApiConfigModal.value = false;
     return;
   }

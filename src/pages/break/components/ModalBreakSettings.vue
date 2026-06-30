@@ -46,6 +46,10 @@
           <button class="modal__button modal__button--primary modal__button--sm" @click="showRepoConfig = true">打开</button>
         </div>
         <div class="modal__setting-item">
+          <span class="modal__setting-item-name">P2P 配对同步</span>
+          <button class="modal__button modal__button--primary modal__button--sm" @click="showP2pSync = true">打开</button>
+        </div>
+        <div class="modal__setting-item">
           <span class="modal__setting-item-name">配置迁移</span>
           <div class="modal__form-actions">
             <button class="modal__button modal__button--primary modal__button--sm" @click="exportConfig">导出配置</button>
@@ -56,6 +60,7 @@
       </div>
     </div>
     <ModalBreakRepo :show="showRepoConfig" @close="showRepoConfig = false" />
+    <ModalP2pSync :show="showP2pSync" @close="showP2pSync = false" />
     <template #footer>
       <button @click="$emit('close')" class="modal__button modal__button--secondary">取消</button>
       <button @click="save" class="modal__button modal__button--primary">保存设置</button>
@@ -69,11 +74,13 @@ import BaseModal from '@/modals/modal-base.vue'
 import configService from '@/services/config-service'
 import { showToast } from '@/utils/toast'
 import ModalBreakRepo from './ModalBreakRepo.vue'
+import ModalP2pSync from '@/modals/modal-p2p-sync.vue'
 
-const sp = defineProps<{ show: boolean }>()
+defineProps<{ show: boolean }>()
 defineEmits<{ (e: 'close'): void }>()
 
 const showRepoConfig = ref(false)
+const showP2pSync = ref(false)
 const importInputRef = ref<HTMLInputElement>()
 
 const fonts = [

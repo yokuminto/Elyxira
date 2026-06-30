@@ -39,6 +39,10 @@
               @click="handleOpenSyncConfig" title="同步仓库">
               <BaseIcon name="github" size="16" />
             </button>
+            <button class="page-library__action-button page-library__action-button--secondary"
+              @click="showP2pSyncModal = true" title="P2P 配对同步">
+              <BaseIcon name="qr_code" size="16" />
+            </button>
             <button class="page-library__action-button page-library__action-button--secondary" @click="loadQuizList"
               title="刷新列表">
               <BaseIcon name="refresh" size="16" />
@@ -366,6 +370,9 @@
       <QuizSyncModal :show="showlibrarySyncConfigModal" @close="showlibrarySyncConfigModal = false"
         @sync-complete="handleSyncComplete" @save="handleRepoConfigSave" />
 
+      <!-- P2P 配对同步模态框 -->
+      <ModalP2pSync :show="showP2pSyncModal" @close="showP2pSyncModal = false" />
+
 
       <!-- 通用设置模态框 -->
       <ModalSettings :show="showGeneralSettings" :current-settings="appSettings" @close="showGeneralSettings = false"
@@ -461,6 +468,7 @@ import SettingsButton from '../../components/button-settings.vue'
 import DebugModal from '@/modals/modal-debug.vue'
 import LibraryDataModal from '@/modals/modal-library-data.vue'
 import QuizSyncModal from '@/modals/modal-quiz-sync.vue'
+import ModalP2pSync from '@/modals/modal-p2p-sync.vue'
 import ModalSettings from '@/modals/modal-settings.vue'
 import { showToast, injectToastStyles } from '../../utils/toast'
 import configService, {
@@ -528,6 +536,7 @@ const showGeneralSettings = ref(false)
 const showDebugModal = ref(false)
 const showlibraryDataModal = ref(false)
 const showlibrarySyncConfigModal = ref(false)
+const showP2pSyncModal = ref(false)
 const showRenameModal = ref(false)
 const showQuizModeModal = ref(false)
 const showDeleteConfirmModal = ref(false)
