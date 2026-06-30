@@ -128,3 +128,21 @@ expectedPerBox[i] = Σ(每个非商店/补给节点 toughness × weight[i] / 100
 **决策**: 将 `StarEffect.breakBonus`（每个角色的击破加成）删除，改为 `BreakProgress` 上的三个全局字段：`baseBreak`（基础击破, 默认 1）、`breakMultiplier`（击破倍数, 默认 1）、`breakBonus`（击破加成 flat, 默认 0）。击破公式变更为 `baseBreak * breakMultiplier + breakBonus + genki + extraBreakCharges`。
 **理由**: 当前所有角色击破倍数均为 1，无技能修改击破值。旧 `breakBonus` 字段语义模糊（是 flat 还是 multiplier？取 max 还是 sum？），且角色数据中 0/1/2 的值无技能描述对应。新设计将击破参数集中到全局运行时状态，未来技能通过修改 `gameState.progress` 上的全局变量生效，不碰角色数据。
 **影响**: `StarEffect` 删除 `breakBonus`；`BreakProgress` 新增 3 字段；`_getActiveBonuses()` 不再聚合 breakBonus；`CHARACTER_POOL` + JSON ×2 移除全部 `breakBonus` 值。
+
+### 19. P2P 同步选 PIN + 信令中继（非 QR 直传 SDP）
+**日期**: 2026-06-30
+**决策**: 设备间同步选 PIN（6 位数字）+ 自部署 Cloudflare Worker 信令 + y-webrtc `password=PIN` 内建加密的方式，不选纯 QR 传 SDP 也不引入第三方云盘账号体系。
+**理由**: 浏览器沙箱不允许原始 UDP/multicast，"插同一 WiFi 自动同步"做不到。纯 QR 单传 SDP 受 ICE candidates 众多限制（需 scan 多张 QR），且仅 LAN 可用。PIN + 中继允许跨网络；y-webrtc 自带 3 个公共信令已全死（heroku shutdown），自部署 Worker 免费层 100k req/天足够私人配对。y-webrtc 内置 password 参数走 PBKDF2(100k)+AES-GCM 自动加密全部信令 + DataChannel 流量，无需自己实现 crypto 代码。PIN 既是房间名又是密钥源，单因子即可。
+**影响**: 新增 `cloudflare-worker/`（Worker + Durable Object）+ `src/services/p2p-sync.ts`（Yjs + y-webrtc + y-indexeddb）+ `src/modals/modal-p2p-sync.vue`。用户需自行 `wrangler deploy` 信令服务器（默认 URL 占位未部署）。
+
+### 20. P2P 镜像数据范围与脱敏策略
+**日期**: 2026-06-30
+**决策**: 入 Yjs CRDT 文档的数据集为 `app_settings`（脱敏 githubConfig.token 与 apiPresets[].apiKey 为空串）、`quizStats`、`quizConfig`（chapter/mode/range 4 个 UI 状态键）、`breakNotes`、`breakTags`、`breakStats` 共 6 类。不入 CRDT 的有 `quizData`/`quizCache_*`（500KB-2MB×N 大体积，GitHub repo 同步已覆盖元数据）、`lastRouteError`/`lastQuizStats`/`syncName_*`（瞬时 UI 不必跨设备）。
+**理由**: 选 6 类数据体积小、变更频繁、合并语义清晰（CRDT Y.Map 按 key LWW）。脱敏因为 P2P 通道虽加密但每设备各持自有 GitHub PAT 才安全，远端 apply 时由 `_mergeRemoteSettingsIntoLocal` 按 name 对齐 apiPresets 复用本地 apiKey，token 不被广播。
+**影响**: `configService` 写 `_sanitizeSettingsForP2P` + `_mergeRemoteSettingsIntoLocal` 两个 helper；`breakStorage` 9 个 set/merge 函数末尾各加一行 `mirrorToYjs`；3 个 save 函数末尾加 `mirrorToYjs`；constructor 末尾 `_registerP2PHooks` 注册 3 个 subscribe + 1 个 addSnapshotProvider。
+
+### 21. P2P 防回环：`_isApplyingRemote` flag
+**日期**: 2026-06-30
+**决策**: `p2p-sync.ts` 的 `mirrorToYjs` 函数入口检查 `_isApplyingRemote` flag，true 时立即 skip；`_triggerChangeCallbacks` 在执行订阅 callback 前后包裹 set/reset 该 flag。
+**理由**: 远端 update → subscribe callback → 业务模块写本地存储 → saveSettings 触发 `mirrorToYjs` → 又写 Yjs 文档 → 触发一遍远端 update → 死循环。`_isApplyingRemote` 在 callback 同步段内 true 阻断反向写。callback 内的异步工作 fire-and-forget 不受影响（flag 在同步段结束已 reset）。
+**影响**: mirrorToYjs / _triggerChangeCallbacks 这一对组合自动防止回环。业务模块集成时无需感知，subscribe callback 内只管同步写本地，无需手动抑制 mirror。

@@ -19,9 +19,10 @@
 | 状态 | reactive composables |
 | 样式 | CSS 自定义变量 + scoped |
 | 图标 | Font Awesome 6 |
-| 依赖 | markdown-it, vue-toastification, vue-router |
+| 依赖 | markdown-it, vue-toastification, vue-router, yjs, y-webrtc, y-indexeddb, qrcode |
 | 测试 | Vitest + Playwright（待搭建） |
 | CI/CD | GitHub Actions → elyxira.github.io |
+| P2P | Yjs CRDT + y-webrtc + 自部署 Cloudflare Worker 信令（cloudflare-worker/）
 ## 项目结构
 
 ```
@@ -118,7 +119,20 @@ src/
 - 开局预抽共享题池（totalToughness × 1.5）
 - 并发生成 + SVG 进度环 + 180s 超时 + 失败计数
 
+### 11. P2P 跨设备同步（路线 B — 2026-06-30）
+- Yjs CRDT 文档：自动合并冲突，无中心服务器
+- y-webrtc：P2P DataChannel 直传，密码=PIN (AES-GCM 内建加密)
+- y-indexeddb：配对 PIN 维度独立数据库，离线缓存
+- 信令服务器：自部署 Cloudflare Worker（`cloudflare-worker/`），每 PIN 一个 Durable Object 房间，2-peer 上限
+- 配对流程：一端生成 PIN → 显示 QR（`{v:1,pin,name}` JSON）→ 对端扫码/输 PIN → 自动建立 WebRTC
+- 镜像数据：app_settings（脱敏 token/apiKey）、quizStats、quizConfig（4 个 UI 状态键）、breakNotes、breakTags、breakStats
+- 不入 CRDT：quizData / quizCache_* / lastRouteError / lastQuizStats / syncName_*
+- 防回环：`_isApplyingRemote` flag 在 callback 同步段阻断 `mirrorToYjs`
+- 入口：笔记工具栏 qrcode 图标 + 题库卡片菜单 + Break Settings 同步组
+- **部署前置**：用户需自 `wrangler deploy` 信令服务器并填入设置（默认地址占位未部署）
+
 ## 更新日志
+- 2026-06-30 — P2P 跨设备同步：Yjs+y-webrtc+y-indexeddb+Cloudflare Worker 信令，6 commit 完整集成
 - 2026-06-25 — 绯想击破 v2.0.2：GitHub 同步、批量 AI 生成、IndexedDB 存储、提示词重构、导入导出增强
 - 2026-06-23 — 项目文档全面审计与修正（README/package.json/GUIDE/AGENTS/设计决策/编码规范）
 - 2026-06-18 — 绯想击破 v2.0 完成：7 项 Bug 修复、CSS 同步、提示词融合、节点重平衡、商店重设计、CI/CD

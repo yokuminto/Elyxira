@@ -81,16 +81,31 @@
 - [x] **死代码清理** — 16 行注释死代码 + [DEBUG] console.log 清理
 - [x] **文档同步** — project_memory / AGENTS / README / CONFIG 全部更新
 
+### P2P 跨设备同步 (2026-06-30)
+- [x] **信令服务器** — cloudflare-worker/，Durable Object 每 PIN 一房间，2-peer pub/sub
+- [x] **Yjs CRDT 核心** — src/services/p2p-sync.ts，Yjs + y-webrtc（PIN=密码 AES-GCM）+ y-indexeddb 持久化
+- [x] **配对 UI** — src/modals/modal-p2p-sync.vue，QR + PIN + 设备列表 + 高级配置
+- [x] **三处入口按钮** — page-quiz 笔记工具栏 / page-library 题库卡片 / ModalBreakSettings 同步组
+- [x] **breakStorage 集成** — `_registerP2pHooks`、9 个 write 函数末尾 `mirrorToYjs`、`addSnapshotProvider`
+- [x] **configService 集成** — `_sanitizeSettingsForP2P` 脱敏 token/apiKey、`_mergeRemoteSettingsIntoLocal` 保留本地敏感、3 个 save 加 `mirrorToYjs`、constructor 末尾 `_registerP2PHooks`
+- [x] **类型声明** — vue-shims.d.ts 加 y-webrtc/y-indexeddb 声明
+- [x] **构建验证** — vue-tsc + vite build 295 模块通过，零类型错误
+
 ## 待处理
 
 ### 高优先级
 1. GitHub Pages CDN 缓存延迟 — 部署后可能需要数分钟才能看到更新
+2. **P2P 信令部署** — 用户需自 `wrangler deploy cloudflare-worker/` 并填入设置 → 当前默认 URL 占位未部署
 
 ### 中优先级
 1. 批量生成失败重试 — 当前失败项需手动重新点击生成
 2. 自动推送开关 — 单题生成时的 optional auto-push 设置
+3. P2P y-indexeddb 离线数据库堆积自动清理（>30 天未访问）
+4. P2P 扩到 mesh（去 2-peer 上限）
+5. P2P CDN 离线兜底（Cloudflare Worker KV 24h TTL）
 
 ### 低优先级
 1. 大文件拆分（useBreakGame.ts 1222 行、config-service.ts 2019 行）
 2. 羁绊效果未接入游戏逻辑（数据层已完成）
 3. 在线题库从 elyxira-data 仓库拉取
+4. P2P 加入 quizData/quizCache_* 分块传输（当前仅元数据，体积大未入 CRDT）
