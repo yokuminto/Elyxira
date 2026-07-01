@@ -40,7 +40,7 @@
 
 /* 特殊内容类 */
 .modal__content--settings {
-  max-width: 650px;
+  max-width: 500px;
 }
 
 .modal--active .modal__content {

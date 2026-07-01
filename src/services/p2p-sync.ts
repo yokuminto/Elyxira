@@ -671,6 +671,40 @@ export async function disconnect(): Promise<void> {
   _state.lastEvent = null
 }
 
+// ─── 从对端导入数据 ─────────────────────────────────────
+
+/**
+ * 从 Yjs 文档中读取每个 MIRROR_KEY 的当前值，逐个触发业务模块的 callback。
+ * 业务模块的 merge 逻辑负责"对端有就覆盖，本地有就保留"的合并策略。
+ *
+ * @param onProgress 进度回调 (0-100)
+ */
+export async function importFromPeer(onProgress?: (percent: number) => void): Promise<void> {
+  if (!_doc) {
+    _notifyEvent('error', '未配对，无法导入')
+    throw new Error('未配对')
+  }
+
+  const keys = Object.values(MIRROR_KEYS)
+  const total = keys.length
+
+  _notifyEvent('info', '正在从对端导入数据…')
+
+  for (let i = 0; i < total; i++) {
+    const key = keys[i] as SyncKeyType
+    if (!_doc) break
+    const yMap = _doc.getMap(key)
+    const val = _yMapToObject(yMap)
+    // 把 doc 中的值推回业务模块（触发 subscribe 回调）
+    _triggerChangeCallbacks(key, val)
+    onProgress?.(Math.round(((i + 1) / total) * 100))
+    // 每个 key 之间让出微任务，避免 UI 卡顿
+    await new Promise<void>((r) => setTimeout(r, 50))
+  }
+
+  _notifyEvent('success', '导入完成')
+}
+
 // ─── Composable 入口 ─────────────────────────────────────
 
 export function useSync(): {
@@ -678,6 +712,7 @@ export function useSync(): {
   startHosting: typeof startHosting
   joinPairing: typeof joinPairing
   disconnect: typeof disconnect
+  importFromPeer: typeof importFromPeer
   setSignalingUrl: typeof setSignalingUrl
   setDeviceName: typeof setDeviceName
 } {
@@ -686,6 +721,7 @@ export function useSync(): {
     startHosting,
     joinPairing,
     disconnect,
+    importFromPeer,
     setSignalingUrl,
     setDeviceName,
   }

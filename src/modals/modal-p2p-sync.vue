@@ -1,189 +1,157 @@
 <template>
-  <BaseModal title="P2P 配对同步" :show="show" contentClass="modal__content--settings" @close="$emit('close')">
-    <!-- Status Banner -->
-    <div v-if="state.status === 'error'" class="modal__settings-group" style="background:var(--bg-danger,rgba(239,68,68,0.1));padding:10px 12px;border-radius:var(--radius);color:var(--color-danger,#e54960);">
+  <BaseModal title="P2P 配对同步" :show="show" @close="$emit('close')">
+    <!-- 状态栏 -->
+    <div v-if="state.status === 'error'" class="p2p-banner p2p-banner--error">
       {{ state.error }}
     </div>
-    <div v-else-if="state.status === 'paired'" class="modal__settings-group" style="background:var(--bg-success,rgba(5,150,105,0.1));padding:10px 12px;border-radius:var(--radius);color:var(--color-success,#059669);">
+    <div v-else-if="state.status === 'paired'" class="p2p-banner p2p-banner--success">
       <font-awesome-icon :icon="['fas', 'wifi']" /> 已配对 {{ state.peers.length }} 台设备
     </div>
+    <div v-else-if="state.status === 'hosting'" class="p2p-banner p2p-banner--info">
+      等待设备加入…
+    </div>
+    <div v-else-if="state.status === 'joining'" class="p2p-banner p2p-banner--info">
+      正在加入配对…
+    </div>
 
-    <div class="modal__separator"></div>
-
-    <!-- Role Switch Tabs -->
-    <div class="modal__section">
-      <div class="modal__settings-tabs">
-        <button class="modal__settings-tab" :class="{ 'modal__settings-tab--active': activeTab === 'host' }" @click="switchTab('host')" :disabled="state.status === 'joining'">
-          <font-awesome-icon :icon="['fas', 'qrcode']" /> 发起配对（显示二维码）
-        </button>
-        <button class="modal__settings-tab" :class="{ 'modal__settings-tab--active': activeTab === 'join' }" @click="switchTab('join')" :disabled="state.status === 'joining'">
-          加入配对（扫描/输入）
+    <!-- 配对区域 -->
+    <div class="p2p-section">
+      <div class="p2p-pin-row">
+        <span class="p2p-pin-label">本机 PIN</span>
+        <strong class="p2p-pin-value">{{ state.pin || '—' }}</strong>
+        <button
+          v-if="state.status === 'idle' || state.status === 'hosting'"
+          class="p2p-refresh-btn"
+          @click="handleRefresh"
+          :disabled="importProgress !== null"
+          title="刷新 PIN"
+        >
+          <font-awesome-icon :icon="['fas', 'sync']" />
         </button>
       </div>
 
-      <!-- Host Mode -->
-      <div v-if="activeTab === 'host'" class="modal__settings-group">
-        <div style="text-align:center;">
-          <canvas ref="qrCanvas" class="p2p-qr"></canvas>
-        </div>
-        <div v-if="state.pin" style="text-align:center;margin-top:8px;">
-          <span class="modal__info-value">配对 PIN：<strong>{{ state.pin }}</strong></span>
-        </div>
-        <div style="text-align:center;margin-top:10px;">
-          <button class="modal__button modal__button--secondary" @click="handleRefreshQR" :disabled="state.status === 'joining'">
-            <font-awesome-icon :icon="['fas', 'sync']" /> 刷新二维码
-          </button>
-        </div>
-        <div v-if="state.status === 'hosting'" class="modal__info-message" style="text-align:center;margin-top:8px;">
-          等待设备扫码加入...
+      <div class="p2p-join-row">
+        <input
+          type="text"
+          v-model="joinPin"
+          placeholder="输入配对 PIN"
+          class="p2p-join-input"
+          maxlength="6"
+          @keyup.enter="handleJoin"
+          :disabled="state.status === 'hosting' || state.status === 'joining' || importProgress !== null"
+        />
+        <button
+          class="modal__button modal__button--primary"
+          @click="handleJoin"
+          :disabled="state.status === 'joining' || state.status === 'hosting' || !joinPin.trim() || importProgress !== null"
+        >
+          加入
+        </button>
+      </div>
+    </div>
+
+    <!-- 已连接设备 -->
+    <div class="p2p-section">
+      <h4 class="p2p-subtitle">已连接设备</h4>
+      <div v-if="state.peers.length === 0" class="p2p-hint">等待设备加入…</div>
+      <div v-else class="p2p-peer-list">
+        <div v-for="peer in state.peers" :key="peer.id" class="p2p-peer-item">
+          <font-awesome-icon :icon="['fas', 'mobile-screen']" />
+          <span>{{ peer.name }}</span>
         </div>
       </div>
+    </div>
 
-      <!-- Join Mode -->
-      <div v-if="activeTab === 'join'" class="modal__settings-group">
-        <div class="modal__form-group">
-          <label class="modal__form-label">扫码结果</label>
-          <input type="text" v-model="joinInput" placeholder='粘贴扫码获取的 JSON 字符串' class="modal__form-control" />
-        </div>
-        <div style="text-align:center;margin:8px 0;color:var(--text-secondary);font-size:0.9em;">或</div>
-        <div class="modal__form-group">
-          <label class="modal__form-label">手动输入配对 PIN</label>
-          <input type="text" v-model="joinPin" placeholder="6 位数字 PIN" class="modal__form-control" maxlength="6" />
-        </div>
-        <div style="margin-top:12px;">
-          <button class="modal__button modal__button--primary" @click="handleJoin" :disabled="state.status === 'joining' || (!joinInput.trim() && !joinPin.trim())">
-            加入
+    <!-- 设备配置（合并信令 URL，不再藏高级开关） -->
+    <div class="p2p-section">
+      <h4 class="p2p-subtitle">设备配置</h4>
+      <div class="p2p-form-group">
+        <label class="p2p-label">设备名称</label>
+        <input type="text" v-model="localDeviceName" @change="handleDeviceNameChange" class="p2p-input" />
+      </div>
+      <div class="p2p-form-group">
+        <label class="p2p-label">信令服务器</label>
+        <div class="p2p-url-row">
+          <input type="text" v-model="localSignalingUrl" @change="handleSignalingUrlChange" class="p2p-input" />
+          <button class="p2p-reset-btn" @click="handleResetUrl" title="重置为默认地址">
+            <font-awesome-icon :icon="['fas', 'rotate-left']" />
           </button>
         </div>
       </div>
     </div>
 
-    <div class="modal__separator"></div>
-
-    <!-- Connected Peers -->
-    <div class="modal__section">
-      <div class="modal__info-panel">
-        <h4 class="modal__info-title">已连接设备</h4>
-        <div v-if="state.peers.length === 0" class="modal__info-message">
-          等待设备加入...
-        </div>
-        <div v-else class="modal__info-content">
-          <div v-for="peer in state.peers" :key="peer.id" class="modal__info-item">
-            <span class="modal__info-label">设备：</span>
-            <span class="modal__info-value">{{ peer.name }}</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Device Config -->
-    <div class="modal__section">
-      <h3 class="modal__section-title">设备配置</h3>
-      <div class="modal__form-group">
-        <label class="modal__form-label" for="p2pDeviceName">设备名称</label>
-        <input type="text" id="p2pDeviceName" v-model="localDeviceName" @change="handleDeviceNameChange" class="modal__form-control" />
-      </div>
-      <div class="modal__form-group modal__form-group--switch">
-        <label class="modal__form-label">高级设置</label>
-        <label class="modal__toggle-switch">
-          <input type="checkbox" v-model="showAdvanced" />
-          <span class="modal__toggle-slider"></span>
-        </label>
-      </div>
-      <div v-if="showAdvanced" class="modal__form-group">
-        <label class="modal__form-label" for="p2pSignalingUrl">信令服务器 URL</label>
-        <div class="modal__form-description">自定义 WebRTC 信令服务器地址</div>
-        <input type="text" id="p2pSignalingUrl" v-model="localSignalingUrl" @change="handleSignalingUrlChange" class="modal__form-control" />
-      </div>
+    <!-- 导入进度 -->
+    <div v-if="importProgress !== null" class="p2p-progress-bar">
+      <div class="p2p-progress-fill" :style="{ width: importProgress + '%' }"></div>
+      <span class="p2p-progress-text">{{ importProgress }}%</span>
     </div>
 
     <template #footer>
-      <button class="modal__button" :class="state.status !== 'idle' ? 'modal__button--danger' : 'modal__button--secondary'" @click="handleDisconnectOrClose">
-        {{ state.status !== 'idle' ? '断开' : '关闭' }}
-      </button>
-      <button v-if="state.status === 'paired'" class="modal__button modal__button--primary" @click="handleManualSync">
-        手动同步
-      </button>
+      <div class="p2p-footer">
+        <button
+          class="modal__button"
+          :class="state.status !== 'idle' ? 'modal__button--danger' : 'modal__button--secondary'"
+          @click="handleDisconnectOrClose"
+          :disabled="importProgress !== null"
+        >
+          {{ state.status !== 'idle' ? '断开' : '关闭' }}
+        </button>
+        <button
+          v-if="state.status === 'paired'"
+          class="modal__button modal__button--primary"
+          @click="handleImport"
+          :disabled="importProgress !== null"
+        >
+          {{ importProgress !== null ? `导入中 ${importProgress}%` : '从对端导入' }}
+        </button>
+      </div>
     </template>
   </BaseModal>
 </template>
 
 <script setup lang="ts">
-import { ref, watch, nextTick } from 'vue'
+import { ref, watch } from 'vue'
 import BaseModal from './modal-base.vue'
-import QRCode from 'qrcode'
-import { useSync, parseQRPayload } from '@/services/p2p-sync'
+import { useSync } from '@/services/p2p-sync'
 import { showToast } from '@/utils/toast'
 
-// Register FA icons used by this component
 import { library } from '@fortawesome/fontawesome-svg-core'
-import { faQrcode, faWifi } from '@fortawesome/free-solid-svg-icons'
-library.add(faQrcode, faWifi)
+import { faWifi, faMobileScreen, faSync, faRotateLeft } from '@fortawesome/free-solid-svg-icons'
+library.add(faWifi, faMobileScreen, faSync, faRotateLeft)
 
 const props = defineProps<{ show: boolean }>()
 const emit = defineEmits<{ (e: 'close'): void }>()
 
-const { state, startHosting, joinPairing, disconnect, setSignalingUrl, setDeviceName } = useSync()
+const { state, startHosting, joinPairing, disconnect, importFromPeer, setSignalingUrl, setDeviceName } = useSync()
 
-const activeTab = ref<'host' | 'join'>('host')
-const joinInput = ref('')
 const joinPin = ref('')
-const qrPayload = ref('')
-const qrCanvas = ref<HTMLCanvasElement | null>(null)
 const localDeviceName = ref(state.deviceName)
 const localSignalingUrl = ref(state.signalingUrl)
-const showAdvanced = ref(false)
+const importProgress = ref<number | null>(null)
 
-function switchTab(tab: 'host' | 'join'): void {
-  activeTab.value = tab
-}
-
-async function renderQR(): Promise<void> {
-  if (!qrCanvas.value || !qrPayload.value) return
+/** 刷新 PIN（发起配对） */
+async function handleRefresh(): Promise<void> {
   try {
-    await QRCode.toCanvas(qrCanvas.value, qrPayload.value, { width: 240, margin: 1 })
-  } catch (e) {
-    console.error('[p2p-sync] QR render failed:', e)
-  }
-}
-
-async function handleRefreshQR(): Promise<void> {
-  try {
-    qrPayload.value = await startHosting()
-    await nextTick()
-    await renderQR()
-    showToast('二维码已刷新', 'info')
+    await startHosting()
+    showToast('PIN 已刷新', 'info')
   } catch (e) {
     showToast(`刷新失败：${(e as Error).message}`, 'error')
   }
 }
 
+/** 加入配对 */
 async function handleJoin(): Promise<void> {
-  let qrStr = ''
-
-  if (joinPin.value.trim()) {
-    qrStr = JSON.stringify({ v: 1, pin: joinPin.value.trim(), name: '' })
-  } else if (joinInput.value.trim()) {
-    try {
-      parseQRPayload(joinInput.value.trim())
-    } catch (e) {
-      showToast(`无效的扫码内容：${(e as Error).message}`, 'error')
-      return
-    }
-    qrStr = joinInput.value.trim()
-  } else {
-    showToast('请粘贴扫码结果或输入配对 PIN', 'warning')
-    return
-  }
-
+  const pin = joinPin.value.trim()
+  if (!pin) return
   try {
+    const qrStr = JSON.stringify({ v: 1, pin, name: '' })
     await joinPairing(qrStr)
-    // "配对成功" toast 由 p2p-sync 的 lastEvent 机制触发（实际连接建立时），此处不再重复
   } catch (e) {
     showToast(`配对失败：${(e as Error).message}`, 'error')
   }
 }
 
+/** 断开或关闭 */
 async function handleDisconnectOrClose(): Promise<void> {
   if (state.status !== 'idle') {
     try {
@@ -197,8 +165,18 @@ async function handleDisconnectOrClose(): Promise<void> {
   }
 }
 
-function handleManualSync(): void {
-  showToast('手动同步请求已发送', 'success')
+/** 从对端导入 */
+async function handleImport(): Promise<void> {
+  importProgress.value = 0
+  try {
+    await importFromPeer((pct) => {
+      importProgress.value = pct
+    })
+  } catch (e) {
+    showToast(`导入失败：${(e as Error).message}`, 'error')
+  } finally {
+    importProgress.value = null
+  }
 }
 
 function handleDeviceNameChange(): void {
@@ -209,27 +187,25 @@ function handleSignalingUrlChange(): void {
   setSignalingUrl(localSignalingUrl.value)
 }
 
-// Open modal → sync local form fields, auto-start hosting if idle
+/** 重置信令 URL 为默认地址 */
+function handleResetUrl(): void {
+  const defaultUrl = 'wss://elyxira-signal.yokuminto-107.workers.dev'
+  localSignalingUrl.value = defaultUrl
+  setSignalingUrl(defaultUrl)
+  showToast('信令服务器已重置', 'info')
+}
+
+// 弹窗打开 → 同步表单，idle 时自动发起
 watch(() => props.show, async (newVal) => {
   if (!newVal) return
   localDeviceName.value = state.deviceName
   localSignalingUrl.value = state.signalingUrl
-  if (state.status === 'idle') {
-    activeTab.value = 'host'
-    await nextTick()
-    await handleRefreshQR()
-  }
+  joinPin.value = ''
+  importProgress.value = null
+  // 弹窗打开时不自动发起，让用户自己选择：刷新 PIN 发起，或输入对方 PIN 加入
 })
 
-// Re-render QR when payload changes (separate from auto-start path)
-watch(qrPayload, async () => {
-  if (qrPayload.value && activeTab.value === 'host') {
-    await nextTick()
-    await renderQR()
-  }
-})
-
-// 监听 p2p-sync 的 lastEvent，在 UI 层显示 toast（解决 p2p-sync 模块无 Vue 上下文的问题）
+// 监听 lastEvent 显示 toast
 watch(() => state.lastEvent, (evt) => {
   if (!evt) return
   const typeMap: Record<string, 'info' | 'success' | 'warning' | 'error'> = {
@@ -240,10 +216,182 @@ watch(() => state.lastEvent, (evt) => {
 </script>
 
 <style scoped>
-.p2p-qr {
-  width: 240px;
-  height: 240px;
+.p2p-banner {
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  font-size: 0.95em;
+  margin-bottom: 16px;
+}
+.p2p-banner--error {
+  background: var(--bg-danger, rgba(239, 68, 68, 0.1));
+  color: var(--color-danger, #e54960);
+}
+.p2p-banner--success {
+  background: var(--bg-success, rgba(5, 150, 105, 0.1));
+  color: var(--color-success, #059669);
+}
+.p2p-banner--info {
+  background: var(--bg-info, rgba(59, 130, 246, 0.1));
+  color: var(--color-blue, #3b82f6);
+}
+
+.p2p-section {
+  margin-bottom: 16px;
+}
+
+.p2p-pin-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.p2p-pin-label {
+  color: var(--text-secondary);
+  font-size: 0.9em;
+}
+.p2p-pin-value {
+  font-size: 1.3em;
+  letter-spacing: 0.1em;
+  color: var(--text-main);
+}
+.p2p-refresh-btn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 4px 8px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: all 0.2s;
+}
+.p2p-refresh-btn:hover {
+  color: var(--color-blue);
+  border-color: var(--color-blue);
+}
+.p2p-refresh-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.p2p-join-row {
+  display: flex;
+  gap: 8px;
+}
+.p2p-join-input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-white);
+  color: var(--text-main);
+  font-size: 1em;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+.p2p-join-input:focus {
+  outline: none;
+  border-color: var(--color-blue);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.p2p-subtitle {
+  font-size: 0.95em;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+.p2p-hint {
+  color: var(--text-light, #6b7280);
+  font-style: italic;
+  font-size: 0.9em;
+}
+.p2p-peer-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.p2p-peer-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-main);
+  font-size: 0.95em;
+}
+
+.p2p-form-group {
+  margin-bottom: 12px;
+}
+.p2p-label {
   display: block;
-  margin: 0 auto;
+  margin-bottom: 4px;
+  font-size: 0.85em;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+.p2p-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-white);
+  color: var(--text-main);
+  font-size: 0.95em;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+.p2p-input:focus {
+  outline: none;
+  border-color: var(--color-blue);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+.p2p-url-row {
+  display: flex;
+  gap: 6px;
+}
+.p2p-reset-btn {
+  padding: 6px 10px;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+.p2p-reset-btn:hover {
+  color: var(--color-blue);
+  border-color: var(--color-blue);
+}
+
+.p2p-progress-bar {
+  position: relative;
+  height: 24px;
+  background: var(--bg-white-light, #f0f0f0);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+.p2p-progress-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  background: var(--color-blue, #3b82f6);
+  transition: width 0.2s ease;
+}
+.p2p-progress-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85em;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.p2p-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
 }
 </style>
