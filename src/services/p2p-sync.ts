@@ -46,7 +46,7 @@ export const MIRROR_KEYS = {
 export type SyncKeyType = (typeof MIRROR_KEYS)[keyof typeof MIRROR_KEYS]
 
 /** 信令 URL 默认值（部署后用户改写为自有域名） */
-const DEFAULT_SIGNALING_URL = 'wss://elyxira-signal.yokuminto-107.workers.dev/ws'
+const DEFAULT_SIGNALING_URL = 'wss://elyxira-signal.yokuminto-107.workers.dev'
 
 const DEVICE_ID_KEY = 'elyxira_device_id'
 const DEVICE_NAME_KEY = 'elyxira_device_name'
@@ -529,7 +529,10 @@ async function _doBootstrap(pin: string, role: PairingRole): Promise<void> {
   // y-webrtc 内置 password 从 PIN 派生密钥，AES-GCM 加密全部信令 + P2P 载荷
   try {
     const WebrtcModule: typeof import('y-webrtc') = await import('y-webrtc')
-    const signaling = [_state.signalingUrl]
+    // y-webrtc v10 不会自动把房间名拼到 URL 上，需手动构造 /ws/{PIN} 路径
+    const baseUrl = _state.signalingUrl.replace(/\/$/, '')
+    const wsUrl = baseUrl.endsWith('/ws') ? `${baseUrl}/${pin}` : `${baseUrl}/ws/${pin}`
+    const signaling = [wsUrl]
     _provider = new WebrtcModule.WebrtcProvider(pin, doc, {
       signaling,
       password: pin, // 信令回路加密；与远端共享 PIN
@@ -561,21 +564,24 @@ async function _doBootstrap(pin: string, role: PairingRole): Promise<void> {
 function provider_bindEvents(p: import('y-webrtc').WebrtcProvider): () => void {
   const onStatus = (_e: unknown) => {
     if (_provider !== p) return
-    const peerCount = 'peers' in p ? (p.peers as unknown[]).length : 0
     _state.peers = _readPeers(p)
-    if (peerCount > 0) {
+    if (_state.peers.length > 0) {
       _state.status = 'paired'
       _state.lastSync = Date.now()
-      // 实际连接建立时才通知"配对成功"，而非 _bootstrap 返回时
       _notifyEvent('success', '配对成功')
     }
   }
   const onPeers = (_e: unknown) => {
     if (_provider !== p) return
+    // peers 事件触发时 awareness 可能还没传播过来，用事件 payload 判断
+    const evt = _e as { added?: unknown[]; removed?: unknown[]; webrtcPeers?: unknown[]; bcPeers?: unknown[] }
+    const totalConnected = (evt?.webrtcPeers?.length ?? 0) + (evt?.bcPeers?.length ?? 0)
     _state.peers = _readPeers(p)
-    if (_state.peers.length > 0) {
+    const peerCount = totalConnected > 0 ? totalConnected : _state.peers.length
+    if (peerCount > 0) {
       _state.status = 'paired'
       _state.lastSync = Date.now()
+      _notifyEvent('success', '配对成功')
     } else if (_state.status === 'paired') {
       // 对端断开：根据本机角色正确降级
       if (_activeRole === 'join') {
@@ -591,6 +597,12 @@ function provider_bindEvents(p: import('y-webrtc').WebrtcProvider): () => void {
   const onUpdateAwareness = () => {
     if (_provider !== p) return
     _state.peers = _readPeers(p)
+    // awareness 到达后如果发现 peers 但 status 还不是 paired → 补设
+    if (_state.peers.length > 0 && _state.status !== 'paired') {
+      _state.status = 'paired'
+      _state.lastSync = Date.now()
+      _notifyEvent('success', '配对成功')
+    }
   }
   try {
     p.awareness.on('change', onUpdateAwareness)
